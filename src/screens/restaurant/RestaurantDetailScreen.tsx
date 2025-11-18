@@ -1,99 +1,141 @@
 import React from "react";
-import {View, Text, FlatList, StyleSheet, TouchableOpacity, Alert} from "react-native";
-import {useCartStore} from "@store/cartStore";
-import {Button} from "@components/base/Button";
-import {colors} from "@constants/colors";
+import {View, Text, StyleSheet, ScrollView, Image, FlatList, TouchableOpacity} from "react-native";
+import {useRoute, useNavigation} from "@react-navigation/native";
+import {useQuery} from "@tanstack/react-query";
+import {restaurantApi} from "@api/restaurant.api";
+import {Spin} from "@ant-design/react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import {colors} from "@constants/colors";
+import {useCartStore} from "@store/cartStore";
 
-const CartScreen: React.FC = () => {
-  const {items, removeItem, updateQuantity, clearCart, getCartTotal, getItemCount} = useCartStore();
+const RestaurantDetailScreen: React.FC = () => {
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
+  const {addItem} = useCartStore();
+  const restaurantId = route.params?.id;
 
-  const handleCheckout = () => {
-    if (items.length === 0) {
-      Alert.alert("Cart Empty", "Please add items to cart");
-      return;
-    }
-    Alert.alert("Success", "Checkout feature coming soon!");
-  };
+  const {data: restaurant, isLoading: restaurantLoading} = useQuery({
+    queryKey: ["restaurant", restaurantId],
+    queryFn: () => restaurantApi.getById(restaurantId),
+  });
 
-  const handleRemove = (itemId: number) => {
-    Alert.alert("Remove Item", "Are you sure?", [
-      {text: "Cancel", style: "cancel"},
-      {text: "Remove", onPress: () => removeItem(itemId), style: "destructive"},
-    ]);
+  const {data: menu, isLoading: menuLoading} = useQuery({
+    queryKey: ["menu", restaurantId],
+    queryFn: () => restaurantApi.getMenu(restaurantId),
+  });
+
+  if (restaurantLoading || menuLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Spin size="large" />
+      </View>
+    );
+  }
+
+  const restaurantData = restaurant?.data?.data;
+  const products = menu?.data?.data?.data || [];
+
+  const handleAddToCart = (product: any) => {
+    addItem(product, 1);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Cart</Text>
-        <Text style={styles.itemCount}>{getItemCount()} items</Text>
+    <ScrollView style={styles.container}>
+      {/* Restaurant Header */}
+      <Image source={{uri: restaurantData?.image || "https://via.placeholder.com/400"}} style={styles.headerImage} />
+
+      <View style={styles.headerContent}>
+        <Text style={styles.name}>{restaurantData?.name}</Text>
+
+        <View style={styles.infoRow}>
+          <View style={styles.ratingContainer}>
+            <Icon name="star" size={20} color="#ffc107" />
+            <Text style={styles.rating}>{restaurantData?.rating || "0"}</Text>
+          </View>
+
+          <Text style={styles.deliveryTime}>{restaurantData?.deliveryTime}</Text>
+
+          <Text style={styles.deliveryFee}>₫{restaurantData?.deliveryFee?.toLocaleString() || "0"}</Text>
+        </View>
+
+        <Text style={styles.address}>{restaurantData?.address}</Text>
+        <Text style={styles.description}>{restaurantData?.description}</Text>
       </View>
 
-      {items.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Icon name="cart-outline" size={80} color="#ccc" />
-          <Text style={styles.emptyText}>Your cart is empty</Text>
-        </View>
-      ) : (
-        <>
+      {/* Menu */}
+      <View style={styles.menuSection}>
+        <Text style={styles.menuTitle}>Menu</Text>
+
+        {products.length === 0 ? (
+          <Text style={styles.emptyText}>No products available</Text>
+        ) : (
           <FlatList
-            data={items}
+            data={products}
             keyExtractor={(item) => item.id.toString()}
+            scrollEnabled={false}
             renderItem={({item}) => (
-              <View style={styles.cartItem}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.product?.name}</Text>
-                  <Text style={styles.itemPrice}>₫{item.product?.price.toLocaleString()}</Text>
+              <View style={styles.productCard}>
+                <Image source={{uri: item.image || "https://via.placeholder.com/100"}} style={styles.productImage} />
+
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.productDescription} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                  <Text style={styles.productPrice}>₫{item.price?.toLocaleString()}</Text>
                 </View>
 
-                <View style={styles.quantityContainer}>
-                  <TouchableOpacity onPress={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}>
-                    <Icon name="minus-circle" size={28} color={colors.primary} />
-                  </TouchableOpacity>
-                  <Text style={styles.quantity}>{item.quantity}</Text>
-                  <TouchableOpacity onPress={() => updateQuantity(item.id, item.quantity + 1)}>
-                    <Icon name="plus-circle" size={28} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity onPress={() => handleRemove(item.id)}>
-                  <Icon name="delete" size={24} color={colors.danger} />
+                <TouchableOpacity style={styles.addButton} onPress={() => handleAddToCart(item)}>
+                  <Icon name="plus" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
             )}
           />
-
-          <View style={styles.footer}>
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalAmount}>₫{getCartTotal().toLocaleString()}</Text>
-            </View>
-            <Button title="Checkout" onPress={handleCheckout} />
-          </View>
-        </>
-      )}
-    </View>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: "#fff"},
-  header: {padding: 16, borderBottomWidth: 1, borderBottomColor: "#eee"},
-  title: {fontSize: 24, fontWeight: "bold"},
-  itemCount: {fontSize: 14, color: "#666", marginTop: 4},
-  emptyContainer: {flex: 1, justifyContent: "center", alignItems: "center"},
-  emptyText: {fontSize: 16, color: "#999", marginTop: 16},
-  cartItem: {flexDirection: "row", padding: 16, borderBottomWidth: 1, borderBottomColor: "#eee", alignItems: "center"},
-  itemInfo: {flex: 1},
-  itemName: {fontSize: 16, fontWeight: "600"},
-  itemPrice: {fontSize: 14, color: "#666", marginTop: 4},
-  quantityContainer: {flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 16},
-  quantity: {fontSize: 16, fontWeight: "bold", minWidth: 30, textAlign: "center"},
-  footer: {padding: 16, borderTopWidth: 1, borderTopColor: "#eee"},
-  totalContainer: {flexDirection: "row", justifyContent: "space-between", marginBottom: 16},
-  totalLabel: {fontSize: 18, fontWeight: "bold"},
-  totalAmount: {fontSize: 18, fontWeight: "bold", color: colors.primary},
+  loadingContainer: {flex: 1, justifyContent: "center", alignItems: "center"},
+  headerImage: {width: "100%", height: 250},
+  headerContent: {padding: 16},
+  name: {fontSize: 24, fontWeight: "bold", marginBottom: 8},
+  infoRow: {flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 8},
+  ratingContainer: {flexDirection: "row", alignItems: "center", gap: 4},
+  rating: {fontSize: 16, fontWeight: "600"},
+  deliveryTime: {fontSize: 14, color: "#666"},
+  deliveryFee: {fontSize: 14, color: colors.primary, fontWeight: "600"},
+  address: {fontSize: 14, color: "#666", marginBottom: 8},
+  description: {fontSize: 14, color: "#999", lineHeight: 20},
+  menuSection: {padding: 16, borderTopWidth: 8, borderTopColor: "#f5f5f5"},
+  menuTitle: {fontSize: 20, fontWeight: "bold", marginBottom: 16},
+  emptyText: {fontSize: 16, color: "#999", textAlign: "center", paddingVertical: 20},
+  productCard: {
+    flexDirection: "row",
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  productImage: {width: 80, height: 80, borderRadius: 8},
+  productInfo: {flex: 1, marginLeft: 12, justifyContent: "center"},
+  productName: {fontSize: 16, fontWeight: "600", marginBottom: 4},
+  productDescription: {fontSize: 12, color: "#666", marginBottom: 4},
+  productPrice: {fontSize: 16, fontWeight: "bold", color: colors.primary},
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+  },
 });
 
-export default CartScreen;
+export default RestaurantDetailScreen;

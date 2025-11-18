@@ -3,6 +3,8 @@ import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import {colors} from "@constants/colors";
+
+// Screens
 import HomeScreen from "@screens/home/HomeScreen";
 import SearchScreen from "@screens/search/SearchScreen";
 import CartScreen from "@screens/cart/CartScreen";
@@ -24,33 +26,57 @@ const HomeStack: React.FC = () => (
     }}
   >
     <Stack.Screen name="HomeMain" component={HomeScreen} options={{title: "FunFood"}} />
-    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
-    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} options={{title: "Restaurant"}} />
+    <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{title: "Product"}} />
   </Stack.Navigator>
 );
 
 const SearchStack: React.FC = () => (
-  <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name="SearchMain" component={SearchScreen} />
-    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} />
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: true,
+      headerStyle: {backgroundColor: colors.primary},
+      headerTintColor: "#fff",
+    }}
+  >
+    <Stack.Screen name="SearchMain" component={SearchScreen} options={{title: "Search"}} />
+    <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} options={{title: "Restaurant"}} />
   </Stack.Navigator>
 );
 
 const CartStack: React.FC = () => (
-  <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name="CartMain" component={CartScreen} />
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: true,
+      headerStyle: {backgroundColor: colors.primary},
+      headerTintColor: "#fff",
+    }}
+  >
+    <Stack.Screen name="CartMain" component={CartScreen} options={{title: "Cart"}} />
   </Stack.Navigator>
 );
 
 const OrdersStack: React.FC = () => (
-  <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name="OrdersMain" component={OrdersScreen} />
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: true,
+      headerStyle: {backgroundColor: colors.primary},
+      headerTintColor: "#fff",
+    }}
+  >
+    <Stack.Screen name="OrdersMain" component={OrdersScreen} options={{title: "Orders"}} />
   </Stack.Navigator>
 );
 
 const ProfileStack: React.FC = () => (
-  <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: true,
+      headerStyle: {backgroundColor: colors.primary},
+      headerTintColor: "#fff",
+    }}
+  >
+    <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{title: "Profile"}} />
   </Stack.Navigator>
 );
 
