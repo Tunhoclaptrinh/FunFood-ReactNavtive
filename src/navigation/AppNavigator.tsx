@@ -8,7 +8,7 @@ import {colors} from "@constants/colors";
 import HomeScreen from "@screens/home/HomeScreen";
 import SearchScreen from "@screens/search/SearchScreen";
 import CartScreen from "@screens/cart/CartScreen";
-import OrdersScreen from "@screens/orders/OrdersScreen";
+import OrdersScreen from "@screens/order/OrdersScreen";
 import ProfileScreen from "@screens/profile/ProfileScreen";
 import RestaurantDetailScreen from "@screens/restaurant/RestaurantDetailScreen";
 import ProductDetailScreen from "@screens/product/ProductDetailScreen";

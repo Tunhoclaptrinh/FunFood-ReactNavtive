@@ -6,9 +6,11 @@ module.exports = function (api) {
       [
         'module-resolver',
         {
-          root: ['./src'],
+          // Sửa: Đặt root là thư mục gốc của dự án
+          root: ['./'],
           extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
           alias: {
+            // Giữ nguyên các alias trỏ vào src/
             '@components': './src/components',
             '@screens': './src/screens',
             '@hooks': './src/hooks',
