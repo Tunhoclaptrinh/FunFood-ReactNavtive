@@ -1,0 +1,55 @@
+# Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.npm
+
+# React Native
+.buckconfig.local
+.gradle
+local.properties
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+build/
+dist/
+.expo/
+.expo-shared/
+
+# Cache
+*.cache
+.eslintcache
+.tsbuildinfo
+
+# Testing
+coverage/
+.jest_cache/
+
+# Others
+*.log
+.huskyrc.json
+.lintstagedrc.json
+coverage
+act.yml
+.yalc
+yalc.lock
