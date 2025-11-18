@@ -4,8 +4,9 @@ import {useApi} from "@hooks/useApi";
 import {usePagination} from "@hooks/usePagination";
 import {useFilter} from "@hooks/useFilter";
 import {ApiResponse, PaginatedResponse} from "@types/api.types";
-import {Loading} from "./Loading";
-import {EmptyState} from "./EmptyState";
+
+import Loading from "../common/Loading";
+import EmptyState from "../common/EmptyState";
 
 interface CRUDListProps<T> {
   apiFunc: (options: any) => Promise<{data: ApiResponse<any>}>;

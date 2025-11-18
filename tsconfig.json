@@ -21,7 +21,8 @@
       "@types/*": ["types/*"],
       "@utils/*": ["utils/*"],
       "@constants/*": ["constants/*"],
-      "@api/*": ["api/*"]
+      "@api/*": ["api/*"],
+      "@navigation/*": ["navigation/*"]
     }
   },
   "include": ["src"],
