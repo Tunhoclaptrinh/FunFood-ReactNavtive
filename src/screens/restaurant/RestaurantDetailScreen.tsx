@@ -3,7 +3,7 @@ import {View, Text, StyleSheet, ScrollView, Image, FlatList, TouchableOpacity} f
 import {useRoute, useNavigation} from "@react-navigation/native";
 import {useQuery} from "@tanstack/react-query";
 import {restaurantApi} from "@api/restaurant.api";
-import {Spin} from "@ant-design/react-native";
+import {ActivityIndicator} from "react-native";
 import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
 import {colors} from "@constants/colors";
 import {useCartStore} from "@store/cartStore";
@@ -27,7 +27,7 @@ const RestaurantDetailScreen: React.FC = () => {
   if (restaurantLoading || menuLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Spin size="large" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }

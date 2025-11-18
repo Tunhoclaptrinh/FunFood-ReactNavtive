@@ -1,11 +1,12 @@
 import React, {useState} from "react";
 import {View, StyleSheet, TouchableOpacity, Text, Alert, KeyboardAvoidingView, Platform} from "react-native";
-import {Input, Button, Spin} from "@ant-design/react-native";
 import {useAuthStore} from "@store/authStore";
 import {authApi} from "@api/auth.api";
 import {colors} from "@constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {Button} from "@components/base/Button"; // Dùng button base
+import {Input} from "@components/base/Input"; // Dùng input mới tạo
 
 const LoginScreen: React.FC<any> = ({navigation}) => {
   const [email, setEmail] = useState("user@funfood.com");
@@ -29,7 +30,7 @@ const LoginScreen: React.FC<any> = ({navigation}) => {
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setAuth(user, token);
-      Alert.alert("Success", "Login successful!");
+      // Alert.alert("Success", "Login successful!"); // Tạm tắt để trải nghiệm mượt hơn
     } catch (error: any) {
       Alert.alert("Login Failed", error.response?.data?.message || "Invalid credentials");
     } finally {
@@ -50,29 +51,18 @@ const LoginScreen: React.FC<any> = ({navigation}) => {
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            disabled={loading}
-            style={styles.input}
-            placeholderTextColor="#999"
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
-          <View style={styles.passwordContainer}>
-            <Input
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              disabled={loading}
-              style={styles.input}
-              placeholderTextColor="#999"
-            />
+          <View>
+            <Input placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
               <Icon name={showPassword ? "eye" : "eye-off"} size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
-          <Button activeStyle={{opacity: 0.8}} onPress={handleLogin} disabled={loading} style={styles.button}>
-            {loading ? <Spin size="small" /> : <Text style={styles.buttonText}>Login</Text>}
-          </Button>
+          <Button title="Login" onPress={handleLogin} loading={loading} disabled={loading} />
         </View>
 
         <View style={styles.footer}>
@@ -87,71 +77,16 @@ const LoginScreen: React.FC<any> = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-  },
-  header: {
-    marginBottom: 40,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-  },
-  form: {
-    marginBottom: 30,
-  },
-  input: {
-    marginBottom: 16,
-    height: 48,
-    borderColor: colors.primary,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  passwordContainer: {
-    position: "relative",
-    marginBottom: 16,
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 14,
-  },
-  button: {
-    height: 48,
-    marginTop: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  footerText: {
-    color: "#666",
-  },
-  registerLink: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
+  container: {flex: 1, backgroundColor: "#fff"},
+  content: {flex: 1, padding: 20, justifyContent: "center"},
+  header: {marginBottom: 40, alignItems: "center"},
+  title: {fontSize: 32, fontWeight: "bold", marginBottom: 8, color: colors.primary},
+  subtitle: {fontSize: 16, color: "#666"},
+  form: {marginBottom: 30},
+  eyeIcon: {position: "absolute", right: 12, top: 14}, // Căn chỉnh lại vị trí icon mắt
+  footer: {flexDirection: "row", justifyContent: "center", alignItems: "center"},
+  footerText: {color: "#666"},
+  registerLink: {color: colors.primary, fontWeight: "600"},
 });
 
 export default LoginScreen;

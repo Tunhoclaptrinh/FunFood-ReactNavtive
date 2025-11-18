@@ -1,6 +1,6 @@
 import React from "react";
-import {View, StyleSheet} from "react-native";
-import {SearchBar as AntSearchBar} from "@ant-design/react-native";
+import {View, TextInput, StyleSheet} from "react-native";
+import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
 import {colors} from "@constants/colors";
 
 interface SearchBarProps {
@@ -11,7 +11,10 @@ interface SearchBarProps {
 const SearchBar: React.FC<SearchBarProps> = ({onSearch, placeholder = "Search..."}) => {
   return (
     <View style={styles.container}>
-      <AntSearchBar placeholder={placeholder} onChangeText={onSearch} style={styles.searchBar} />
+      <View style={styles.searchContainer}>
+        <Icon name="magnify" size={24} color="#999" style={styles.icon} />
+        <TextInput placeholder={placeholder} onChangeText={onSearch} style={styles.input} placeholderTextColor="#999" />
+      </View>
     </View>
   );
 };
@@ -23,9 +26,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  searchBar: {
-    borderRadius: 20,
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  icon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+    height: "100%",
   },
 });
 

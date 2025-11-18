@@ -2,13 +2,12 @@ import React, {useEffect, useState} from "react";
 import {NavigationContainer} from "@react-navigation/native";
 import {QueryClientProvider, QueryClient} from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Font from "expo-font";
+// import * as Font from "expo-font"; // Không cần thiết nếu không dùng font tùy chỉnh khác ngay lập tức
 import {useAuthStore} from "@store/authStore";
 import AppNavigator from "@navigation/AppNavigator";
 import AuthNavigator from "@navigation/AuthNavigator";
-import {View, ActivityIndicator} from "react-native";
+import {View, ActivityIndicator, StatusBar} from "react-native"; // Dùng ActivityIndicator thay vì Spin
 
-// Tạo QueryClient
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -25,13 +24,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const prepare = async () => {
       try {
-        // 1. Load Fonts cho Ant Design
-        await Font.loadAsync({
-          antoutline: require("@ant-design/icons-react-native/fonts/antoutline.ttf"),
-          antfill: require("@ant-design/icons-react-native/fonts/antfill.ttf"),
-        });
+        // Đã xóa phần load font Ant Design gây lỗi
 
-        // 2. Khôi phục Token đăng nhập
+        // Khôi phục Token đăng nhập
         const token = await AsyncStorage.getItem("authToken");
         const userJson = await AsyncStorage.getItem("user");
 
@@ -59,6 +54,7 @@ const App: React.FC = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <StatusBar barStyle="dark-content" />
       <NavigationContainer>{isAuthenticated ? <AppNavigator /> : <AuthNavigator />}</NavigationContainer>
     </QueryClientProvider>
   );
