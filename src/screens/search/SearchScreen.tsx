@@ -1,11 +1,11 @@
 import React, {useState} from "react";
-import {View, Text, StyleSheet, FlatList} from "react-native";
+import {View, Text, StyleSheet, FlatList, ActivityIndicator} from "react-native";
 import {useQuery} from "@tanstack/react-query";
 import {restaurantApi} from "@api/restaurant.api";
 import SearchBar from "@components/common/SearchBar";
 import RestaurantCard from "@components/features/RestaurantCard";
-import {Spin} from "@ant-design/react-native";
 import {useDebounce} from "@hooks/useDebounce";
+import {colors} from "@constants/colors"; // Cần import colors cho ActivityIndicator
 
 const SearchScreen: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,7 +23,7 @@ const SearchScreen: React.FC = () => {
 
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <Spin />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
 
