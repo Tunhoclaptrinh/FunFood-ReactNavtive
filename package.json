@@ -1,0 +1,26 @@
+{
+  "name": "funfood-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "clean": "rimraf node_modules && rimraf package-lock.json && npm cache clean --force"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.72.17",
+    "@react-navigation/native": "6.1.0",
+    "@react-navigation/bottom-tabs": "6.5.0",
+    "@react-navigation/stack": "6.3.0",
+    "axios": "1.6.0",
+    "zustand": "4.4.0",
+    "@ant-design/react-native": "5.2.0",
+    "react-hook-form": "7.48.0",
+    "zod": "3.22.0",
+    "@tanstack/react-query": "5.0.0",
+    "react-native-maps": "1.7.1",
+    "react-native-vector-icons": "10.0.0"
+  }
+}
