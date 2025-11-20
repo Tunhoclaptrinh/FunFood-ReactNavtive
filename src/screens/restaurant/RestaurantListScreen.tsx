@@ -1,12 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {View, FlatList, StyleSheet} from "react-native";
-import {SearchBar} from "@components/common/SearchBar";
-import {RestaurantCard} from "@components/features/RestaurantCard";
+import SearchBar from "@components/common/SearchBar";
+import RestaurantCard from "@components/features/RestaurantCard";
 import {useApi} from "@hooks/useApi";
 import {useFilter} from "@hooks/useFilter";
 import {useDebounce} from "@hooks/useDebounce";
 import {restaurantApi} from "@api/restaurant.api";
-import {Restaurant} from "@types/models.types";
 
 export const RestaurantListScreen: React.FC = () => {
   const filter = useFilter();

@@ -3,7 +3,7 @@ import {FlatList, View, StyleSheet} from "react-native";
 import {useApi} from "@hooks/useApi";
 import {usePagination} from "@hooks/usePagination";
 import {useFilter} from "@hooks/useFilter";
-import {ApiResponse, PaginatedResponse} from "@types/api.types";
+import {ApiResponse, PaginatedResponse} from "@/types/api.types";
 
 import Loading from "../common/Loading";
 import EmptyState from "../common/EmptyState";
