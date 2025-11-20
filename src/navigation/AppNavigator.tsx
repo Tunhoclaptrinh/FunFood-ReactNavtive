@@ -1,7 +1,7 @@
 import React from "react";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {Home, Search, ShoppingCart, ClipboardList, User} from "lucide-react-native";
 import {colors} from "@constants/colors";
 
 // Screens
@@ -97,14 +97,12 @@ const AppNavigator: React.FC = () => {
         tabBarLabel: route.name,
         tabBarLabelStyle: {fontSize: 12, marginTop: -8},
         tabBarIcon: ({color, size}) => {
-          const icons: Record<string, string> = {
-            Home: "home",
-            Search: "magnify",
-            Cart: "shopping",
-            Orders: "clipboard-list",
-            Profile: "account",
-          };
-          return <Icon name={icons[route.name]} size={24} color={color} />;
+          if (route.name === "Home") return <Home size={24} color={color} />;
+          if (route.name === "Search") return <Search size={24} color={color} />;
+          if (route.name === "Cart") return <ShoppingCart size={24} color={color} />;
+          if (route.name === "Orders") return <ClipboardList size={24} color={color} />;
+          if (route.name === "Profile") return <User size={24} color={color} />;
+          return <Home size={24} color={color} />;
         },
       })}
     >

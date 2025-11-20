@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {View, StyleSheet, TouchableOpacity, Text, Alert, ScrollView} from "react-native";
 import {authApi} from "@api/auth.api";
 import {colors} from "@constants/colors";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {ArrowLeft} from "lucide-react-native";
 import {Button} from "@components/base/Button";
 import {Input} from "@components/base/Input";
 
@@ -44,7 +44,7 @@ const RegisterScreen: React.FC<any> = ({navigation}) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-left" size={24} color={colors.primary} />
+          <ArrowLeft size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Create Account</Text>
       </View>

@@ -1,6 +1,6 @@
 import React from "react";
 import {View, TextInput, StyleSheet} from "react-native";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {Search} from "lucide-react-native";
 import {colors} from "@constants/colors";
 
 interface SearchBarProps {
@@ -12,7 +12,7 @@ const SearchBar: React.FC<SearchBarProps> = ({onSearch, placeholder = "Search...
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
-        <Icon name="magnify" size={24} color="#999" style={styles.icon} />
+        <Search size={20} color="#999" style={styles.icon} />
         <TextInput placeholder={placeholder} onChangeText={onSearch} style={styles.input} placeholderTextColor="#999" />
       </View>
     </View>

@@ -2,11 +2,16 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-config.transformer = {
-  babelTransformerPath: require.resolve("react-native-svg-transformer"),
-};
+// Loại ttf và png khỏi sourceExts
+config.resolver.sourceExts = config.resolver.sourceExts.filter(
+  ext => ext !== "ttf" && ext !== "png"
+);
 
-config.resolver.assetExts = config.resolver.assetExts.filter(ext => ext !== "svg");
-config.resolver.sourceExts.push("svg");
+// Đảm bảo ttf và png nằm trong assetExts
+["ttf", "png"].forEach(ext => {
+  if (!config.resolver.assetExts.includes(ext)) {
+    config.resolver.assetExts.push(ext);
+  }
+});
 
 module.exports = config;

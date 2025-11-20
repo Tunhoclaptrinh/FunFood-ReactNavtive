@@ -2,7 +2,7 @@ import React from "react";
 import {View, Text, StyleSheet, TouchableOpacity, Alert} from "react-native";
 import {useAuthStore} from "@store/authStore";
 import {colors} from "@constants/colors";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {User, Edit, MapPin, Heart, LogOut, ChevronRight} from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileScreen: React.FC = () => {
@@ -27,7 +27,7 @@ const ProfileScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Icon name="account" size={60} color="#fff" />
+          <User size={60} color="#fff" />
         </View>
         <Text style={styles.name}>{user?.name}</Text>
         <Text style={styles.email}>{user?.email}</Text>
@@ -35,27 +35,27 @@ const ProfileScreen: React.FC = () => {
 
       <View style={styles.menu}>
         <TouchableOpacity style={styles.menuItem}>
-          <Icon name="account-edit" size={24} color={colors.primary} />
+          <Edit size={24} color={colors.primary} />
           <Text style={styles.menuText}>Edit Profile</Text>
-          <Icon name="chevron-right" size={24} color="#ccc" />
+          <ChevronRight size={24} color="#ccc" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>
-          <Icon name="map-marker" size={24} color={colors.primary} />
+          <MapPin size={24} color={colors.primary} />
           <Text style={styles.menuText}>Addresses</Text>
-          <Icon name="chevron-right" size={24} color="#ccc" />
+          <ChevronRight size={24} color="#ccc" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>
-          <Icon name="heart" size={24} color={colors.primary} />
+          <Heart size={24} color={colors.primary} />
           <Text style={styles.menuText}>Favorites</Text>
-          <Icon name="chevron-right" size={24} color="#ccc" />
+          <ChevronRight size={24} color="#ccc" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-          <Icon name="logout" size={24} color={colors.danger} />
+          <LogOut size={24} color={colors.danger} />
           <Text style={[styles.menuText, {color: colors.danger}]}>Logout</Text>
-          <Icon name="chevron-right" size={24} color="#ccc" />
+          <ChevronRight size={24} color="#ccc" />
         </TouchableOpacity>
       </View>
     </View>

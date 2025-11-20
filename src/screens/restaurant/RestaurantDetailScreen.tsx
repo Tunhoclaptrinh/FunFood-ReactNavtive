@@ -4,7 +4,7 @@ import {useRoute, useNavigation} from "@react-navigation/native";
 import {useQuery} from "@tanstack/react-query";
 import {restaurantApi} from "@api/restaurant.api";
 import {ActivityIndicator} from "react-native";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {Star, Plus} from "lucide-react-native";
 import {colors} from "@constants/colors";
 import {useCartStore} from "@store/cartStore";
 
@@ -49,7 +49,7 @@ const RestaurantDetailScreen: React.FC = () => {
 
         <View style={styles.infoRow}>
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={20} color="#ffc107" />
+            <Star size={20} color="#ffc107" fill="#ffc107" />
             <Text style={styles.rating}>{restaurantData?.rating || "0"}</Text>
           </View>
 
@@ -86,7 +86,7 @@ const RestaurantDetailScreen: React.FC = () => {
                 </View>
 
                 <TouchableOpacity style={styles.addButton} onPress={() => handleAddToCart(item)}>
-                  <Icon name="plus" size={24} color="#fff" />
+                  <Plus size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
             )}

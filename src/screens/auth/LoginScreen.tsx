@@ -4,9 +4,9 @@ import {useAuthStore} from "@store/authStore";
 import {authApi} from "@api/auth.api";
 import {colors} from "@constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
-import {Button} from "@components/base/Button"; // Dùng button base
-import {Input} from "@components/base/Input"; // Dùng input mới tạo
+import {Eye, EyeOff} from "lucide-react-native";
+import {Button} from "@components/base/Button";
+import {Input} from "@components/base/Input";
 
 const LoginScreen: React.FC<any> = ({navigation}) => {
   const [email, setEmail] = useState("user@funfood.com");
@@ -30,7 +30,6 @@ const LoginScreen: React.FC<any> = ({navigation}) => {
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setAuth(user, token);
-      // Alert.alert("Success", "Login successful!"); // Tạm tắt để trải nghiệm mượt hơn
     } catch (error: any) {
       Alert.alert("Login Failed", error.response?.data?.message || "Invalid credentials");
     } finally {
@@ -58,7 +57,7 @@ const LoginScreen: React.FC<any> = ({navigation}) => {
           <View>
             <Input placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Icon name={showPassword ? "eye" : "eye-off"} size={20} color={colors.primary} />
+              {showPassword ? <Eye size={20} color={colors.primary} /> : <EyeOff size={20} color={colors.primary} />}
             </TouchableOpacity>
           </View>
 
@@ -83,7 +82,7 @@ const styles = StyleSheet.create({
   title: {fontSize: 32, fontWeight: "bold", marginBottom: 8, color: colors.primary},
   subtitle: {fontSize: 16, color: "#666"},
   form: {marginBottom: 30},
-  eyeIcon: {position: "absolute", right: 12, top: 14}, // Căn chỉnh lại vị trí icon mắt
+  eyeIcon: {position: "absolute", right: 12, top: 14},
   footer: {flexDirection: "row", justifyContent: "center", alignItems: "center"},
   footerText: {color: "#666"},
   registerLink: {color: colors.primary, fontWeight: "600"},

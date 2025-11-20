@@ -3,7 +3,7 @@ import {View, Text, FlatList, StyleSheet, TouchableOpacity, Alert} from "react-n
 import {useCartStore} from "@store/cartStore";
 import {Button} from "@components/base/Button";
 import {colors} from "@constants/colors";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {ShoppingCart, MinusCircle, PlusCircle, Trash2} from "lucide-react-native";
 
 const CartScreen: React.FC = () => {
   const {items, removeItem, updateQuantity, clearCart, getCartTotal, getItemCount} = useCartStore();
@@ -27,7 +27,7 @@ const CartScreen: React.FC = () => {
     <View style={styles.container}>
       {items.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Icon name="cart-outline" size={80} color="#ccc" />
+          <ShoppingCart size={80} color="#ccc" />
           <Text style={styles.emptyText}>Your cart is empty</Text>
         </View>
       ) : (
@@ -44,16 +44,16 @@ const CartScreen: React.FC = () => {
 
                 <View style={styles.quantityContainer}>
                   <TouchableOpacity onPress={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}>
-                    <Icon name="minus-circle" size={28} color={colors.primary} />
+                    <MinusCircle size={28} color={colors.primary} />
                   </TouchableOpacity>
                   <Text style={styles.quantity}>{item.quantity}</Text>
                   <TouchableOpacity onPress={() => updateQuantity(item.id, item.quantity + 1)}>
-                    <Icon name="plus-circle" size={28} color={colors.primary} />
+                    <PlusCircle size={28} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity onPress={() => handleRemove(item.id)}>
-                  <Icon name="delete" size={24} color={colors.danger} />
+                  <Trash2 size={24} color={colors.danger} />
                 </TouchableOpacity>
               </View>
             )}

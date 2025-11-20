@@ -1,9 +1,9 @@
 import React from "react";
 import {View, Text, Image, TouchableOpacity, StyleSheet} from "react-native";
 import {useNavigation} from "@react-navigation/native";
-import {MaterialCommunityIcons as Icon} from "@expo/vector-icons";
+import {Star} from "lucide-react-native";
 import {colors} from "@constants/colors";
-import {Restaurant} from "@types/models.types";
+import {Restaurant} from "@/types/models.types";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -21,7 +21,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({restaurant}) => {
 
         <View style={styles.info}>
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={16} color="#ffc107" />
+            <Star size={16} color="#ffc107" fill="#ffc107" />
             <Text style={styles.rating}>{restaurant.rating}</Text>
           </View>
 
