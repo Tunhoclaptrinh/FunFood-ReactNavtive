@@ -1,4 +1,5 @@
 import {useState, useEffect, useCallback} from "react";
+import {Platform} from "react-native"; // Dòng này RẤT QUAN TRỌNG
 import * as Location from "expo-location";
 
 interface Location {
@@ -13,6 +14,16 @@ export const useGeolocation = () => {
   const [error, setError] = useState<string | null>(null);
 
   const requestLocation = useCallback(async () => {
+    // 1. KIỂM TRA NỀN TẢNG: Nếu là Web, sử dụng mock data và thoát
+    if (Platform.OS === "web") {
+      // Vị trí giả lập (ví dụ: Hà Nội)
+      setLocation({latitude: 21.0285, longitude: 105.8542, accuracy: 0});
+      setLoading(false);
+      setError("Location is mocked on web platform.");
+      return;
+    }
+
+    // 2. LOGIC NATIVE: Chỉ chạy cho iOS/Android
     try {
       setLoading(true);
       const {status} = await Location.requestForegroundPermissionsAsync();

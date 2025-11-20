@@ -13,6 +13,6 @@ const ENV = {
   },
 };
 
-const currentEnv = process.env.EXPO_PUBLIC_ENV || "dev";
+const currentEnv = process.env.EXPO_PUBLIC_ENV || "development";
 
 export default ENV[currentEnv as keyof typeof ENV];

@@ -2,7 +2,7 @@ import React, {useEffect} from "react";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {useAuth} from "@hooks/useAuth";
-import RootNavigator from "@navigation/RootNavigator";
+import RootNavigator from "./navigation/RootNavigator";
 
 const AppContent = () => {
   const {isLoading, isAuthenticated, restoreSession} = useAuth();
