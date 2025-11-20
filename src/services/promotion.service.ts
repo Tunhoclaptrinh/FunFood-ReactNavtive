@@ -1,0 +1,13 @@
+import {ENDPOINTS} from "../config/api.config";
+import {apiClient} from "./api.client";
+
+export class PromotionService {
+  static async validatePromotion(code: string, orderValue: number, deliveryFee?: number) {
+    const response = await apiClient.post(ENDPOINTS.PROMOTIONS.VALIDATE, {
+      code,
+      orderValue,
+      deliveryFee,
+    });
+    return response.data.data;
+  }
+}
