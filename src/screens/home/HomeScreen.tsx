@@ -8,7 +8,7 @@ import {COLORS} from "@/src/config/constants";
 
 const HomeScreen = () => {
   const {location, loading: geoLoading} = useGeolocation();
-  const [restaurants, setRestaurants] = useState([]);
+  const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,7 +27,18 @@ const HomeScreen = () => {
         _page: 1,
         _limit: 10,
       });
-      setRestaurants(response.data);
+
+      // Parse dữ liệu để đảm bảo type đúng
+      const parsed = response.data.map((r: any) => ({
+        ...r,
+        id: Number(r.id),
+        rating: typeof r.rating === "string" ? parseFloat(r.rating) : Number(r.rating) || 0,
+        deliveryFee: typeof r.deliveryFee === "string" ? parseFloat(r.deliveryFee) : Number(r.deliveryFee) || 0,
+        distance: typeof r.distance === "string" ? parseFloat(r.distance) : Number(r.distance) || 0,
+        // Bỏ qua isOpen nếu nó là string
+      }));
+
+      setRestaurants(parsed);
     } catch (error) {
       console.error("Error loading restaurants:", error);
     } finally {
