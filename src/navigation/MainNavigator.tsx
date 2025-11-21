@@ -14,31 +14,31 @@ const Tab = createBottomTabNavigator();
 
 const HomeStack = () => (
   <Stack.Navigator screenOptions={{headerShown: true}}>
-    <Stack.Screen name="HomeScreen" component={HomeScreen} />
+    <Stack.Screen name="HomeScreen" component={HomeScreen} options={{title: "Home"}} />
   </Stack.Navigator>
 );
 
 const SearchStack = () => (
   <Stack.Navigator screenOptions={{headerShown: true}}>
-    <Stack.Screen name="SearchScreen" component={SearchScreen} />
+    <Stack.Screen name="SearchScreen" component={SearchScreen} options={{title: "Search"}} />
   </Stack.Navigator>
 );
 
 const CartStack = () => (
   <Stack.Navigator screenOptions={{headerShown: true}}>
-    <Stack.Screen name="CartScreen" component={CartScreen} />
+    <Stack.Screen name="CartScreen" component={CartScreen} options={{title: "Cart"}} />
   </Stack.Navigator>
 );
 
 const OrdersStack = () => (
   <Stack.Navigator screenOptions={{headerShown: true}}>
-    <Stack.Screen name="OrdersScreen" component={OrdersScreen} />
+    <Stack.Screen name="OrdersScreen" component={OrdersScreen} options={{title: "Orders"}} />
   </Stack.Navigator>
 );
 
 const ProfileStack = () => (
   <Stack.Navigator screenOptions={{headerShown: true}}>
-    <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+    <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{title: "Profile"}} />
   </Stack.Navigator>
 );
 
@@ -60,13 +60,14 @@ const MainNavigator = () => {
         },
         tabBarActiveTintColor: "#FF6B6B",
         tabBarInactiveTintColor: "#8B8B8B",
+        tabBarLabelStyle: {fontSize: 12},
       })}
     >
-      <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Search" component={SearchStack} />
-      <Tab.Screen name="Cart" component={CartStack} />
-      <Tab.Screen name="Orders" component={OrdersStack} />
-      <Tab.Screen name="Profile" component={ProfileStack} />
+      <Tab.Screen name="Home" component={HomeStack} options={{tabBarLabel: "Home"}} />
+      <Tab.Screen name="Search" component={SearchStack} options={{tabBarLabel: "Search"}} />
+      <Tab.Screen name="Cart" component={CartStack} options={{tabBarLabel: "Cart"}} />
+      <Tab.Screen name="Orders" component={OrdersStack} options={{tabBarLabel: "Orders"}} />
+      <Tab.Screen name="Profile" component={ProfileStack} options={{tabBarLabel: "Profile"}} />
     </Tab.Navigator>
   );
 };

@@ -6,32 +6,16 @@ export class RestaurantService {
   static async getNearby(params: NearbyRestaurantsParams & {_page?: number; _limit?: number}) {
     try {
       const response = await apiClient.get<PaginatedResponse<Restaurant>>(ENDPOINTS.RESTAURANTS.NEARBY, params);
-      console.log("getNearby response:", response.data);
+      console.log("=== FULL API RESPONSE ===");
+      console.log(JSON.stringify(response.data, null, 2));
 
-      // Helper để parse boolean từ bất kỳ type nào
-      const toBoolean = (val: any): boolean => {
-        if (val === true || val === 1 || val === "1") return true;
-        if (val === false || val === 0 || val === "0") return false;
-        if (typeof val === "string") return val.toLowerCase() === "true";
-        return Boolean(val);
-      };
+      if (response.data.data && response.data.data.length > 0) {
+        console.log("=== FIRST ITEM ===");
+        console.log(JSON.stringify(response.data.data[0], null, 2));
+      }
 
-      const toNumber = (val: any): number => {
-        const num = typeof val === "string" ? parseFloat(val) : val;
-        return isNaN(num) ? 0 : num;
-      };
-
-      const restaurants = response.data.data.map((r: any) => ({
-        ...r,
-        isOpen: toBoolean(r.isOpen),
-        rating: toNumber(r.rating),
-        deliveryFee: toNumber(r.deliveryFee),
-      }));
-
-      return {
-        ...response.data,
-        data: restaurants,
-      };
+      // Trả về raw data mà không transform
+      return response.data;
     } catch (error) {
       console.error("getNearby error:", error);
       throw error;
@@ -55,26 +39,7 @@ export class RestaurantService {
   static async getById(id: number) {
     try {
       const response = await apiClient.get<ApiResponse<Restaurant>>(ENDPOINTS.RESTAURANTS.GET_ONE(id));
-      const restaurant = response.data.data;
-
-      const toBoolean = (val: any): boolean => {
-        if (val === true || val === 1 || val === "1") return true;
-        if (val === false || val === 0 || val === "0") return false;
-        if (typeof val === "string") return val.toLowerCase() === "true";
-        return Boolean(val);
-      };
-
-      const toNumber = (val: any): number => {
-        const num = typeof val === "string" ? parseFloat(val) : val;
-        return isNaN(num) ? 0 : num;
-      };
-
-      return {
-        ...restaurant,
-        isOpen: toBoolean(restaurant.isOpen),
-        rating: toNumber(restaurant.rating),
-        deliveryFee: toNumber(restaurant.deliveryFee),
-      };
+      return response.data.data;
     } catch (error) {
       console.error("getById error:", error);
       throw error;
