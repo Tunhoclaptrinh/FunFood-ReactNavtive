@@ -1,5 +1,5 @@
 import {Restaurant, NearbyRestaurantsParams, PaginatedResponse, ApiResponse} from "../types";
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 import {ENDPOINTS} from "../config/api.config";
 
 export class RestaurantService {

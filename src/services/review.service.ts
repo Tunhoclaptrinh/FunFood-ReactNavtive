@@ -1,6 +1,6 @@
 import {ENDPOINTS} from "../config/api.config";
 import {CreateReviewRequest} from "../types";
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 
 export class ReviewService {
   static async createReview(data: CreateReviewRequest) {

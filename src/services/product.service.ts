@@ -1,4 +1,4 @@
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 import {ENDPOINTS} from "../config/api.config";
 import {ApiResponse, PaginatedResponse, Product} from "../types";
 
