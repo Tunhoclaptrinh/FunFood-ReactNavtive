@@ -25,8 +25,13 @@ class ApiClient {
 
     // Response interceptor
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // DEBUG: Log response data để xem cấu trúc
+        console.log("API Response:", response.data);
+        return response;
+      },
       async (error: AxiosError) => {
+        console.error("API Error:", error.response?.data || error.message);
         if (error.response?.status === 401) {
           // Token expired or invalid
           await StorageService.removeToken();
