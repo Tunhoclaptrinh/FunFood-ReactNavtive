@@ -1,36 +1,112 @@
-import {apiClient} from "../config/api.client";
-import {ENDPOINTS} from "../config/api.config";
-import {ApiResponse, PaginatedResponse, Product} from "../types";
+import {BaseApiService, PaginatedResponse} from "@/src/base/BaseApiService";
+import {apiClient} from "@config/api.client";
+import {Product} from "../types";
 
-export class ProductService {
-  static async getAll(page = 1, limit = 20, filters?: any) {
-    const response = await apiClient.get<PaginatedResponse<Product>>(ENDPOINTS.PRODUCTS.BASE, {
-      _page: page,
-      _limit: limit,
-      ...filters,
-    });
-    return response.data;
+/**
+ * Product Service extending BaseApiService
+ *
+ * Inherited methods:
+ * - getAll(), getById(), create(), update(), delete()
+ * - search(), filter(), getWithRelations()
+ *
+ * Custom methods:
+ * - getDiscounted() - Products with discounts
+ * - getByRestaurant() - Products from specific restaurant
+ * - getByCategory() - Products by category
+ * - getAvailable() - Available products only
+ */
+class ProductServiceClass extends BaseApiService<Product> {
+  protected baseEndpoint = "/products";
+
+  /**
+   * Get discounted products
+   *
+   * Example:
+   * ```typescript
+   * const deals = await productService.getDiscounted({ page: 1, limit: 20 });
+   * ```
+   */
+  async getDiscounted(params?: any): Promise<PaginatedResponse<Product>> {
+    return this.filter({discount_ne: 0, available: true, ...params});
   }
 
-  static async getById(id: number) {
-    const response = await apiClient.get<ApiResponse<Product>>(ENDPOINTS.PRODUCTS.GET_ONE(id));
-    return response.data.data;
+  /**
+   * Get products by restaurant
+   *
+   * Example:
+   * ```typescript
+   * const menu = await productService.getByRestaurant(1, { available: true });
+   * ```
+   */
+  async getByRestaurant(restaurantId: number, params?: any): Promise<PaginatedResponse<Product>> {
+    return this.filter({restaurantId, ...params});
   }
 
-  static async search(query: string, page = 1, limit = 20) {
-    const response = await apiClient.get<PaginatedResponse<Product>>(ENDPOINTS.PRODUCTS.SEARCH, {
-      q: query,
-      _page: page,
-      _limit: limit,
-    });
-    return response.data;
+  /**
+   * Get products by category
+   *
+   * Example:
+   * ```typescript
+   * const vietnamese = await productService.getByCategory(1);
+   * ```
+   */
+  async getByCategory(categoryId: number, params?: any): Promise<PaginatedResponse<Product>> {
+    return this.filter({categoryId, ...params});
   }
 
-  static async getDiscounted(page = 1, limit = 20) {
-    const response = await apiClient.get<PaginatedResponse<Product>>(ENDPOINTS.PRODUCTS.DISCOUNTED, {
-      _page: page,
-      _limit: limit,
+  /**
+   * Get available products only
+   *
+   * Example:
+   * ```typescript
+   * const available = await productService.getAvailable();
+   * ```
+   */
+  async getAvailable(params?: any): Promise<PaginatedResponse<Product>> {
+    return this.filter({available: true, ...params});
+  }
+
+  /**
+   * Get products by price range
+   *
+   * Example:
+   * ```typescript
+   * const affordable = await productService.getByPriceRange(10000, 50000);
+   * ```
+   */
+  async getByPriceRange(minPrice: number, maxPrice: number, params?: any): Promise<PaginatedResponse<Product>> {
+    return this.filter({
+      price_gte: minPrice,
+      price_lte: maxPrice,
+      ...params,
     });
-    return response.data;
+  }
+
+  /**
+   * Search products
+   *
+   * Example:
+   * ```typescript
+   * const results = await productService.searchProducts("pizza");
+   * ```
+   */
+  async searchProducts(query: string, params?: any): Promise<PaginatedResponse<Product>> {
+    return this.search(query, params);
+  }
+
+  /**
+   * Get product with restaurant details
+   *
+   * Example:
+   * ```typescript
+   * const product = await productService.getWithRestaurant(1);
+   * ```
+   */
+  async getWithRestaurant(productId: number): Promise<Product> {
+    return this.getWithRelations(productId, {
+      expand: ["restaurant", "category"],
+    });
   }
 }
+
+export const ProductService = new ProductServiceClass();

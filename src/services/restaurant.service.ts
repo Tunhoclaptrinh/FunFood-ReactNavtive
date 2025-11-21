@@ -1,61 +1,160 @@
-import {Restaurant, NearbyRestaurantsParams, PaginatedResponse, ApiResponse} from "../types";
-import {apiClient} from "../config/api.client";
-import {ENDPOINTS} from "../config/api.config";
+import {BaseApiService, PaginatedResponse} from "@/src/base/BaseApiService";
+import {apiClient} from "@config/api.client";
+import {Restaurant} from "../types";
 
-export class RestaurantService {
-  static async getNearby(params: NearbyRestaurantsParams & {_page?: number; _limit?: number}) {
-    try {
-      const response = await apiClient.get<PaginatedResponse<Restaurant>>(ENDPOINTS.RESTAURANTS.NEARBY, params);
-      console.log("=== FULL API RESPONSE ===");
-      console.log(JSON.stringify(response.data, null, 2));
+interface NearbyParams {
+  latitude: number;
+  longitude: number;
+  radius?: number;
+  isOpen?: boolean;
+  categoryId?: number;
+  rating_gte?: number;
+  _page?: number;
+  _limit?: number;
+}
 
-      if (response.data.data && response.data.data.length > 0) {
-        console.log("=== FIRST ITEM ===");
-        console.log(JSON.stringify(response.data.data[0], null, 2));
-      }
+/**
+ * Restaurant Service extending BaseApiService
+ *
+ * Inherited methods from BaseApiService:
+ * - getAll(params)
+ * - getById(id, params)
+ * - create(data)
+ * - update(id, data)
+ * - patch(id, data)
+ * - delete(id)
+ * - search(query, params)
+ * - filter(filters, params)
+ * - getWithRelations(id, options)
+ * - batchDelete(ids)
+ * - batchCreate(items)
+ * - exists(id)
+ * - count(params)
+ *
+ * Custom methods specific to Restaurant:
+ * - getNearby() - GPS-based nearby search
+ * - getMenu() - Get restaurant products
+ * - getFullDetails() - Get with products + reviews
+ * - getOpenRestaurants() - Filter open only
+ * - getHighlyRated() - Filter rating >= 4.5
+ * - getDiscountedMenu() - Products with discounts
+ */
+class RestaurantServiceClass extends BaseApiService<Restaurant> {
+  protected baseEndpoint = "/restaurants";
 
-      // Trả về raw data mà không transform
-      return response.data;
-    } catch (error) {
-      console.error("getNearby error:", error);
-      throw error;
-    }
+  /**
+   * Get nearby restaurants with GPS
+   *
+   * Example:
+   * ```typescript
+   * const nearby = await restaurantService.getNearby({
+   *   latitude: 10.7756,
+   *   longitude: 106.7019,
+   *   radius: 5,
+   *   isOpen: true,
+   *   rating_gte: 4.5
+   * });
+   * ```
+   */
+  async getNearby(params: NearbyParams): Promise<PaginatedResponse<Restaurant>> {
+    const response = await apiClient.get(`${this.baseEndpoint}/nearby`, params);
+    return response.data;
   }
 
-  static async search(query: string, page = 1, limit = 10) {
-    try {
-      const response = await apiClient.get<PaginatedResponse<Restaurant>>(ENDPOINTS.RESTAURANTS.SEARCH, {
-        q: query,
-        _page: page,
-        _limit: limit,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("search error:", error);
-      throw error;
-    }
+  /**
+   * Get restaurant menu (products)
+   *
+   * Example:
+   * ```typescript
+   * const menu = await restaurantService.getMenu(1, 1, 20);
+   * ```
+   */
+  async getMenu(restaurantId: number, page = 1, limit = 20): Promise<PaginatedResponse<any>> {
+    const response = await apiClient.get(`${this.baseEndpoint}/${restaurantId}/products`, {
+      _page: page,
+      _limit: limit,
+    });
+    return response.data;
   }
 
-  static async getById(id: number) {
-    try {
-      const response = await apiClient.get<ApiResponse<Restaurant>>(ENDPOINTS.RESTAURANTS.GET_ONE(id));
-      return response.data.data;
-    } catch (error) {
-      console.error("getById error:", error);
-      throw error;
-    }
+  /**
+   * Get restaurant with full details (products + reviews + category)
+   *
+   * Example:
+   * ```typescript
+   * const details = await restaurantService.getFullDetails(1);
+   * ```
+   */
+  async getFullDetails(restaurantId: number): Promise<Restaurant> {
+    return this.getWithRelations(restaurantId, {
+      embed: ["products", "reviews"],
+      expand: ["category"],
+    });
   }
 
-  static async getMenu(restaurantId: number, page = 1, limit = 20) {
-    try {
-      const response = await apiClient.get(ENDPOINTS.RESTAURANTS.MENU(restaurantId), {
-        _page: page,
-        _limit: limit,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("getMenu error:", error);
-      throw error;
-    }
+  /**
+   * Get open restaurants only
+   *
+   * Example:
+   * ```typescript
+   * const openRestaurants = await restaurantService.getOpenRestaurants({ page: 1, limit: 10 });
+   * ```
+   */
+  async getOpenRestaurants(params?: any): Promise<PaginatedResponse<Restaurant>> {
+    return this.filter({isOpen: true, ...params});
+  }
+
+  /**
+   * Get highly rated restaurants (rating >= 4.5)
+   *
+   * Example:
+   * ```typescript
+   * const topRated = await restaurantService.getHighlyRated();
+   * ```
+   */
+  async getHighlyRated(params?: any): Promise<PaginatedResponse<Restaurant>> {
+    return this.filter({rating_gte: 4.5, ...params});
+  }
+
+  /**
+   * Get discounted products from restaurant
+   *
+   * Example:
+   * ```typescript
+   * const deals = await restaurantService.getDiscountedMenu(1);
+   * ```
+   */
+  async getDiscountedMenu(restaurantId: number): Promise<PaginatedResponse<any>> {
+    const response = await apiClient.get(`${this.baseEndpoint}/${restaurantId}/products`, {
+      discount_ne: 0,
+      available: true,
+    });
+    return response.data;
+  }
+
+  /**
+   * Search restaurants by name or address
+   *
+   * Example:
+   * ```typescript
+   * const results = await restaurantService.search("pizza", { page: 1, limit: 10 });
+   * ```
+   */
+  async searchRestaurants(query: string, params?: any): Promise<PaginatedResponse<Restaurant>> {
+    return this.search(query, params);
+  }
+
+  /**
+   * Get restaurants by category
+   *
+   * Example:
+   * ```typescript
+   * const vietnamese = await restaurantService.getByCategory(1);
+   * ```
+   */
+  async getByCategory(categoryId: number, params?: any): Promise<PaginatedResponse<Restaurant>> {
+    return this.filter({categoryId, ...params});
   }
 }
+
+export const RestaurantService = new RestaurantServiceClass();
