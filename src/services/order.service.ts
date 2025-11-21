@@ -1,6 +1,6 @@
 import {ENDPOINTS} from "../config/api.config";
 import {ApiResponse, CreateOrderRequest, Order, PaginatedResponse} from "../types";
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 
 export class OrderService {
   static async createOrder(data: CreateOrderRequest) {

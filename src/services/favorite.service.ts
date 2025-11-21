@@ -1,5 +1,5 @@
 import {ENDPOINTS} from "../config/api.config";
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 
 export class FavoriteService {
   static async toggleFavorite(type: "restaurant" | "product", id: number) {

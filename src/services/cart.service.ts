@@ -1,4 +1,4 @@
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 import {ENDPOINTS} from "../config/api.config";
 import {ApiResponse, Cart} from "../types";
 

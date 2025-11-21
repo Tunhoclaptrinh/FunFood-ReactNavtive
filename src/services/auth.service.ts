@@ -1,5 +1,5 @@
 import {ApiResponse, AuthResponse, LoginRequest, RegisterRequest} from "../types";
-import {apiClient} from "./api.client";
+import {apiClient} from "../config/api.client";
 import {ENDPOINTS} from "@config/api.config";
 
 export class AuthService {
