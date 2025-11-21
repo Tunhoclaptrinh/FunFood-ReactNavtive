@@ -1,171 +1,185 @@
-import React, {useEffect, useState} from "react";
-import {View, StyleSheet, ScrollView, Text, ActivityIndicator, Platform} from "react-native";
-import * as Location from "expo-location";
-import {RestaurantService} from "@services/restaurant.service";
+import React, {useState, useEffect} from "react";
+import {View, StyleSheet, Text, TouchableOpacity} from "react-native";
+import {Ionicons} from "@expo/vector-icons";
+import {useNearbyRestaurants, useRestaurantStore} from "@stores/restaurantStore";
+import {useGeolocation} from "@hooks/useGeolocation";
+import BaseList from "@components/common/BaseList";
 import Card from "@components/common/Card";
-import EmptyState from "@components/common/EmptyState";
 import {COLORS} from "@/src/config/constants";
 
-const HomeScreen = () => {
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState<any>(null);
-  const [geoError, setGeoError] = useState<string | null>(null);
+/**
+ * HomeScreen với BaseList và Store integration
+ *
+ * Features:
+ * - View mode toggle (Nearby / All)
+ * - GPS-based nearby search
+ * - Pull to refresh
+ * - Infinite scroll
+ * - Auto fetch on mount
+ * - Loading states
+ * - Error handling
+ */
+const HomeScreen = ({navigation}: any) => {
+  const {location} = useGeolocation();
+  const [viewMode, setViewMode] = useState<"nearby" | "all">("nearby");
 
+  // Store for nearby restaurants
+  const nearbyStore = useNearbyRestaurants();
+
+  // Store for all restaurants
+  const allStore = useRestaurantStore();
+
+  // Select active store based on view mode
+  const store = viewMode === "nearby" ? nearbyStore : allStore;
+
+  // Fetch nearby restaurants when location is available
   useEffect(() => {
-    initializeScreen();
-  }, []);
-
-  const initializeScreen = async () => {
-    try {
-      // Get location
-      await getLocation();
-    } catch (error) {
-      console.error("Error initializing screen:", error);
-    } finally {
-      setLoading(false);
+    if (location && viewMode === "nearby") {
+      nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
     }
+  }, [location, viewMode]);
+
+  // Fetch all restaurants when switching to "all" mode
+  useEffect(() => {
+    if (viewMode === "all") {
+      allStore.fetchAll();
+    }
+  }, [viewMode]);
+
+  const handleRestaurantPress = (restaurantId: number) => {
+    navigation.navigate("RestaurantDetail", {restaurantId});
   };
 
-  const getLocation = async () => {
-    try {
-      // Web platform: use mock location
-      if (Platform.OS === "web") {
-        console.log("Web platform detected, using mock location");
-        const mockLocation = {
-          latitude: 21.0285,
-          longitude: 105.8542,
-        };
-        setLocation(mockLocation);
-        await loadRestaurants(mockLocation);
-        return;
-      }
-
-      // Mobile: request permission
-      const {status} = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        console.log("Location permission denied, using mock location");
-        setGeoError("Location permission denied, using default location");
-        const mockLocation = {
-          latitude: 21.0285,
-          longitude: 105.8542,
-        };
-        setLocation(mockLocation);
-        await loadRestaurants(mockLocation);
-        return;
-      }
-
-      // Get current location
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      const {latitude, longitude} = currentLocation.coords;
-
-      console.log("Location obtained:", {latitude, longitude});
-      setLocation({latitude, longitude});
-      await loadRestaurants({latitude, longitude});
-    } catch (error) {
-      console.error("Geolocation error:", error);
-      setGeoError("Could not get location, using default");
-
-      // Fallback to mock location
-      const mockLocation = {
-        latitude: 21.0285,
-        longitude: 105.8542,
-      };
-      setLocation(mockLocation);
-      await loadRestaurants(mockLocation);
-    }
+  const handleViewModeChange = (mode: "nearby" | "all") => {
+    setViewMode(mode);
   };
 
-  const loadRestaurants = async (coords: any) => {
-    try {
-      setLoading(true);
-      const response = await RestaurantService.getNearby({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        radius: 5,
-        _page: 1,
-        _limit: 10,
-      });
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <Text style={styles.title}>{viewMode === "nearby" ? "Nearby Restaurants" : "All Restaurants"}</Text>
 
-      console.log("Restaurants loaded:", response.data?.length || 0);
-      setRestaurants(response.data || []);
-    } catch (error) {
-      console.error("Error loading restaurants:", error);
-      setRestaurants([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-      </View>
-    );
-  }
-
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Nearby Restaurants</Text>
-
-      {geoError && (
-        <View style={styles.warningBox}>
-          <Text style={styles.warningText}>⚠️ {geoError}</Text>
-        </View>
-      )}
-
-      {location && (
+      {location && viewMode === "nearby" && (
         <Text style={styles.locationText}>
-          📍 Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+          📍 {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
         </Text>
       )}
 
-      {restaurants.length > 0 ? (
-        restaurants.map((restaurant: any) => (
+      {/* View Mode Toggle */}
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[styles.toggleButton, viewMode === "nearby" && styles.toggleButtonActive]}
+          onPress={() => handleViewModeChange("nearby")}
+        >
+          <Ionicons name="navigate" size={16} color={viewMode === "nearby" ? COLORS.WHITE : COLORS.PRIMARY} />
+          <Text style={[styles.toggleText, viewMode === "nearby" && styles.toggleTextActive]}>Nearby</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.toggleButton, viewMode === "all" && styles.toggleButtonActive]}
+          onPress={() => handleViewModeChange("all")}
+        >
+          <Ionicons name="list" size={16} color={viewMode === "all" ? COLORS.WHITE : COLORS.PRIMARY} />
+          <Text style={[styles.toggleText, viewMode === "all" && styles.toggleTextActive]}>All</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Stats */}
+      {store.items.length > 0 && (
+        <Text style={styles.stats}>
+          Showing {store.items.length} of {store.totalItems} restaurants
+        </Text>
+      )}
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <BaseList
+        items={store.items}
+        isLoading={store.isLoading}
+        isRefreshing={store.isRefreshing}
+        isLoadingMore={store.isLoadingMore}
+        error={store.error}
+        hasMore={store.hasMore}
+        fetchAll={store.fetchAll}
+        fetchMore={store.fetchMore}
+        refresh={store.refresh}
+        renderItem={(restaurant) => (
           <Card
             key={restaurant.id}
             image={restaurant.image}
             title={restaurant.name}
             subtitle={restaurant.address}
             rating={restaurant.rating}
-            description={`Distance: ${restaurant.distance?.toFixed(1) || "0"}km`}
+            description={`${restaurant.distance?.toFixed(1) || "0"}km • ${restaurant.deliveryTime || "30-40 min"}`}
+            badge={restaurant.isOpen ? "Open" : "Closed"}
+            onPress={() => handleRestaurantPress(restaurant.id)}
           />
-        ))
-      ) : (
-        <EmptyState
-          icon="restaurant-outline"
-          title="No Restaurants Found"
-          subtitle="Try expanding your search radius"
-        />
-      )}
-    </ScrollView>
+        )}
+        keyExtractor={(restaurant) => restaurant.id.toString()}
+        ListHeaderComponent={renderHeader()}
+        emptyIcon="restaurant-outline"
+        emptyTitle="No restaurants found"
+        emptySubtitle={
+          viewMode === "nearby"
+            ? "No restaurants nearby. Try expanding your search radius."
+            : "No restaurants available at the moment."
+        }
+        autoFetch={false} // We handle fetch manually based on view mode
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: COLORS.WHITE},
-  content: {padding: 16},
-  centered: {justifyContent: "center", alignItems: "center"},
-  title: {fontSize: 24, fontWeight: "bold", marginBottom: 16, color: COLORS.DARK},
-  warningBox: {
-    backgroundColor: "#FEF3C7",
-    borderLeftWidth: 4,
-    borderLeftColor: "#F59E0B",
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 12,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
   },
-  warningText: {
-    color: "#92400E",
-    fontSize: 12,
+  header: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: COLORS.DARK,
+    marginBottom: 8,
   },
   locationText: {
     fontSize: 12,
     color: COLORS.GRAY,
     marginBottom: 12,
-    textAlign: "center",
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  toggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+    gap: 6,
+  },
+  toggleButtonActive: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  toggleText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.PRIMARY,
+  },
+  toggleTextActive: {
+    color: COLORS.WHITE,
+  },
+  stats: {
+    fontSize: 12,
+    color: COLORS.GRAY,
+    marginTop: 8,
   },
 });
 

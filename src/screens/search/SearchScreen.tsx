@@ -57,10 +57,10 @@ const SearchScreen = ({navigation}: any) => {
 
       // Search both restaurants and products
       const [restaurantsRes, productsRes] = await Promise.all([
-        RestaurantService.search(searchQuery, 1, 10).catch(() => ({
+        RestaurantService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({
           data: [],
         })),
-        ProductService.search(searchQuery, 1, 10).catch(() => ({
+        ProductService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({
           data: [],
         })),
       ]);
