@@ -42,9 +42,9 @@ const ProfileScreen = ({navigation}: any) => {
 
     try {
       setLoading(true);
-      const response = await apiClient.get(`/users/${user.id}/activity`);
+      const response = await apiClient.get<{data?: {stats?: UserStats}}>(`/users/${user.id}/activity`);
       setStats(
-        response.data.data?.stats || {
+        response.data?.data?.stats ?? {
           totalOrders: 0,
           completedOrders: 0,
           totalSpent: 0,
