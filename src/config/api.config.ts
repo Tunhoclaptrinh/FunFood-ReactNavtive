@@ -84,4 +84,13 @@ export const ENDPOINTS = {
     BASE: "/notifications",
     MARK_READ: (id: number) => `/notifications/${id}/read`,
   },
+
+  SHIPPER: {
+    AVAILABLE_ORDERS: "/shipper/orders/available",
+    ACCEPT_ORDER: (id: number) => `/shipper/orders/${id}/accept`,
+    DELIVERIES: "/shipper/orders/my-deliveries",
+    UPDATE_STATUS: (id: number) => `/shipper/orders/${id}/status`,
+    HISTORY: "/shipper/orders/history",
+    STATS: "/shipper/stats",
+  },
 };

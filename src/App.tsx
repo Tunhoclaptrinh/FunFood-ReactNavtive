@@ -11,6 +11,7 @@ const AppContent = () => {
     restoreSession();
   }, [restoreSession]);
 
+  // @ts-ignore - RootNavigator currently doesn't expose these props in its types; pass auth state until types are fixed
   return <RootNavigator isLoading={isLoading} isAuthenticated={isAuthenticated} />;
 };
 

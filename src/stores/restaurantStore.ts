@@ -1,6 +1,6 @@
 import {createBaseStore} from "@/src/base/BaseStore";
 import {RestaurantService} from "@services/restaurant.service";
-import {Restaurant} from "@types/index";
+import {Restaurant} from "../types";
 
 /**
  * Restaurant Store với tất cả base features:
