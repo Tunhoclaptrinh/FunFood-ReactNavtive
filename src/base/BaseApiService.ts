@@ -81,7 +81,7 @@ export abstract class BaseApiService<T> {
    */
   async getAll(params?: PaginationParams): Promise<PaginatedResponse<T>> {
     const normalizedParams = this.normalizeParams(params);
-    const response = await apiClient.get<PaginatedResponse<T>>(this.baseEndpoint, {params: normalizedParams});
+    const response = await apiClient.get<PaginatedResponse<T>>(this.baseEndpoint, normalizedParams);
     return response.data;
   }
 
@@ -93,9 +93,7 @@ export abstract class BaseApiService<T> {
       ...params,
       q: query,
     });
-    const response = await apiClient.get<PaginatedResponse<T>>(`${this.baseEndpoint}/search`, {
-      params: normalizedParams,
-    });
+    const response = await apiClient.get<PaginatedResponse<T>>(`${this.baseEndpoint}/search`, normalizedParams);
     return response.data;
   }
 
@@ -123,7 +121,7 @@ export abstract class BaseApiService<T> {
       ...params,
       ...filters,
     });
-    const response = await apiClient.get<PaginatedResponse<T>>(this.baseEndpoint, {params: normalizedParams});
+    const response = await apiClient.get<PaginatedResponse<T>>(this.baseEndpoint, normalizedParams);
     return response.data;
   }
 
