@@ -14,9 +14,9 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {apiClient} from "@config/api.client";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
-import EmptyState from "@components/common/EmptyState";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {COLORS} from "@config/constants";
 
 interface Review {

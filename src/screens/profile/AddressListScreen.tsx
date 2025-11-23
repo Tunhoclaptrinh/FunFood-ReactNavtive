@@ -13,7 +13,7 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {apiClient} from "@config/api.client";
-import EmptyState from "@components/common/EmptyState";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {COLORS} from "@config/constants";
 
 interface Address {

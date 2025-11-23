@@ -23,7 +23,8 @@
       "@types/*": ["./src/types/*"],
       "@stores/*": ["./src/stores/*"],
       "@hooks/*": ["./src/hooks/*"],
-      "@constants/*": ["./src/constants/*"]
+      "@constants/*": ["./src/constants/*"],
+      "@styles/*": ["./src/styles/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],

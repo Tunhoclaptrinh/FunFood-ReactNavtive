@@ -14,8 +14,8 @@ import {Ionicons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
 import {COLORS} from "@config/constants";
 
 const EditProfileScreen = ({navigation}: any) => {

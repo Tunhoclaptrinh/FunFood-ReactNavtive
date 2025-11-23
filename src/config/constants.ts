@@ -30,30 +30,6 @@ export const PAYMENT_METHODS = {
   ZALOPAY: "zalopay",
 };
 
-// UI Colors
-export const COLORS = {
-  PRIMARY: "#FF6B6B",
-  SECONDARY: "#4ECDC4",
-  SUCCESS: "#2ECC71",
-  ERROR: "#E74C3C",
-  WARNING: "#F39C12",
-  INFO: "#3498DB",
-  LIGHT_GRAY: "#F5F5F5",
-  GRAY: "#9CA3AF",
-  DARK: "#1F2937",
-  WHITE: "#FFFFFF",
-  BLACK: "#000000",
-};
-
-export const ORDER_STATUS_COLORS: {[key: string]: string} = {
-  pending: "#FFA500",
-  confirmed: "#4ECDC4",
-  preparing: "#FFB800",
-  delivering: "#3498DB",
-  delivered: "#2ECC71",
-  cancelled: "#E74C3C",
-};
-
 export const ORDER_STATUS_LABELS: {[key: string]: string} = {
   pending: "Pending",
   confirmed: "Confirmed",

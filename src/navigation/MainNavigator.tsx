@@ -1,14 +1,11 @@
 /**
  * Main Navigator - Refactored with Routes Config
  */
-
-import React from "react";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {Ionicons} from "@expo/vector-icons";
 
 import {ROUTE_NAMES, SCREEN_OPTIONS} from "@/src/config/routes.config";
-import {COLORS} from "@/src/config/constants";
 
 // Home Stack Screens
 import HomeScreen from "@screens/home/HomeScreen";
@@ -36,6 +33,7 @@ import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
 import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
 import OrderStatsScreen from "@screens/profile/OrderStatsScreen";
+import {COLORS} from "@/src/styles/colors";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

@@ -1,11 +1,11 @@
 import React, {useState} from "react";
 import {View, StyleSheet, ScrollView, TouchableOpacity, Text} from "react-native";
 import {useAuth} from "@hooks/useAuth";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
 
 import {validateEmail, validatePassword} from "@utils/validation";
-import {COLORS} from "@/src/config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const LoginScreen = ({navigation}: any) => {
   const [email, setEmail] = useState("user@funfood.com");

@@ -3,7 +3,6 @@
  * Navigation cho Shipper role
  */
 
-import React from "react";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {Ionicons} from "@expo/vector-icons";
@@ -14,8 +13,8 @@ import ShipperDeliveriesScreen from "@screens/shipper/ShipperDeliveriesScreen";
 
 import ProfileScreen from "@screens/profile/ProfileScreen";
 
-import {COLORS} from "@/src/config/constants";
 import ShipperHistoryScreen from "../screens/shipper/ShipperHistoryScreen";
+import {COLORS} from "@/src/styles/colors";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

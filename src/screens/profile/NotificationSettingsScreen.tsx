@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from "react";
 import {View, ScrollView, StyleSheet, Text, Switch, TouchableOpacity, Alert, SafeAreaView} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
-import Button from "@components/common/Button";
+import Button from "@/src/components/common/Button";
 import {COLORS} from "@config/constants";
 
 const NotificationSettingsScreen = ({navigation}: any) => {

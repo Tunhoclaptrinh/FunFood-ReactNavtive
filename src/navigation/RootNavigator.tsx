@@ -8,11 +8,11 @@ import {ActivityIndicator, View} from "react-native";
 import {NavigationContainer} from "@react-navigation/native";
 import {useAuthStore} from "@stores/authStore";
 import {navigationRef} from "@services/navigation.service";
-import {COLORS} from "@/src/config/constants";
 
 import AuthNavigator from "./AuthNavigator";
 import MainNavigator from "./MainNavigator";
 import ShipperNavigator from "./ShipperNavigator";
+import {COLORS} from "../styles/colors";
 
 const RootNavigator = () => {
   const {user, isLoading, isAuthenticated} = useAuthStore();

@@ -13,13 +13,12 @@ import {Ionicons} from "@expo/vector-icons";
 import {RestaurantService} from "@services/restaurant.service";
 import {ProductService} from "@services/product.service";
 import {useDebounce} from "@hooks/useDebounce";
-import Input from "@components/common/Input";
-import Card from "@components/common/Card";
-import EmptyState from "@components/common/EmptyState";
 import Button from "@components/common/Button";
 import {formatCurrency, formatDistance} from "@utils/formatters";
-import {COLORS} from "@/src/config/constants";
 import SearchBar from "@/src/components/common/SearchBar";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
+import Card from "@/src/components/common/Card/Card";
+import {COLORS} from "@/src/styles/colors";
 
 interface SearchResult {
   type: "restaurant" | "product";
@@ -56,14 +55,9 @@ const SearchScreen = ({navigation}: any) => {
       setLoading(true);
       setSearched(true);
 
-      // Search both restaurants and products
       const [restaurantsRes, productsRes] = await Promise.all([
-        RestaurantService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({
-          data: [],
-        })),
-        ProductService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({
-          data: [],
-        })),
+        RestaurantService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({data: []})),
+        ProductService.search(searchQuery, {page: 1, limit: 10}).catch(() => ({data: []})),
       ]);
 
       const restaurants: SearchResult[] = (restaurantsRes.data || []).map((r: any) => ({
@@ -110,7 +104,6 @@ const SearchScreen = ({navigation}: any) => {
     setSearched(false);
   };
 
-  // Group results by type
   const groupedResults = [
     {
       title: "Restaurants",
@@ -124,11 +117,16 @@ const SearchScreen = ({navigation}: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Search Bar */}
+      {/* ✅ FIXED: Search Bar Section */}
       <View style={styles.searchSection}>
-        <View style={styles.searchInputContainer}>
-          <SearchBar value={query} onChangeText={handleClearSearch} onClear={() => setQuery("")} />
-        </View>
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          onClear={handleClearSearch}
+          placeholder="Search restaurants or food..."
+          showFocusBorder={true}
+          autoFocus={false}
+        />
       </View>
 
       {/* Loading State */}
@@ -237,14 +235,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.WHITE,
   },
+
+  // ✅ FIXED: Search Section
   searchSection: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: COLORS.WHITE,
+    borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
+    // ⚠️ REMOVED: No flex here, let SearchBar control its own height
   },
-  searchInputContainer: {
-    flex: 1,
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -317,6 +318,7 @@ const styles = StyleSheet.create({
   resultsList: {
     paddingHorizontal: 16,
     paddingTop: 12,
+    flexGrow: 1,
   },
   resultItem: {
     marginBottom: 12,

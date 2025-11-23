@@ -1,9 +1,9 @@
 import React, {useState} from "react";
 import {View, StyleSheet, ScrollView, TouchableOpacity, Text} from "react-native";
 import {useAuth} from "@hooks/useAuth";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
-import {COLORS} from "@/src/config/constants";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
+import {COLORS} from "@/src/styles/colors";
 
 const RegisterScreen = ({navigation}: any) => {
   const [formData, setFormData] = useState({

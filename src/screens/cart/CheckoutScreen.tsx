@@ -15,11 +15,11 @@ import {useCart} from "@hooks/useCart";
 import {OrderService} from "@services/order.service";
 import {PromotionService} from "@services/promotion.service";
 import {useGeolocation} from "@hooks/useGeolocation";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {calculateDeliveryFee} from "@utils/gps";
-import {COLORS} from "@/src/config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const PAYMENT_METHODS = [
   {id: "cash", label: "Cash on Delivery", icon: "cash-outline"},

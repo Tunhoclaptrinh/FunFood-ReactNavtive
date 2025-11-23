@@ -14,7 +14,7 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {FavoriteService} from "@services/favorite.service";
-import EmptyState from "@components/common/EmptyState";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@config/constants";
 

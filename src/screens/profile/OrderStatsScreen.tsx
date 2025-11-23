@@ -12,7 +12,7 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
-import Button from "@components/common/Button";
+import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@config/constants";
 

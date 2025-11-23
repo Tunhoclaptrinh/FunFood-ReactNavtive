@@ -19,8 +19,8 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {ShipperService, ShipperOrder} from "@services/shipper.service";
-import Button from "@components/common/Button";
-import EmptyState from "@components/common/EmptyState";
+import Button from "@/src/components/common/Button";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import {COLORS} from "@config/constants";
 

@@ -1,14 +1,5 @@
 import React, {useState, useEffect, useRef, useCallback} from "react";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  TextInputProps,
-  Keyboard,
-} from "react-native";
+import {View, TextInput, TouchableOpacity, Keyboard} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {SearchBarProps} from "./types";
 import {styles} from "./styles";

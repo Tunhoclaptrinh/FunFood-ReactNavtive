@@ -15,12 +15,12 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useNearbyRestaurants, useRestaurantStore, useRestaurantFilters} from "@stores/restaurantStore";
 import {useGeolocation} from "@hooks/useGeolocation";
-import Card from "@components/common/Card";
-import Button from "@components/common/Button";
-import Input from "@components/common/Input";
-import EmptyState from "@components/common/EmptyState";
+import Card from "@/src/components/common/Card/Card";
+import Button from "@/src/components/common/Button";
+import Input from "@/src/components/common/Input/Input";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@/src/config/constants";
+import {COLORS} from "@/src/styles/colors";
 import SearchBar from "@/src/components/common/SearchBar";
 
 const {width} = Dimensions.get("window");

@@ -14,10 +14,10 @@ import {Ionicons} from "@expo/vector-icons";
 import {ProductService} from "@services/product.service";
 import {ReviewService} from "@services/review.service";
 import {useCart} from "@hooks/useCart";
-import Button from "@components/common/Button";
-import EmptyState from "@components/common/EmptyState";
+import Button from "@/src/components/common/Button";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@/src/config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface RouteParams {
   productId: number;

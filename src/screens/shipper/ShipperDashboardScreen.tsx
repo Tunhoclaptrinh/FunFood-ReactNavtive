@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {ShipperService, ShipperStats} from "@services/shipper.service";
-import Button from "@components/common/Button";
+import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@config/constants";
 

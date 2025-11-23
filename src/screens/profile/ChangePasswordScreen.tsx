@@ -2,8 +2,8 @@ import React, {useState} from "react";
 import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, SafeAreaView} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {apiClient} from "@config/api.client";
-import Input from "@components/common/Input";
-import Button from "@components/common/Button";
+import Input from "@/src/components/common/Input/Input";
+import Button from "@/src/components/common/Button";
 import {COLORS} from "@config/constants";
 
 const ChangePasswordScreen = ({navigation}: any) => {

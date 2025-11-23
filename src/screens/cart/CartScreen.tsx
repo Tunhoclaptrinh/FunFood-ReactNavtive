@@ -2,10 +2,10 @@ import React from "react";
 import {View, StyleSheet, Text, ScrollView, TouchableOpacity, FlatList, Alert} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {useCart} from "@hooks/useCart";
-import EmptyState from "@components/common/EmptyState";
-import Button from "@components/common/Button";
+import EmptyState from "@/src/components/common/EmptyState/EmptyState";
+import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@/src/config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const CartScreen = ({navigation}: any) => {
   const {items, removeItem, updateQuantity, totalPrice} = useCart();
