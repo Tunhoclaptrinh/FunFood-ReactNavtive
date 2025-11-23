@@ -8,7 +8,8 @@ interface ButtonProps {
   disabled?: boolean;
   variant?: "primary" | "secondary" | "outline";
   size?: "small" | "medium" | "large";
-  style?: ViewStyle;
+  containerStyle?: ViewStyle; // ⭐ spacing, width
+  buttonStyle?: ViewStyle; // ⭐ màu, border
   textStyle?: TextStyle;
 }
 
@@ -19,7 +20,8 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   variant = "primary",
   size = "medium",
-  style,
+  containerStyle,
+  buttonStyle,
   textStyle,
 }) => {
   const isDisabled = disabled || loading;
@@ -27,11 +29,12 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <TouchableOpacity
       style={[
-        styles.button,
-        styles[`${variant}Button`],
-        styles[`${size}Size`],
+        styles.button, // base
+        styles[`${variant}Button`], // variant
+        styles[`${size}Size`], // size
+        buttonStyle, // override màu sắc (không ảnh hưởng padding)
+        containerStyle, // override layout (width, margin)
         isDisabled && styles.disabledButton,
-        style,
       ]}
       onPress={onPress}
       disabled={isDisabled}

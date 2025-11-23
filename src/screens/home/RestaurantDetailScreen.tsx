@@ -21,6 +21,7 @@ import Input from "@components/common/Input";
 import EmptyState from "@components/common/EmptyState";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import {COLORS} from "@/src/config/constants";
+import SearchBar from "@/src/components/common/SearchBar";
 
 interface RouteParams {
   restaurantId: number;
@@ -142,6 +143,7 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
             rating={restaurant.rating}
             description={`${restaurant.distance?.toFixed(1) || "0"}km • ${restaurant.deliveryTime || "30-40 min"}`}
             badge={restaurant.isOpen ? "Open" : "Closed"}
+            style={{borderRadius: 0, paddingBottom: 0, marginBottom: 4}}
           />
 
           <View style={styles.infoSection}>
@@ -173,11 +175,11 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Input
+          <SearchBar
             placeholder="Search menu..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            containerStyle={styles.inputContainer}
+            onClear={() => setSearchQuery("")}
           />
         </View>
 
@@ -189,23 +191,29 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
             <FlatList
               data={filteredProducts}
               keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              columnWrapperStyle={styles.columnWrapper}
               renderItem={({item}) => (
-                <TouchableOpacity
-                  style={styles.productCard}
-                  onPress={() => handleProductPress(item)}
-                  activeOpacity={0.7}
-                >
-                  <Card
-                    image={item.image}
-                    title={item.name}
-                    subtitle={formatCurrency(item.price)}
-                    rating={item.rating}
-                    badge={item.discount ? `${item.discount}% OFF` : undefined}
-                    description={item.description}
-                  />
-
-                  <Button title="Add" onPress={() => handleAddToCart(item)} size="small" style={styles.addButton} />
-                </TouchableOpacity>
+                <View style={styles.gridProductCard}>
+                  <TouchableOpacity
+                    style={styles.productContent}
+                    onPress={() => handleProductPress(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Card
+                      image={item.image}
+                      title={item.name}
+                      subtitle={formatCurrency(item.price)}
+                      rating={item.rating}
+                      badge={item.discount ? `${item.discount}% OFF` : undefined}
+                      description={item.description}
+                      style={styles.cardStyle}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.addButton} onPress={() => handleAddToCart(item)}>
+                    <Ionicons name="add-circle" size={52} color={COLORS.PRIMARY} />
+                  </TouchableOpacity>
+                </View>
               )}
               scrollEnabled={false}
               onEndReached={handleLoadMore}
@@ -280,12 +288,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  inputContainer: {
-    marginVertical: 0,
+    height: "100%",
   },
   menuSection: {
-    padding: 16,
+    padding: 0,
+    margin: 16,
   },
   menuTitle: {
     fontSize: 18,
@@ -293,15 +300,27 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: COLORS.DARK,
   },
-  productCard: {
-    marginBottom: 12,
-    position: "relative",
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  gridProductCard: {
+    width: "46%",
+  },
+  productContent: {
+    flex: 1,
+  },
+  cardStyle: {
+    borderRadius: 4,
   },
   addButton: {
     position: "absolute",
-    bottom: 12,
-    right: 12,
-    width: 70,
+    bottom: -8,
+    right: -8,
+    width: 52,
+    height: 52,
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingFooter: {
     marginVertical: 16,

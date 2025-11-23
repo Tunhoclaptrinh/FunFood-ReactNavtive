@@ -19,6 +19,7 @@ import EmptyState from "@components/common/EmptyState";
 import Button from "@components/common/Button";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import {COLORS} from "@/src/config/constants";
+import SearchBar from "@/src/components/common/SearchBar";
 
 interface SearchResult {
   type: "restaurant" | "product";
@@ -126,18 +127,7 @@ const SearchScreen = ({navigation}: any) => {
       {/* Search Bar */}
       <View style={styles.searchSection}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={COLORS.GRAY} style={styles.searchIcon} />
-          <Input
-            placeholder="Search restaurants or food..."
-            value={query}
-            onChangeText={setQuery}
-            containerStyle={styles.inputStyle}
-          />
-          {query.length > 0 && (
-            <TouchableOpacity onPress={handleClearSearch} style={styles.clearButton}>
-              <Ionicons name="close-circle-outline" size={20} color={COLORS.GRAY} />
-            </TouchableOpacity>
-          )}
+          <SearchBar value={query} onChangeText={handleClearSearch} onClear={() => setQuery("")} />
         </View>
       </View>
 
@@ -250,25 +240,10 @@ const styles = StyleSheet.create({
   searchSection: {
     padding: 16,
     backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
   },
   searchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  inputStyle: {
     flex: 1,
-    marginVertical: 0,
-  },
-  clearButton: {
-    padding: 8,
   },
   loadingContainer: {
     flex: 1,

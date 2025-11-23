@@ -14,7 +14,7 @@ import {useFocusEffect} from "@react-navigation/native";
 import {OrderService} from "@services/order.service";
 import EmptyState from "@components/common/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@/src/config/constants";
+import {COLORS, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS} from "@/src/config/constants";
 
 interface Order {
   id: number;
@@ -23,24 +23,6 @@ interface Order {
   createdAt: string;
   items: any[];
 }
-
-const ORDER_STATUS_COLORS: {[key: string]: string} = {
-  pending: "#FFA500",
-  confirmed: "#4ECDC4",
-  preparing: "#FFB800",
-  delivering: "#3498DB",
-  delivered: "#2ECC71",
-  cancelled: "#E74C3C",
-};
-
-const ORDER_STATUS_LABELS: {[key: string]: string} = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  preparing: "Preparing",
-  delivering: "Delivering",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
 
 const OrdersScreen = ({navigation}: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -187,7 +169,6 @@ const OrdersScreen = ({navigation}: any) => {
             </View>
           ) : null
         }
-        ListHeaderComponent={<Text style={styles.headerText}>My Orders</Text>}
       />
     </SafeAreaView>
   );

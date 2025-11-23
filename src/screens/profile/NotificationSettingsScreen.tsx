@@ -85,8 +85,7 @@ const NotificationSettingsScreen = ({navigation}: any) => {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Notification Settings</Text>
-          <Text style={styles.headerSubtitle}>Manage how you receive notifications</Text>
+          <Text style={styles.headerTitle}>Manage how you receive notifications</Text>
         </View>
 
         {settingsGroups.map((group, groupIndex) => (
@@ -145,10 +144,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.DARK,
     marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORS.GRAY,
+    alignContent: "center",
   },
   section: {
     marginTop: 16,
@@ -158,7 +154,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.DARK,
+    color: COLORS.GRAY,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
