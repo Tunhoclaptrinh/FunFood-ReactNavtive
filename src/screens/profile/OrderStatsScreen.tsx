@@ -305,9 +305,13 @@ const OrderStatsScreen = ({navigation}: any) => {
             title="View All Orders"
             onPress={() => navigation.navigate("Orders")}
             variant="outline"
-            style={styles.actionButton}
+            containerStyle={styles.actionButton}
           />
-          <Button title="Order Again" onPress={() => navigation.navigate("Home")} style={styles.actionButton} />
+          <Button
+            title="Order Again"
+            onPress={() => navigation.navigate("Home")}
+            containerStyle={styles.actionButton}
+          />
         </View>
 
         <View style={styles.bottomPadding} />

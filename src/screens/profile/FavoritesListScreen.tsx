@@ -17,6 +17,7 @@ import {FavoriteService} from "@services/favorite.service";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
+import {ROUTE_NAMES} from "@/src/navigation";
 
 interface FavoriteItem {
   id: number;
@@ -88,7 +89,7 @@ const FavoritesListScreen = ({navigation}: any) => {
   };
 
   const handleRestaurantPress = (restaurantId: number) => {
-    navigation.navigate("RestaurantDetail", {restaurantId});
+    navigation.navigate(ROUTE_NAMES.HOME.RESTAURANT_DETAIL, {restaurantId});
   };
 
   const handleProductPress = (productId: number) => {

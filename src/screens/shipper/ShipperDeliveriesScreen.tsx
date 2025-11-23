@@ -245,7 +245,7 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
           <Button
             title="View Available Orders"
             onPress={() => navigation.navigate("ShipperAvailableOrders")}
-            style={styles.button}
+            containerStyle={styles.button}
           />
         </View>
       </SafeAreaView>
@@ -386,7 +386,7 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
                       title="Start Delivery"
                       onPress={handleMarkAsDelivering}
                       loading={updatingStatus}
-                      style={styles.actionButton}
+                      containerStyle={styles.actionButton}
                     />
                   )}
                   {selectedOrder.status === "delivering" && (
@@ -394,7 +394,7 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
                       title="Mark Delivered"
                       onPress={handleMarkAsDelivered}
                       loading={updatingStatus}
-                      style={styles.actionButton}
+                      containerStyle={styles.actionButton}
                     />
                   )}
                 </View>

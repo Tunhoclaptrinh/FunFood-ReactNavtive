@@ -3,7 +3,6 @@
  * Role-based navigation routing
  */
 
-import React from "react";
 import {ActivityIndicator, View} from "react-native";
 import {NavigationContainer} from "@react-navigation/native";
 import {useAuthStore} from "@stores/authStore";

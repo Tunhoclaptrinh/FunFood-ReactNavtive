@@ -312,7 +312,7 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
                   title={`Accept Order - ${formatCurrency(selectedOrder.deliveryFee)}`}
                   onPress={handleAcceptOrder}
                   loading={accepting}
-                  style={styles.acceptButton}
+                  containerStyle={styles.acceptButton}
                 />
               </View>
             </>

@@ -258,7 +258,7 @@ const EditProfileScreen = ({navigation}: any) => {
             }
           }}
           variant="outline"
-          style={styles.cancelButton}
+          containerStyle={styles.actionButton}
         />
 
         <Button
@@ -266,7 +266,7 @@ const EditProfileScreen = ({navigation}: any) => {
           onPress={handleSave}
           loading={loading}
           disabled={loading || !hasChanges()}
-          style={styles.saveButton}
+          containerStyle={styles.actionButton}
         />
       </View>
     </SafeAreaView>
@@ -401,11 +401,9 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    justifyContent: "space-between",
   },
-  cancelButton: {
-    flex: 1,
-  },
-  saveButton: {
+  actionButton: {
     flex: 1,
   },
 });

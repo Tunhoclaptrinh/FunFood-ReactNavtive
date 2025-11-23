@@ -61,7 +61,7 @@ const LoginScreen = ({navigation}: any) => {
         containerStyle={styles.input}
       />
 
-      <Button title="Login" onPress={handleLogin} loading={loading} style={styles.button} />
+      <Button title="Login" onPress={handleLogin} loading={loading} containerStyle={styles.button} />
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Don't have an account? </Text>

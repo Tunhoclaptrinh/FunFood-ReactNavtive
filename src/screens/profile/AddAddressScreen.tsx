@@ -234,7 +234,7 @@ const AddAddressScreen = ({route, navigation}: any) => {
                 onPress={handleGetCurrentLocation}
                 variant="outline"
                 size="small"
-                style={styles.gpsButton}
+                containerStyle={styles.gpsButton}
               />
             </View>
           </View>
@@ -282,14 +282,19 @@ const AddAddressScreen = ({route, navigation}: any) => {
 
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
-        <Button title="Cancel" onPress={() => navigation.goBack()} variant="outline" style={styles.cancelButton} />
+        <Button
+          title="Cancel"
+          onPress={() => navigation.goBack()}
+          variant="outline"
+          containerStyle={styles.cancelButton}
+        />
 
         <Button
           title={loading ? "Saving..." : isEdit ? "Update" : "Add Address"}
           onPress={handleSave}
           loading={loading}
           disabled={loading}
-          style={styles.saveButton}
+          containerStyle={styles.saveButton}
         />
       </View>
     </SafeAreaView>

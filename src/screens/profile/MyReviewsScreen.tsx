@@ -225,7 +225,12 @@ const MyReviewsScreen = ({navigation}: any) => {
               />
             </View>
 
-            <Button title="Update Review" onPress={handleUpdateReview} loading={updating} style={styles.updateButton} />
+            <Button
+              title="Update Review"
+              onPress={handleUpdateReview}
+              loading={updating}
+              containerStyle={styles.updateButton}
+            />
           </View>
         </View>
       </Modal>

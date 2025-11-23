@@ -273,10 +273,12 @@ const OrderDetailScreen = ({route, navigation}: any) => {
               onPress={handleCancelOrder}
               loading={cancelling}
               variant="outline"
-              style={styles.cancelButton}
+              containerStyle={styles.cancelButton}
             />
           )}
-          {canRate && <Button title="Rate Order" onPress={() => setShowRatingModal(true)} style={styles.rateButton} />}
+          {canRate && (
+            <Button title="Rate Order" onPress={() => setShowRatingModal(true)} containerStyle={styles.rateButton} />
+          )}
         </View>
       </View>
 
@@ -321,7 +323,7 @@ const OrderDetailScreen = ({route, navigation}: any) => {
               title="Submit Rating"
               onPress={handleRateOrder}
               loading={submittingRating}
-              style={styles.submitButton}
+              containerStyle={styles.submitButton}
             />
           </View>
         </View>

@@ -72,7 +72,7 @@ const ShipperDashboardScreen = ({navigation}: any) => {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.errorText}>Failed to load statistics</Text>
-        <Button title="Retry" onPress={loadStats} style={{marginTop: 16}} />
+        <Button title="Retry" onPress={loadStats} containerStyle={{marginTop: 16}} />
       </View>
     );
   }
@@ -173,25 +173,28 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                   title="Available Orders"
                   onPress={() => navigation.navigate("ShipperAvailableOrders")}
                   size="small"
-                  style={styles.actionButton}
+                  containerStyle={styles.actionButton}
                 />
                 <Button
                   title="My Deliveries"
                   onPress={() => navigation.navigate("ShipperDeliveries")}
                   size="small"
-                  style={styles.actionButton}
+                  containerStyle={styles.actionButton}
                 />
+              </View>
+
+              <View style={styles.actionsGrid}>
                 <Button
                   title="History"
                   onPress={() => navigation.navigate("ShipperHistory")}
                   size="small"
-                  style={styles.actionButton}
+                  containerStyle={styles.actionButton}
                 />
                 <Button
                   title="Profile"
                   onPress={() => navigation.navigate("Profile")}
                   size="small"
-                  style={styles.actionButton}
+                  containerStyle={styles.actionButton}
                 />
               </View>
             </View>
@@ -436,8 +439,9 @@ const styles = StyleSheet.create({
   },
   earningsLabel: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
+    color: COLORS.INFO,
     marginBottom: 4,
+    fontWeight: "500",
   },
   earningsAmount: {
     fontSize: 20,
@@ -457,9 +461,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 10,
     justifyContent: "space-between",
+    marginBottom: 8,
   },
   actionButton: {
-    width: "48%",
+    flex: 1,
   },
   earningsDetails: {
     gap: 12,

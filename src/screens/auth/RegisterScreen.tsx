@@ -71,7 +71,7 @@ const RegisterScreen = ({navigation}: any) => {
         error={errors.confirmPassword}
       />
 
-      <Button title="Register" onPress={handleRegister} loading={loading} style={styles.button} />
+      <Button title="Register" onPress={handleRegister} loading={loading} containerStyle={styles.button} />
 
       <View style={styles.footer}>
         <TouchableOpacity onPress={() => navigation.navigate("Login")}>

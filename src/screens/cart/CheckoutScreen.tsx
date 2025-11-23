@@ -185,7 +185,11 @@ const CheckoutScreen = ({navigation}: any) => {
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={80} color={COLORS.LIGHT_GRAY} style={{marginBottom: 20}} />
           <Text style={styles.emptyText}>Your cart is empty</Text>
-          <Button title="Continue Shopping" onPress={() => navigation.navigate("Search")} style={{marginTop: 20}} />
+          <Button
+            title="Continue Shopping"
+            onPress={() => navigation.navigate("Search")}
+            containerStyle={{marginTop: 20}}
+          />
         </View>
       </SafeAreaView>
     );
@@ -280,7 +284,7 @@ const CheckoutScreen = ({navigation}: any) => {
                 onPress={handleValidatePromo}
                 loading={validatingPromo}
                 size="small"
-                style={styles.applyButton}
+                containerStyle={styles.applyButton}
               />
             </View>
           )}
@@ -337,7 +341,7 @@ const CheckoutScreen = ({navigation}: any) => {
           title={`Place Order - ${formatCurrency(finalTotal)}`}
           onPress={handlePlaceOrder}
           loading={loading}
-          style={styles.placeButton}
+          containerStyle={styles.placeButton}
         />
       </View>
 

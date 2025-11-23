@@ -20,7 +20,7 @@ const CartScreen = ({navigation}: any) => {
           containerStyle={styles.emptyState}
         />
         <View style={styles.emptyFooter}>
-          <Button title="Start Shopping" onPress={() => navigation.navigate("Search")} style={styles.button} />
+          <Button title="Start Shopping" onPress={() => navigation.navigate("Search")} containerStyle={styles.button} />
         </View>
       </View>
     );
@@ -151,7 +151,7 @@ const CartScreen = ({navigation}: any) => {
         <Button
           title={`Checkout - ${formatCurrency(totalPrice)}`}
           onPress={handleCheckout}
-          style={styles.checkoutButton}
+          containerStyle={styles.checkoutButton}
         />
       </View>
     </View>

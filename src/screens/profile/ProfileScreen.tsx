@@ -471,6 +471,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
+    borderRadius: 10,
   },
   statsCardIcon: {
     width: 42,
@@ -581,13 +582,12 @@ const styles = StyleSheet.create({
   },
   versionSection: {
     alignItems: "center",
-    paddingVertical: 20,
+    paddingVertical: 8,
   },
   versionText: {
     fontSize: 12,
     color: COLORS.GRAY,
     fontWeight: "500",
-    marginBottom: 2,
   },
   versionNumber: {
     fontSize: 11,

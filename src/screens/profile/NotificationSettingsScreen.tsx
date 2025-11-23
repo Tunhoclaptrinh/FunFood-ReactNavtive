@@ -122,7 +122,7 @@ const NotificationSettingsScreen = ({navigation}: any) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <Button title="Save Preferences" onPress={handleSave} loading={loading} style={styles.button} />
+          <Button title="Save Preferences" onPress={handleSave} loading={loading} containerStyle={styles.button} />
         </View>
       </ScrollView>
     </SafeAreaView>
