@@ -107,15 +107,12 @@ const SearchScreen = ({navigation}: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ✅ FIXED: Search Bar Section */}
       <View style={styles.searchSection}>
         <SearchBar
           value={query}
           onChangeText={setQuery}
           onClear={handleClearSearch}
           placeholder="Search restaurants or food..."
-          showFocusBorder={true}
-          autoFocus={false}
         />
       </View>
 
@@ -225,15 +222,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.WHITE,
   },
-
-  // ✅ FIXED: Search Section
   searchSection: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: COLORS.WHITE,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
-    // ⚠️ REMOVED: No flex here, let SearchBar control its own height
+    height: 70,
   },
 
   loadingContainer: {
