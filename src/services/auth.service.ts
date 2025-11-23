@@ -17,8 +17,8 @@ export class AuthService {
     return await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
   }
 
-  static async getMe() {
-    const response = await apiClient.get(ENDPOINTS.AUTH.ME);
+  static async getMe(): Promise<AuthResponse> {
+    const response = await apiClient.get<ApiResponse<AuthResponse>>(ENDPOINTS.AUTH.ME);
     return response.data.data;
   }
 

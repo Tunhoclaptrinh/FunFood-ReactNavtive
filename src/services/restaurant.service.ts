@@ -57,8 +57,8 @@ class RestaurantServiceClass extends BaseApiService<Restaurant> {
    * ```
    */
   async getNearby(params: NearbyParams): Promise<PaginatedResponse<Restaurant>> {
-    const response = await apiClient.get(`${this.baseEndpoint}/nearby`, params);
-    return response.data;
+    const response = await apiClient.get<PaginatedResponse<Restaurant>>(`${this.baseEndpoint}/nearby`, params);
+    return response.data as PaginatedResponse<Restaurant>;
   }
 
   /**
@@ -70,7 +70,7 @@ class RestaurantServiceClass extends BaseApiService<Restaurant> {
    * ```
    */
   async getMenu(restaurantId: number, page = 1, limit = 20): Promise<PaginatedResponse<any>> {
-    const response = await apiClient.get(`${this.baseEndpoint}/${restaurantId}/products`, {
+    const response = await apiClient.get<PaginatedResponse<any>>(`${this.baseEndpoint}/${restaurantId}/products`, {
       _page: page,
       _limit: limit,
     });
@@ -125,7 +125,7 @@ class RestaurantServiceClass extends BaseApiService<Restaurant> {
    * ```
    */
   async getDiscountedMenu(restaurantId: number): Promise<PaginatedResponse<any>> {
-    const response = await apiClient.get(`${this.baseEndpoint}/${restaurantId}/products`, {
+    const response = await apiClient.get<PaginatedResponse<any>>(`${this.baseEndpoint}/${restaurantId}/products`, {
       discount_ne: 0,
       available: true,
     });
