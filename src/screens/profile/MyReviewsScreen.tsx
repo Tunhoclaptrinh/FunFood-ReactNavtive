@@ -17,7 +17,7 @@ import {apiClient} from "@config/api.client";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface Review {
   id: number;

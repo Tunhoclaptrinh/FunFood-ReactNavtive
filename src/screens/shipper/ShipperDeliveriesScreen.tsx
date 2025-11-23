@@ -22,7 +22,7 @@ import {ShipperService, ShipperOrder} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency, formatDistance} from "@utils/formatters";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const ShipperDeliveriesScreen = ({navigation}: any) => {
   const [orders, setOrders] = useState<ShipperOrder[]>([]);

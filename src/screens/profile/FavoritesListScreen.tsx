@@ -16,7 +16,7 @@ import {useFocusEffect} from "@react-navigation/native";
 import {FavoriteService} from "@services/favorite.service";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface FavoriteItem {
   id: number;

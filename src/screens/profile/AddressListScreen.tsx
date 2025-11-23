@@ -14,7 +14,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {apiClient} from "@config/api.client";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface Address {
   id: number;

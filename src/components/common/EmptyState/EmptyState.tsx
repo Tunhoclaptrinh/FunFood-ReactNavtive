@@ -4,6 +4,9 @@ import {Ionicons} from "@expo/vector-icons";
 import Button from "../Button"; // Import enhanced Button
 import {styles} from "./styles";
 import {EmptyStateProps} from "./types";
+import {COLORS} from "@/src/styles/colors";
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   icon = "alert-circle-outline",

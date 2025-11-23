@@ -4,7 +4,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {apiClient} from "@config/api.client";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const ChangePasswordScreen = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);

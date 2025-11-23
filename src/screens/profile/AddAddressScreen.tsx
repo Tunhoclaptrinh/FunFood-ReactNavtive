@@ -5,7 +5,7 @@ import {apiClient} from "@config/api.client";
 import {useGeolocation} from "@hooks/useGeolocation";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const LABEL_OPTIONS = [
   {label: "Home", icon: "home"},

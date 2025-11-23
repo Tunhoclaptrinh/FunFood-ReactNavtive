@@ -14,7 +14,7 @@ import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface OrderStats {
   totalOrders: number;

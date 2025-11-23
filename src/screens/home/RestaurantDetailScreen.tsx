@@ -174,12 +174,14 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <SearchBar
-            placeholder="Search menu..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onClear={() => setSearchQuery("")}
-          />
+          <View style={styles.searchBarContainer}>
+            <SearchBar
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onClear={() => setSearchQuery("")}
+            />
+          </View>
         </View>
 
         {/* Menu Section */}
@@ -287,6 +289,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
+  },
+  searchBarContainer: {
+    backgroundColor: COLORS.WHITE,
+    height: "100%",
   },
   menuSection: {
     padding: 0,

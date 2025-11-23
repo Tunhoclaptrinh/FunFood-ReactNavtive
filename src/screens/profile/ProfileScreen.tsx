@@ -14,8 +14,8 @@ import {
 import {Ionicons} from "@expo/vector-icons";
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
-import {COLORS} from "@config/constants";
 import {LinearGradient} from "expo-linear-gradient";
+import {COLORS} from "@/src/styles/colors";
 
 interface UserStats {
   totalOrders: number;

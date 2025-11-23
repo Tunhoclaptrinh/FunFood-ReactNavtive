@@ -14,7 +14,8 @@ import {useFocusEffect} from "@react-navigation/native";
 import {OrderService} from "@services/order.service";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS} from "@/src/config/constants";
+import {ORDER_STATUS_LABELS} from "@/src/config/constants";
+import {COLORS, ORDER_STATUS_COLORS} from "@/src/styles/colors";
 
 interface Order {
   id: number;

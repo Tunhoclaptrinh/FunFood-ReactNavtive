@@ -18,7 +18,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {ShipperService, ShipperStats} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 interface DashboardTab {
   id: string;

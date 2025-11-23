@@ -1,4 +1,5 @@
 import {StyleSheet} from "react-native";
+import {COLORS} from "@/src/styles/colors"; // ← Thêm dòng này
 
 export const styles = StyleSheet.create({
   container: {
@@ -12,7 +13,7 @@ export const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   containerFocused: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.WHITE, // ← Giờ có thể dùng COLORS
     borderColor: "#007AFF",
   },
   containerDisabled: {

@@ -22,7 +22,7 @@ import Button from "@/src/components/common/Button";
 import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency, formatDistance} from "@utils/formatters";
-import {COLORS} from "@config/constants";
+import {COLORS} from "@/src/styles/colors";
 
 const ShipperAvailableOrdersScreen = ({navigation}: any) => {
   const [orders, setOrders] = useState<ShipperOrder[]>([]);
