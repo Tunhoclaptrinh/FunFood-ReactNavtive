@@ -182,50 +182,54 @@ const ProfileScreen = ({navigation}: any) => {
           />
         }
       >
-        {/* Header with Gradient */}
+        {/* Compact Header with Gradient */}
         <LinearGradient colors={[COLORS.PRIMARY, "#FF8E8E"]} style={styles.headerGradient}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate("Settings")}>
               <Ionicons name="settings-outline" size={24} color={COLORS.WHITE} />
             </TouchableOpacity>
 
-            <View style={styles.avatarContainer}>
-              {user?.avatar ? (
-                <Image source={{uri: user.avatar}} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || "U"}</Text>
+            {/* Compact Avatar Section */}
+            <View style={styles.avatarSection}>
+              <View style={styles.avatarContainer}>
+                {user?.avatar ? (
+                  <Image source={{uri: user.avatar}} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || "U"}</Text>
+                  </View>
+                )}
+                <TouchableOpacity style={styles.editAvatarButton} onPress={() => navigation.navigate("EditProfile")}>
+                  <Ionicons name="camera" size={14} color={COLORS.WHITE} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.userInfoContainer}>
+                <Text style={styles.userName}>{user?.name}</Text>
+                <Text style={styles.userEmail}>{user?.email}</Text>
+                <View style={styles.roleBadge}>
+                  <Ionicons name="shield-checkmark" size={10} color={COLORS.WHITE} />
+                  <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
                 </View>
-              )}
-              <TouchableOpacity style={styles.editAvatarButton} onPress={() => navigation.navigate("EditProfile")}>
-                <Ionicons name="camera" size={16} color={COLORS.WHITE} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-
-            <View style={styles.roleBadge}>
-              <Ionicons name="shield-checkmark" size={12} color={COLORS.WHITE} />
-              <Text style={styles.roleText}>{user?.role?.toUpperCase()}</Text>
+              </View>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Quick Stats Grid */}
+        {/* Stats Grid 2x2 */}
         {stats && (
-          <View style={styles.statsSection}>
+          <View style={styles.statsGridSection}>
             <TouchableOpacity
               style={styles.statsCard}
               onPress={() => navigation.navigate("OrderStats")}
               activeOpacity={0.7}
             >
-              <View style={[styles.statsIconContainer, {backgroundColor: "#FFE5E5"}]}>
-                <Ionicons name="receipt-outline" size={28} color={COLORS.PRIMARY} />
+              <View style={styles.statsCardIcon}>
+                <Ionicons name="receipt-outline" size={24} color={COLORS.PRIMARY} />
               </View>
-              <Text style={styles.statsValue}>{stats.totalOrders}</Text>
-              <Text style={styles.statsLabel}>Total Orders</Text>
-              <Text style={styles.statsSubtext}>{stats.completedOrders} completed</Text>
+              <Text style={styles.statsCardLabel}>Total Orders</Text>
+              <Text style={styles.statsCardValue}>{stats.totalOrders}</Text>
+              <Text style={styles.statsCardDetail}>{stats.completedOrders} completed</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -233,12 +237,16 @@ const ProfileScreen = ({navigation}: any) => {
               onPress={() => navigation.navigate("OrderStats")}
               activeOpacity={0.7}
             >
-              <View style={[styles.statsIconContainer, {backgroundColor: "#FFF8E1"}]}>
-                <Ionicons name="wallet-outline" size={28} color="#FFA000" />
+              <View style={styles.statsCardIcon}>
+                <Ionicons name="wallet-outline" size={24} color="#FFA000" />
               </View>
-              <Text style={styles.statsValue}>{formatCurrency(stats.totalSpent)}</Text>
-              <Text style={styles.statsLabel}>Total Spent</Text>
-              <Text style={styles.statsSubtext}>Avg {formatCurrency(stats.avgOrderValue)}</Text>
+              <Text style={styles.statsCardLabel}>Total Spent</Text>
+              <Text style={styles.statsCardValue}>
+                {formatCurrency(stats.totalSpent).substring(0, formatCurrency(stats.totalSpent).length - 3)}
+              </Text>
+              <Text style={styles.statsCardDetail}>
+                Avg {formatCurrency(stats.avgOrderValue).substring(0, formatCurrency(stats.avgOrderValue).length - 3)}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -246,12 +254,12 @@ const ProfileScreen = ({navigation}: any) => {
               onPress={() => navigation.navigate("FavoritesList")}
               activeOpacity={0.7}
             >
-              <View style={[styles.statsIconContainer, {backgroundColor: "#FCE4EC"}]}>
-                <Ionicons name="heart" size={28} color="#E91E63" />
+              <View style={styles.statsCardIcon}>
+                <Ionicons name="heart" size={24} color="#E91E63" />
               </View>
-              <Text style={styles.statsValue}>{stats.totalFavorites}</Text>
-              <Text style={styles.statsLabel}>Favorites</Text>
-              <Text style={styles.statsSubtext}>Saved items</Text>
+              <Text style={styles.statsCardLabel}>Favorites</Text>
+              <Text style={styles.statsCardValue}>{stats.totalFavorites}</Text>
+              <Text style={styles.statsCardDetail}>Saved items</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -259,12 +267,12 @@ const ProfileScreen = ({navigation}: any) => {
               onPress={() => navigation.navigate("MyReviews")}
               activeOpacity={0.7}
             >
-              <View style={[styles.statsIconContainer, {backgroundColor: "#FFF8E1"}]}>
-                <Ionicons name="star" size={28} color="#FFB800" />
+              <View style={styles.statsCardIcon}>
+                <Ionicons name="star" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.statsValue}>{stats.avgRating.toFixed(1)}</Text>
-              <Text style={styles.statsLabel}>Avg Rating</Text>
-              <Text style={styles.statsSubtext}>{stats.totalReviews} reviews</Text>
+              <Text style={styles.statsCardLabel}>Avg Rating</Text>
+              <Text style={styles.statsCardValue}>{stats.avgRating.toFixed(1)} ⭐</Text>
+              <Text style={styles.statsCardDetail}>{stats.totalReviews} reviews</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -276,18 +284,18 @@ const ProfileScreen = ({navigation}: any) => {
             {mainMenuItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.mainMenuItem}
+                style={[styles.mainMenuItem, index === mainMenuItems.length - 1 && styles.lastMenuItem]}
                 onPress={() => navigation.navigate(item.screen)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.mainMenuIcon, {backgroundColor: item.bgColor}]}>
-                  <Ionicons name={item.icon as any} size={24} color={item.color} />
+                <View style={[styles.menuIcon, {backgroundColor: item.bgColor}]}>
+                  <Ionicons name={item.icon as any} size={20} color={item.color} />
                 </View>
                 <View style={styles.mainMenuContent}>
-                  <Text style={styles.mainMenuTitle}>{item.title}</Text>
-                  <Text style={styles.mainMenuSubtitle}>{item.subtitle}</Text>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.GRAY} />
+                <Ionicons name="chevron-forward" size={18} color={COLORS.GRAY} />
               </TouchableOpacity>
             ))}
           </View>
@@ -300,16 +308,16 @@ const ProfileScreen = ({navigation}: any) => {
             {settingsItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.settingsMenuItem}
+                style={[styles.settingsMenuItem, index === settingsItems.length - 1 && styles.lastMenuItem]}
                 onPress={() => navigation.navigate(item.screen)}
                 activeOpacity={0.7}
               >
-                <View style={styles.settingsMenuIcon}>
+                <View style={styles.menuIcon}>
                   <Ionicons name={item.icon as any} size={20} color={COLORS.GRAY} />
                 </View>
                 <View style={styles.settingsMenuContent}>
-                  <Text style={styles.settingsMenuTitle}>{item.title}</Text>
-                  <Text style={styles.settingsMenuSubtitle}>{item.subtitle}</Text>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={COLORS.GRAY} />
               </TouchableOpacity>
@@ -320,7 +328,7 @@ const ProfileScreen = ({navigation}: any) => {
         {/* Logout Button */}
         <View style={styles.logoutSection}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
-            <Ionicons name="log-out-outline" size={22} color={COLORS.ERROR} />
+            <Ionicons name="log-out-outline" size={22} color={COLORS.WHITE} />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -353,16 +361,15 @@ const styles = StyleSheet.create({
     color: COLORS.GRAY,
   },
   headerGradient: {
-    paddingBottom: 40,
+    paddingBottom: 12,
   },
   header: {
-    alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 12,
     paddingHorizontal: 16,
   },
   settingsButton: {
     position: "absolute",
-    top: 20,
+    top: 12,
     right: 16,
     width: 40,
     height: 40,
@@ -370,176 +377,181 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 10,
+  },
+  avatarSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingRight: 50,
   },
   avatarContainer: {
     position: "relative",
-    marginBottom: 16,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
     borderColor: COLORS.WHITE,
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: COLORS.WHITE,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: "rgba(255,255,255,0.3)",
   },
   avatarText: {
-    fontSize: 40,
+    fontSize: 28,
     fontWeight: "bold",
     color: COLORS.PRIMARY,
   },
   editAvatarButton: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    bottom: -4,
+    right: -4,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: COLORS.PRIMARY,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: COLORS.WHITE,
   },
+  userInfoContainer: {
+    flex: 1,
+  },
   userName: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
     color: COLORS.WHITE,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   userEmail: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.9)",
-    marginBottom: 12,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.85)",
+    marginBottom: 6,
   },
   roleBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.25)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 3,
+    alignSelf: "flex-start",
   },
   roleText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "700",
     color: COLORS.WHITE,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
-  statsSection: {
+  statsGridSection: {
     flexDirection: "row",
     flexWrap: "wrap",
     paddingHorizontal: 16,
-    marginTop: -20,
-    gap: 12,
+    marginTop: 10,
+    marginBottom: 4,
+    gap: 8,
   },
   statsCard: {
     width: "48%",
     backgroundColor: COLORS.WHITE,
-    borderRadius: 16,
-    padding: 16,
+    padding: 10,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  statsIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  statsCardIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 6,
   },
-  statsValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 4,
-  },
-  statsLabel: {
-    fontSize: 12,
+  statsCardLabel: {
+    fontSize: 11,
     color: COLORS.GRAY,
     fontWeight: "500",
+    marginBottom: 4,
+  },
+  statsCardValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.DARK,
     marginBottom: 2,
   },
-  statsSubtext: {
-    fontSize: 10,
+  statsCardDetail: {
+    fontSize: 9,
     color: COLORS.GRAY,
   },
   section: {
     paddingHorizontal: 16,
-    marginTop: 24,
+    marginTop: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
     color: COLORS.DARK,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   menuContainer: {
     backgroundColor: COLORS.WHITE,
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   mainMenuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#F5F5F5",
   },
-  mainMenuIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
+  lastMenuItem: {
+    borderBottomWidth: 0,
   },
   mainMenuContent: {
     flex: 1,
   },
-  mainMenuTitle: {
-    fontSize: 16,
+  menuTitle: {
+    fontSize: 15,
     fontWeight: "600",
     color: COLORS.DARK,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  mainMenuSubtitle: {
-    fontSize: 13,
+  menuSubtitle: {
+    fontSize: 12,
     color: COLORS.GRAY,
   },
   settingsMenuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#F5F5F5",
   },
-  settingsMenuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: "#F5F5F5",
     justifyContent: "center",
     alignItems: "center",
@@ -548,57 +560,41 @@ const styles = StyleSheet.create({
   settingsMenuContent: {
     flex: 1,
   },
-  settingsMenuTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: COLORS.DARK,
-    marginBottom: 2,
-  },
-  settingsMenuSubtitle: {
-    fontSize: 12,
-    color: COLORS.GRAY,
-  },
   logoutSection: {
     paddingHorizontal: 16,
-    marginTop: 24,
+    marginTop: 20,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.WHITE,
-    paddingVertical: 16,
-    borderRadius: 16,
+    color: COLORS.WHITE,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: COLORS.PRIMARY,
     gap: 8,
-    borderWidth: 1,
-    borderColor: "#FFEBEE",
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: COLORS.ERROR,
+    color: COLORS.WHITE,
   },
   versionSection: {
     alignItems: "center",
-    paddingVertical: 24,
+    paddingVertical: 20,
   },
   versionText: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.GRAY,
     fontWeight: "500",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   versionNumber: {
     fontSize: 11,
     color: COLORS.GRAY,
   },
   bottomPadding: {
-    height: 20,
+    height: 16,
   },
 });
 

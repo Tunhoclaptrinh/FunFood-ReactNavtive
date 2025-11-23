@@ -44,3 +44,21 @@ export const COLORS = {
   WHITE: "#FFFFFF",
   BLACK: "#000000",
 };
+
+export const ORDER_STATUS_COLORS: {[key: string]: string} = {
+  pending: "#FFA500",
+  confirmed: "#4ECDC4",
+  preparing: "#FFB800",
+  delivering: "#3498DB",
+  delivered: "#2ECC71",
+  cancelled: "#E74C3C",
+};
+
+export const ORDER_STATUS_LABELS: {[key: string]: string} = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  preparing: "Preparing",
+  delivering: "Delivering",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};

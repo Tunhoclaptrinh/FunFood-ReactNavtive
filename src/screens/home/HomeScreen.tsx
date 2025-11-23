@@ -21,6 +21,7 @@ import Input from "@components/common/Input";
 import EmptyState from "@components/common/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/config/constants";
+import SearchBar from "@/src/components/common/SearchBar";
 
 const {width} = Dimensions.get("window");
 
@@ -49,7 +50,7 @@ const HomeScreen = ({navigation}: any) => {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [categories] = useState([
+  const [categories, setCategories] = useState([
     {id: 1, name: "Vietnamese", icon: "🍲"},
     {id: 2, name: "Pizza", icon: "🍕"},
     {id: 3, name: "Burgers", icon: "🍔"},
@@ -107,7 +108,7 @@ const HomeScreen = ({navigation}: any) => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.length > 2) {
-      store.search(query);
+      store.search(query); // gọi filter/search store
     } else if (query.length === 0) {
       store.fetchAll();
     }
@@ -168,20 +169,8 @@ const HomeScreen = ({navigation}: any) => {
 
       {/* Search Bar */}
       <View style={styles.searchSection}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={COLORS.GRAY} />
-          <Input
-            placeholder="Search restaurants or food..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-            containerStyle={styles.searchInput}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <Ionicons name="close-circle" size={20} color={COLORS.GRAY} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBar value={searchQuery} onChangeText={handleSearch} onClear={() => setSearchQuery("")} />
+
         <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilters(!showFilters)}>
           <Ionicons name="options-outline" size={20} color={COLORS.WHITE} />
         </TouchableOpacity>
@@ -557,9 +546,19 @@ const styles = StyleSheet.create({
   },
   searchSection: {
     flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 10,
   },
+  filterButton: {
+    width: 45,
+    height: 45,
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   searchInputContainer: {
     flex: 1,
     flexDirection: "row",
@@ -572,14 +571,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginVertical: 0,
-  },
-  filterButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: COLORS.PRIMARY,
-    justifyContent: "center",
-    alignItems: "center",
   },
   categoriesSection: {
     marginBottom: 12,
