@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
+    height: "100%",
   },
   menuSection: {
     padding: 0,
