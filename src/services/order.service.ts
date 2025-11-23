@@ -1,41 +1,79 @@
-import {ENDPOINTS} from "../config/api.config";
-import {ApiResponse, CreateOrderRequest, Order, PaginatedResponse} from "../types";
-import {apiClient} from "../config/api.client";
+import {BaseApiService, PaginatedResponse} from "@/src/base/BaseApiService";
+import {apiClient} from "@config/api.client";
+import {ENDPOINTS} from "@config/api.config";
+import {Order, CreateOrderRequest} from "@/src/types";
 
-export class OrderService {
-  static async createOrder(data: CreateOrderRequest) {
-    const response = await apiClient.post<ApiResponse<Order>>(ENDPOINTS.ORDERS.CREATE, data);
+/**
+ * Order Service - Extends BaseApiService
+ */
+class OrderServiceClass extends BaseApiService<Order> {
+  protected baseEndpoint = ENDPOINTS.ORDERS.BASE;
+
+  /**
+   * Create order
+   */
+  async createOrder(data: CreateOrderRequest): Promise<Order> {
+    const response = await apiClient.post<{data: Order}>(ENDPOINTS.ORDERS.CREATE, data);
     return response.data.data;
   }
 
-  static async getOrders(page = 1, limit = 10, filters?: any) {
-    const response = await apiClient.get<PaginatedResponse<Order>>(ENDPOINTS.ORDERS.BASE, {
-      _page: page,
-      _limit: limit,
+  /**
+   * Get orders with filters
+   */
+  async getOrders(page = 1, limit = 10, filters?: any): Promise<PaginatedResponse<Order>> {
+    return this.getAll({
+      page,
+      limit,
       ...filters,
     });
-    return response.data;
   }
 
-  static async getOrderById(id: number) {
-    const response = await apiClient.get<ApiResponse<Order>>(ENDPOINTS.ORDERS.GET_ONE(id));
+  /**
+   * Get order by ID
+   */
+  async getOrderById(id: number): Promise<Order> {
+    return this.getById(id);
+  }
+
+  /**
+   * Cancel order
+   */
+  async cancelOrder(id: number): Promise<void> {
+    await apiClient.delete(ENDPOINTS.ORDERS.CANCEL(id));
+  }
+
+  /**
+   * Reorder
+   */
+  async reorder(id: number): Promise<Order> {
+    const response = await apiClient.post<{data: Order}>(ENDPOINTS.ORDERS.REORDER(id));
     return response.data.data;
   }
 
-  static async cancelOrder(id: number) {
-    return await apiClient.delete(ENDPOINTS.ORDERS.CANCEL(id));
-  }
-
-  static async reorder(id: number) {
-    const response = await apiClient.post<ApiResponse<Order>>(ENDPOINTS.ORDERS.REORDER(id));
-    return response.data.data;
-  }
-
-  static async rateOrder(id: number, rating: number, comment: string) {
-    const response = await apiClient.post(ENDPOINTS.ORDERS.RATE(id), {
+  /**
+   * Rate order
+   */
+  async rateOrder(id: number, rating: number, comment: string): Promise<void> {
+    await apiClient.post(ENDPOINTS.ORDERS.RATE(id), {
       rating,
       comment,
     });
-    return response.data;
+  }
+
+  /**
+   * Update order status
+   */
+  async updateStatus(id: number, status: string): Promise<Order> {
+    return this.patch(id, {status} as any);
+  }
+
+  /**
+   * Get order statistics
+   */
+  async getStats(): Promise<any> {
+    const response = await apiClient.get<{data: any}>(`${this.baseEndpoint}/stats/summary`);
+    return response.data.data;
   }
 }
+
+export const OrderService = new OrderServiceClass();

@@ -1,36 +1,66 @@
-import {apiClient} from "../config/api.client";
-import {ENDPOINTS} from "../config/api.config";
-import {ApiResponse, Cart} from "../types";
+import {BaseApiService} from "@/src/base/BaseApiService";
+import {apiClient} from "@config/api.client";
+import {ENDPOINTS} from "@config/api.config";
+import {Cart, CartItem} from "@/src/types";
 
-export class CartService {
-  static async getCart() {
-    const response = await apiClient.get<ApiResponse<Cart>>(ENDPOINTS.CART.BASE);
+/**
+ * Cart Service - Extends BaseApiService
+ */
+class CartServiceClass extends BaseApiService<CartItem> {
+  protected baseEndpoint = ENDPOINTS.CART.BASE;
+
+  /**
+   * Get cart with summary
+   */
+  async getCart(): Promise<Cart> {
+    const response = await apiClient.get<{data: Cart}>(this.baseEndpoint);
     return response.data.data;
   }
 
-  static async addItem(productId: number, quantity: number) {
-    const response = await apiClient.post<ApiResponse<any>>(ENDPOINTS.CART.ADD, {
-      productId,
-      quantity,
-    });
+  /**
+   * Add item to cart
+   */
+  async addItem(productId: number, quantity: number): Promise<CartItem> {
+    const response = await apiClient.post<{data: CartItem}>(ENDPOINTS.CART.ADD, {productId, quantity});
     return response.data.data;
   }
 
-  static async syncCart(items: {productId: number; quantity: number}[]) {
-    const response = await apiClient.post<ApiResponse<any>>(ENDPOINTS.CART.SYNC, {items});
+  /**
+   * Sync cart from client
+   */
+  async syncCart(items: Array<{productId: number; quantity: number}>): Promise<Cart> {
+    const response = await apiClient.post<{data: Cart}>(ENDPOINTS.CART.SYNC, {items});
     return response.data.data;
   }
 
-  static async updateItem(id: number, quantity: number) {
-    const response = await apiClient.put<ApiResponse<any>>(ENDPOINTS.CART.UPDATE(id), {quantity});
+  /**
+   * Update item quantity
+   */
+  async updateItem(id: number, quantity: number): Promise<CartItem> {
+    const response = await apiClient.put<{data: CartItem}>(ENDPOINTS.CART.UPDATE(id), {quantity});
     return response.data.data;
   }
 
-  static async removeItem(id: number) {
-    return await apiClient.delete(ENDPOINTS.CART.REMOVE(id));
+  /**
+   * Remove item
+   */
+  async removeItem(id: number): Promise<void> {
+    await apiClient.delete(ENDPOINTS.CART.REMOVE(id));
   }
 
-  static async clearCart() {
-    return await apiClient.delete(ENDPOINTS.CART.CLEAR);
+  /**
+   * Clear cart
+   */
+  async clearCart(): Promise<void> {
+    await apiClient.delete(ENDPOINTS.CART.CLEAR);
+  }
+
+  /**
+   * Clear cart by restaurant
+   */
+  async clearByRestaurant(restaurantId: number): Promise<void> {
+    await apiClient.delete(`${this.baseEndpoint}/restaurant/${restaurantId}`);
   }
 }
+
+export const CartService = new CartServiceClass();

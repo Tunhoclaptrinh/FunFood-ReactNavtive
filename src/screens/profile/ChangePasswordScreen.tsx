@@ -295,13 +295,14 @@ const ChangePasswordScreen = ({navigation}: any) => {
 
         {/* Change Password Button */}
         <View style={styles.buttonContainer}>
-          <Button
-            title={loading ? "Changing Password..." : "Change Password"}
-            onPress={handleChangePassword}
-            loading={loading}
-            disabled={loading || !formData.currentPassword || !formData.newPassword || !formData.confirmPassword}
-            style={styles.button}
-          />
+          <View style={styles.button}>
+            <Button
+              title={loading ? "Changing Password..." : "Change Password"}
+              onPress={handleChangePassword}
+              loading={loading}
+              disabled={loading || !formData.currentPassword || !formData.newPassword || !formData.confirmPassword}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -240,11 +240,9 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
       {/* Cart Button */}
       {cartItemCount > 0 && (
         <View style={styles.cartFooter}>
-          <Button
-            title={`View Cart (${cartItemCount})`}
-            onPress={() => navigation.navigate("Cart")}
-            style={styles.cartButton}
-          />
+          <View style={styles.cartButton}>
+            <Button title={`View Cart (${cartItemCount})`} onPress={() => navigation.navigate("Cart")} />
+          </View>
         </View>
       )}
     </SafeAreaView>
