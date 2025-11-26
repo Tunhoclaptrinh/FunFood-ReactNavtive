@@ -5,20 +5,21 @@
  * - Draw routes with polyline
  * - Track current location
  * - Directions API integration
+ * * UPDATED: Migrated from @react-native-community/geolocation to expo-location
  */
 
 import React, {useEffect, useState, useRef} from "react";
 import {View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert, Platform} from "react-native";
 import MapView, {Marker, Polyline, PROVIDER_GOOGLE, Region} from "react-native-maps";
-import Geolocation from "@react-native-community/geolocation";
+import * as Location from "expo-location"; // <-- Đổi thư viện import
 import {Ionicons} from "@expo/vector-icons";
-import {MapService, Location, MapMarker, DirectionsResult} from "@services/map.service";
+import {MapService, Location as MapLocation, MapMarker, DirectionsResult} from "@services/map.service"; // Alias Location interface to avoid conflict
 import {COLORS} from "@/src/styles/colors";
 
 interface MapViewComponentProps {
   markers?: MapMarker[];
   showRoute?: boolean;
-  destination?: Location;
+  destination?: MapLocation;
   onMarkerPress?: (marker: MapMarker) => void;
   enableTracking?: boolean;
   initialRegion?: Region;
@@ -37,7 +38,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   const mapRef = useRef<MapView>(null);
 
   // State
-  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [directions, setDirections] = useState<DirectionsResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,12 +51,17 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
     }
   );
 
-  // Watch position ID
-  const watchIdRef = useRef<number | null>(null);
+  // Subscription for location tracking
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   // Get initial location
   useEffect(() => {
     getCurrentLocation();
+
+    // Cleanup tracking on unmount
+    return () => {
+      stopTracking();
+    };
   }, []);
 
   // Fetch directions when destination changes
@@ -72,78 +78,103 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
     } else {
       stopTracking();
     }
-
-    return () => stopTracking();
   }, [isTracking]);
 
   // Fit map to show all markers
   useEffect(() => {
     if (markers.length > 0 && mapRef.current) {
-      fitToMarkers();
+      // Add small delay to ensure map is ready
+      setTimeout(() => fitToMarkers(), 500);
     }
   }, [markers]);
 
   /**
-   * Get current location once
+   * Get current location once using Expo Location
    */
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        const {latitude, longitude} = position.coords;
-        const location = {latitude, longitude};
-        setCurrentLocation(location);
-        setRegion({
-          ...region,
-          latitude,
-          longitude,
-        });
-      },
-      (error) => {
-        console.error("Error getting location:", error);
-        Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại");
-      },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000}
-    );
+  const getCurrentLocation = async () => {
+    try {
+      // Web platform check
+      if (Platform.OS === "web") {
+        // Mock location for web to prevent crash
+        const mockLoc = {latitude: 21.0285, longitude: 105.8542};
+        setCurrentLocation(mockLoc);
+        return;
+      }
+
+      const {status} = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Quyền truy cập bị từ chối", "Vui lòng cấp quyền vị trí để sử dụng tính năng này");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const {latitude, longitude} = location.coords;
+      const coords = {latitude, longitude};
+      setCurrentLocation(coords);
+      setRegion({
+        ...region,
+        latitude,
+        longitude,
+      });
+    } catch (error) {
+      console.error("Error getting location:", error);
+      // Don't alert on mount to avoid annoying user if gps is off
+    }
   };
 
   /**
-   * Start tracking location continuously
+   * Start tracking location continuously using Expo Location
    */
-  const startTracking = () => {
-    watchIdRef.current = Geolocation.watchPosition(
-      (position) => {
-        const {latitude, longitude} = position.coords;
-        const location = {latitude, longitude};
-        setCurrentLocation(location);
+  const startTracking = async () => {
+    try {
+      const {status} = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
 
-        // Auto center map to current location
-        if (mapRef.current) {
-          mapRef.current.animateToRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
-        }
-      },
-      (error) => {
-        console.error("Error tracking location:", error);
-      },
-      {
-        enableHighAccuracy: true,
-        distanceFilter: 10, // Update every 10 meters
-        interval: 5000, // Update every 5 seconds
+      // Stop existing subscription if any
+      if (locationSubscription.current) {
+        stopTracking();
       }
-    );
+
+      const sub = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 10, // Update every 10 meters
+          timeInterval: 5000, // Update every 5 seconds
+        },
+        (location) => {
+          const {latitude, longitude} = location.coords;
+          const coords = {latitude, longitude};
+          setCurrentLocation(coords);
+
+          // Auto center map to current location
+          if (mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        }
+      );
+
+      locationSubscription.current = sub;
+    } catch (error) {
+      console.error("Error tracking location:", error);
+      setIsTracking(false);
+    }
   };
 
   /**
    * Stop tracking location
    */
   const stopTracking = () => {
-    if (watchIdRef.current !== null) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
     }
   };
 
@@ -172,11 +203,11 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
           mapRef.current.animateToRegion(regionToFit, 1000);
         }
       } else {
-        Alert.alert("Lỗi", "Không thể tìm đường đi");
+        // Alert.alert("Lỗi", "Không thể tìm đường đi");
       }
     } catch (error) {
       console.error("Error fetching directions:", error);
-      Alert.alert("Lỗi", "Không thể tải chỉ đường");
+      // Alert.alert("Lỗi", "Không thể tải chỉ đường");
     } finally {
       setLoading(false);
     }

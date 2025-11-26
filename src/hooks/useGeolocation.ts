@@ -1,49 +1,62 @@
+// src/hooks/useGeolocation.ts
 import {useState, useEffect, useCallback} from "react";
-import {Platform} from "react-native"; // Dòng này RẤT QUAN TRỌNG
-import * as Location from "expo-location";
+import {Platform, Alert} from "react-native";
+import * as Location from "expo-location"; // <-- Dùng thư viện này
 
-interface Location {
+interface LocationType {
   latitude: number;
   longitude: number;
-  accuracy: number;
+  accuracy: number | null;
 }
 
 export const useGeolocation = () => {
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] = useState<LocationType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const requestLocation = useCallback(async () => {
-    // 1. KIỂM TRA NỀN TẢNG: Nếu là Web, sử dụng mock data và thoát
+    // 1. Xử lý Web (Mock data)
     if (Platform.OS === "web") {
       // Vị trí giả lập (ví dụ: Hà Nội)
       setLocation({latitude: 21.0285, longitude: 105.8542, accuracy: 0});
       setLoading(false);
       setError("Location is mocked on web platform.");
       return;
+      return;
     }
 
-    // 2. LOGIC NATIVE: Chỉ chạy cho iOS/Android
+    setLoading(true);
     try {
-      setLoading(true);
+      // 2. Xin quyền truy cập vị trí
       const {status} = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
         setError("Permission denied");
+        Alert.alert("Lỗi", "Cần cấp quyền vị trí để tìm nhà hàng gần bạn.");
         return;
       }
 
-      const loc = await Location.getCurrentPositionAsync({});
-      const {latitude, longitude, accuracy} = loc.coords;
-      setLocation({latitude, longitude, accuracy: accuracy || 0});
+      // 3. Lấy vị trí hiện tại
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High, // Độ chính xác cao
+      });
+
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        accuracy: loc.coords.accuracy,
+      });
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(message);
+      console.error("Location error:", message);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Tự động chạy khi hook được khởi tạo
   useEffect(() => {
     requestLocation();
   }, []);
