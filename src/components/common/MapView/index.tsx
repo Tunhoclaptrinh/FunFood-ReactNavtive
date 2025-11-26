@@ -1,5 +1,5 @@
 /**
- * MapViewComponent - Google Maps with Full Features
+ * MapView - Google Maps with Full Features
  * - Display map
  * - Show markers (restaurants, delivery points)
  * - Draw routes with polyline
@@ -10,23 +10,16 @@
 
 import React, {useEffect, useState, useRef} from "react";
 import {View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Alert, Platform} from "react-native";
-import MapView, {Marker, Polyline, PROVIDER_GOOGLE, Region} from "react-native-maps";
-import * as Location from "expo-location"; // <-- Đổi thư viện import
+import ReactNativeMap, {Marker, Polyline, PROVIDER_GOOGLE, Region} from "react-native-maps";
+
+import * as Location from "expo-location";
 import {Ionicons} from "@expo/vector-icons";
-import {MapService, Location as MapLocation, MapMarker, DirectionsResult} from "@services/map.service"; // Alias Location interface to avoid conflict
+import {MapService, Location as MapLocation, DirectionsResult} from "@services/map.service"; // Alias Location interface to avoid conflict
 import {COLORS} from "@/src/styles/colors";
+import {MapViewProps} from "./types";
+import {styles} from "./styles";
 
-interface MapViewComponentProps {
-  markers?: MapMarker[];
-  showRoute?: boolean;
-  destination?: MapLocation;
-  onMarkerPress?: (marker: MapMarker) => void;
-  enableTracking?: boolean;
-  initialRegion?: Region;
-  style?: any;
-}
-
-const MapViewComponent: React.FC<MapViewComponentProps> = ({
+const MapView: React.FC<MapViewProps> = ({
   markers = [],
   showRoute = false,
   destination,
@@ -35,7 +28,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   initialRegion,
   style,
 }) => {
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<ReactNativeMap>(null);
 
   // State
   const [currentLocation, setCurrentLocation] = useState<MapLocation | null>(null);
@@ -282,7 +275,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   return (
     <View style={[styles.container, style]}>
       {/* Map */}
-      <MapView
+      <ReactNativeMap
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
@@ -302,7 +295,9 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
             pinColor={COLORS.INFO}
           >
             <View style={[styles.currentLocationMarker, isTracking && styles.trackingMarker]}>
-              <Ionicons name="navigate-circle" size={32} color={COLORS.INFO} />
+              <View style={styles.currentLocationMarkerIcon}>
+                <Ionicons name="navigate-circle" size={24} color={COLORS.INFO} />
+              </View>
             </View>
           </Marker>
         )}
@@ -334,7 +329,7 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
             lineDashPattern={[1]}
           />
         )}
-      </MapView>
+      </ReactNativeMap>
 
       {/* Route Info Card */}
       {showRoute && directions && (
@@ -405,118 +400,4 @@ const MapViewComponent: React.FC<MapViewComponentProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  currentLocationMarker: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.WHITE,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: COLORS.INFO,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  trackingMarker: {
-    borderColor: COLORS.SUCCESS,
-    backgroundColor: "#E8F8F1",
-  },
-  markerContainer: {
-    alignItems: "center",
-  },
-  markerIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: COLORS.WHITE,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  routeInfoCard: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    right: 16,
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  routeInfoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  routeInfoText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-  },
-  controls: {
-    position: "absolute",
-    right: 16,
-    bottom: 100,
-    gap: 12,
-  },
-  controlButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.WHITE,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  trackingActiveButton: {
-    backgroundColor: COLORS.SUCCESS,
-  },
-  trackingStatus: {
-    position: "absolute",
-    bottom: 40,
-    left: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.SUCCESS,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 8,
-  },
-  trackingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.WHITE,
-  },
-  trackingText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.WHITE,
-  },
-});
-
-export default MapViewComponent;
+export default MapView;

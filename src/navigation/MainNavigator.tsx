@@ -33,7 +33,6 @@ import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
 import OrderStatsScreen from "@screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
-import HomeScreenWithMap from "../screens/home/HomeScreenWithMap";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -82,7 +81,7 @@ const HomeStack = () => (
   <Stack.Navigator screenOptions={GLOBAL_HEADER_OPTIONS}>
     <Stack.Screen
       name={ROUTE_NAMES.HOME.SCREEN}
-      component={HomeScreenWithMap}
+      component={HomeScreen}
       options={{title: "Khám phá", headerBackVisible: false}}
     />
     <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
