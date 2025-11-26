@@ -142,9 +142,6 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
 
       {/* --- Header Actions (Back & Favorite) --- */}
       <View style={styles.headerActions}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.BLACK} />
-        </TouchableOpacity>
         <View style={{flex: 1}} />
         <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
           <Ionicons name="share-social-outline" size={24} color={COLORS.BLACK} />
