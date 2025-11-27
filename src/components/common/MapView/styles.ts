@@ -70,6 +70,11 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.DARK,
   },
+  routeInfoSubtext: {
+    fontSize: 12,
+    color: COLORS.GRAY,
+    marginTop: 4,
+  },
   controls: {
     position: "absolute",
     right: 16,
@@ -91,6 +96,9 @@ export const styles = StyleSheet.create({
   },
   trackingActiveButton: {
     backgroundColor: COLORS.SUCCESS,
+  },
+  clearRouteButton: {
+    backgroundColor: COLORS.ERROR || "#FF3B30",
   },
   trackingStatus: {
     position: "absolute",
@@ -114,5 +122,29 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: COLORS.WHITE,
+  },
+  instructionsCard: {
+    position: "absolute",
+    bottom: 40,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.WHITE,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  instructionsText: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.DARK,
+    fontWeight: "500",
   },
 });

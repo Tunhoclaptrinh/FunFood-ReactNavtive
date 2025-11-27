@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  FlatList,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -13,6 +12,8 @@ import {
   Animated,
   Platform,
   StatusBar,
+  Linking,
+  Share,
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {RestaurantService} from "@services/restaurant.service";
@@ -23,7 +24,6 @@ import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 import SearchBar from "@/src/components/common/SearchBar";
-import Card from "@/src/components/common/Card/Card";
 
 const HEADER_HEIGHT = 250;
 
@@ -63,12 +63,8 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const loadRestaurantData = async () => {
     try {
       setLoading(true);
-      // Load restaurant info
       const res = await RestaurantService.getById(restaurantId);
       setRestaurant(res);
-      // Giả lập check favorite (thực tế nên có API check)
-      // setIsFavorite(res.isFavorite);
-
       await loadMenu(1);
     } catch (error) {
       Alert.alert("Lỗi", "Không thể tải thông tin nhà hàng");
@@ -102,8 +98,51 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
       setIsFavorite(!isFavorite);
       await FavoriteService.toggleFavorite("restaurant", restaurantId);
     } catch (error) {
-      setIsFavorite(!isFavorite); // Revert if error
+      setIsFavorite(!isFavorite);
       console.error("Favorite error", error);
+    }
+  };
+
+  const handlePhoneCall = () => {
+    if (restaurant?.phone) {
+      const phoneNumber = restaurant.phone.replace(/\s/g, "");
+      Alert.alert("Gọi điện thoại", `Bạn muốn gọi đến ${restaurant.phone}?`, [
+        {text: "Hủy", style: "cancel"},
+        {
+          text: "Gọi ngay",
+          onPress: () => {
+            Linking.openURL(`tel:${phoneNumber}`);
+          },
+        },
+      ]);
+    }
+  };
+
+  const handleOpenMap = () => {
+    if (restaurant?.latitude && restaurant?.longitude) {
+      const scheme = Platform.select({ios: "maps:", android: "geo:"});
+      const latLng = `${restaurant.latitude},${restaurant.longitude}`;
+      const label = encodeURIComponent(restaurant.name);
+
+      const url = Platform.select({
+        ios: `${scheme}?q=${label}&ll=${latLng}`,
+        android: `${scheme}${latLng}?q=${label}`,
+      });
+
+      Linking.openURL(url as string).catch(() => {
+        Alert.alert("Lỗi", "Không thể mở bản đồ");
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Khám phá ${restaurant.name} - ${restaurant.description}\nĐịa chỉ: ${restaurant.address}\nĐánh giá: ${restaurant.rating}⭐`,
+        title: restaurant.name,
+      });
+    } catch (error) {
+      console.error("Share error", error);
     }
   };
 
@@ -119,7 +158,6 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const handleAddToCart = (product: any) => {
     setAddingId(product.id);
     addItem(product, 1);
-    // Hiệu ứng giả lập delay nhỏ để user cảm thấy đã add
     setTimeout(() => setAddingId(null), 300);
   };
 
@@ -139,22 +177,6 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-
-      {/* --- Header Actions (Back & Favorite) --- */}
-      <View style={styles.headerActions}>
-        <View style={{flex: 1}} />
-        <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
-          <Ionicons name="share-social-outline" size={24} color={COLORS.BLACK} />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.iconButton, {marginLeft: 12}]} onPress={handleToggleFavorite}>
-          <Ionicons
-            name={isFavorite ? "heart" : "heart-outline"}
-            size={24}
-            color={isFavorite ? COLORS.PRIMARY : COLORS.BLACK}
-          />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {useNativeDriver: false})}
@@ -174,6 +196,7 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
         {/* --- Info Section --- */}
         <View style={styles.contentContainer}>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
+          {restaurant.description && <Text style={styles.restaurantDescription}>{restaurant.description}</Text>}
           <Text style={styles.restaurantAddress}>{restaurant.address}</Text>
 
           <View style={styles.metaRow}>
@@ -195,9 +218,62 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
             </View>
           </View>
 
+          {/* --- Action Buttons --- */}
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity style={styles.actionButton} onPress={handlePhoneCall}>
+              <View style={[styles.actionIconCircle, {backgroundColor: "#E8F5E9"}]}>
+                <Ionicons name="call" size={20} color="#4CAF50" />
+              </View>
+              <Text style={styles.actionButtonText}>Gọi điện</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionButton} onPress={handleOpenMap}>
+              <View style={[styles.actionIconCircle, {backgroundColor: "#E3F2FD"}]}>
+                <Ionicons name="navigate" size={20} color="#2196F3" />
+              </View>
+              <Text style={styles.actionButtonText}>Chỉ đường</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+              <View style={[styles.actionIconCircle, {backgroundColor: "#FFF3E0"}]}>
+                <Ionicons name="share-social-outline" size={20} color={COLORS.BLACK} />
+              </View>
+              <Text style={styles.actionButtonText}>Chia sẻ</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionButton} onPress={handleToggleFavorite}>
+              <View style={[styles.actionIconCircle, {backgroundColor: "#ffe0edff"}]}>
+                <Ionicons
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={20}
+                  color={isFavorite ? COLORS.PRIMARY : COLORS.BLACK}
+                />
+              </View>
+              <Text style={styles.actionButtonText}>Yêu thích</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* --- Opening Hours --- */}
+          {restaurant.openTime && restaurant.closeTime && (
+            <View style={styles.hoursContainer}>
+              <View style={styles.hoursRow}>
+                <Ionicons name="time-outline" size={18} color={COLORS.GRAY} />
+                <Text style={styles.hoursLabel}>Giờ mở cửa:</Text>
+                <Text style={styles.hoursText}>
+                  {restaurant.openTime} - {restaurant.closeTime}
+                </Text>
+                <View style={[styles.statusBadge, restaurant.isOpen ? styles.statusOpen : styles.statusClosed]}>
+                  <Text style={[styles.statusText, {color: restaurant.isOpen ? "#2E7D32" : "#C62828"}]}>
+                    {restaurant.isOpen ? "Đang mở" : "Đã đóng"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           <View style={styles.divider} />
 
-          {/* --- Search & Filter --- */}
+          {/* --- Search --- */}
           <View style={styles.searchSection}>
             <SearchBar
               placeholder="Tìm món ngon..."
@@ -286,27 +362,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  headerActions: {
-    position: "absolute",
-    top: Platform.OS === "android" ? 20 : 30,
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    zIndex: 10,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.WHITE,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
   bannerImage: {
     width: "100%",
     height: HEADER_HEIGHT,
@@ -338,8 +393,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    marginTop: -10,
     paddingHorizontal: 20,
     paddingTop: 24,
   },
@@ -347,7 +403,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: COLORS.DARK,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  restaurantDescription: {
+    fontSize: 14,
+    color: COLORS.DARK_GRAY,
+    lineHeight: 20,
+    marginBottom: 12,
   },
   restaurantAddress: {
     fontSize: 14,
@@ -374,6 +436,66 @@ const styles = StyleSheet.create({
     height: 14,
     backgroundColor: COLORS.BORDER,
     marginHorizontal: 12,
+  },
+  actionButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 20,
+    paddingHorizontal: 10,
+  },
+  actionButton: {
+    alignItems: "center",
+    flex: 1,
+  },
+  actionIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    fontSize: 12,
+    color: COLORS.DARK_GRAY,
+    fontWeight: "500",
+  },
+  hoursContainer: {
+    backgroundColor: "#F8F9FA",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  hoursRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  hoursLabel: {
+    fontSize: 13,
+    color: COLORS.GRAY,
+    fontWeight: "500",
+  },
+  hoursText: {
+    fontSize: 13,
+    color: COLORS.DARK,
+    fontWeight: "600",
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  statusOpen: {
+    backgroundColor: "#E8F5E9",
+  },
+  statusClosed: {
+    backgroundColor: "#FFEBEE",
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
   divider: {
     height: 1,
