@@ -6,11 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
   Modal,
 } from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {apiClient} from "@config/api.client";

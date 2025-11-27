@@ -12,10 +12,10 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  SafeAreaView,
   Alert,
   Modal,
 } from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {ShipperService, ShipperOrder} from "@services/shipper.service";

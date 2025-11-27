@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from "react";
-import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, SafeAreaView, Switch} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, Switch} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {apiClient} from "@config/api.client";
 import {useGeolocation} from "@hooks/useGeolocation";

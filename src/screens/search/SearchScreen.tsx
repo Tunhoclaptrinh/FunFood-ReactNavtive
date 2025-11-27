@@ -1,5 +1,6 @@
 import React, {useState} from "react";
-import {View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, SafeAreaView, SectionList} from "react-native";
+import {View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, SectionList} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {RestaurantService} from "@services/restaurant.service";
 import {ProductService} from "@services/product.service";
@@ -7,7 +8,7 @@ import {useDebounce} from "@hooks/useDebounce";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import SearchBar from "@/src/components/common/SearchBar";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
-import Card from "@/src/components/common/Card/Card";
+import Card from "@/src/components/common/Card";
 import {COLORS} from "@/src/styles/colors";
 
 interface SearchResult {

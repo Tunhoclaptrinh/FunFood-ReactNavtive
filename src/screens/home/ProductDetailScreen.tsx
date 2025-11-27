@@ -7,7 +7,6 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
   Platform,
@@ -94,23 +93,6 @@ const ProductDetailScreen = ({route, navigation}: any) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* --- Header Nav --- */}
-      <View style={styles.navHeader}>
-        <TouchableOpacity style={styles.navBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.DARK} />
-        </TouchableOpacity>
-        <Text style={styles.navTitle} numberOfLines={1}>
-          {product.name}
-        </Text>
-        <TouchableOpacity style={styles.navBtn} onPress={handleToggleFavorite}>
-          <Ionicons
-            name={isFavorite ? "heart" : "heart-outline"}
-            size={24}
-            color={isFavorite ? COLORS.PRIMARY : COLORS.DARK}
-          />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 120}}>
         {/* --- Image --- */}
         <View style={styles.imageWrapper}>
@@ -135,6 +117,15 @@ const ProductDetailScreen = ({route, navigation}: any) => {
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFB800" />
               <Text style={styles.ratingText}>{product.rating || 5.0}</Text>
+            </View>
+            <View style={styles.ratingContainer}>
+              <TouchableOpacity style={styles.favoriteIcon} onPress={handleToggleFavorite}>
+                <Ionicons
+                  name={isFavorite ? "heart" : "heart-outline"}
+                  size={24}
+                  color={isFavorite ? COLORS.PRIMARY : COLORS.DARK}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -229,31 +220,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  navHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 0,
-    paddingTop: Platform.OS === "android" ? 10 : 10,
-    backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  navBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  navTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginHorizontal: 10,
-  },
   imageWrapper: {
     width: "100%",
     height: 300,
@@ -310,6 +276,11 @@ const styles = StyleSheet.create({
     color: "#FFB800",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  favoriteIcon: {
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   description: {
     fontSize: 14,

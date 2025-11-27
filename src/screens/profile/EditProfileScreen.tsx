@@ -1,15 +1,6 @@
 import React, {useState, useEffect} from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Alert,
-  SafeAreaView,
-  ActivityIndicator,
-  Image,
-} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator, Image} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {useAuth} from "@hooks/useAuth";
