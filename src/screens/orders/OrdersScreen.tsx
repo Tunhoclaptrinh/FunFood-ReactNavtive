@@ -1,14 +1,6 @@
 import React, {useEffect, useState} from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  SafeAreaView,
-} from "react-native";
+import {View, StyleSheet, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import {OrderService} from "@services/order.service";

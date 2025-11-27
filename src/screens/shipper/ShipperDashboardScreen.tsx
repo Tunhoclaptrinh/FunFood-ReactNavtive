@@ -4,16 +4,8 @@
  */
 
 import React, {useEffect, useState} from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  SafeAreaView,
-} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {ShipperService, ShipperStats} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";

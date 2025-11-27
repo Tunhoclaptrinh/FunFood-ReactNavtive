@@ -6,11 +6,11 @@ import {
   Text,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   Image,
   RefreshControl,
 } from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";

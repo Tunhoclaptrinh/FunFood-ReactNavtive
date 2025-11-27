@@ -1,15 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  SafeAreaView,
-  Modal,
-} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator, Modal} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {useCart} from "@hooks/useCart";
 import {OrderService} from "@services/order.service";
@@ -20,6 +10,7 @@ import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {calculateDeliveryFee} from "@utils/gps";
 import {COLORS} from "@/src/styles/colors";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 
 const PAYMENT_METHODS = [
   {id: "cash", label: "Cash on Delivery", icon: "cash-outline"},

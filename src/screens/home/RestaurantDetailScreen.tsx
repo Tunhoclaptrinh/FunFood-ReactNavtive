@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   ImageBackground,
   Animated,
   Platform,
@@ -15,6 +14,7 @@ import {
   Linking,
   Share,
 } from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {RestaurantService} from "@services/restaurant.service";
 import {FavoriteService} from "@services/favorite.service";
@@ -440,8 +440,8 @@ const styles = StyleSheet.create({
   actionButtonsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginVertical: 20,
-    paddingHorizontal: 10,
+    marginVertical: 10,
+    paddingHorizontal: 4,
   },
   actionButton: {
     alignItems: "center",

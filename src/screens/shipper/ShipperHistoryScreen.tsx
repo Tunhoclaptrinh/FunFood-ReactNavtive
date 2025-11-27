@@ -4,17 +4,9 @@
  */
 
 import React, {useEffect, useState, useCallback} from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
-  SafeAreaView,
-} from "react-native";
+import {View, StyleSheet, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {useFocusEffect} from "@react-navigation/native";
 import {ShipperService, ShipperOrder} from "@services/shipper.service";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";

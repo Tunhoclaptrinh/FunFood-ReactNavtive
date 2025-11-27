@@ -1,5 +1,6 @@
 import React, {useState} from "react";
-import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, SafeAreaView} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {apiClient} from "@config/api.client";
 import Input from "@/src/components/common/Input/Input";

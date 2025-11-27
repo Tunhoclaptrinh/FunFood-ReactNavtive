@@ -1,14 +1,6 @@
 import React, {useState, useEffect} from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, ActivityIndicator, RefreshControl} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";

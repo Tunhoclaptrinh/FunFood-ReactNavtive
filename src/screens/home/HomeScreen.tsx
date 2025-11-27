@@ -6,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
   Image,
   Dimensions,
@@ -14,6 +13,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 
 // --- Stores & Hooks ---
@@ -98,7 +98,6 @@ const HomeScreen = ({navigation}: any) => {
   useEffect(() => {
     handleFetchData();
   }, [location, dataSource]);
-
   // 3. Sync Store Items to Map Markers
   useEffect(() => {
     if (store.items.length > 0) {
@@ -548,20 +547,20 @@ const HomeScreen = ({navigation}: any) => {
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: "#FAFAFA"},
   headerContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingTop: Platform.OS === "android" ? 10 : 0,
-    paddingBottom: 10,
+    paddingBottom: 8,
     backgroundColor: COLORS.WHITE,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
     shadowColor: "#000",
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 2,
     zIndex: 10,
   },
-  greetingSection: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12},
+  greetingSection: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8},
   greeting: {fontSize: 22, fontWeight: "800", color: COLORS.DARK},
   greetingSubtitle: {fontSize: 13, color: COLORS.GRAY},
   notificationButton: {
@@ -578,7 +577,7 @@ const styles = StyleSheet.create({
     right: -4,
     backgroundColor: COLORS.ERROR,
     paddingHorizontal: 4,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   badgeText: {color: "white", fontSize: 10, fontWeight: "bold"},
 
@@ -597,16 +596,15 @@ const styles = StyleSheet.create({
   locationAddress: {fontSize: 13, fontWeight: "600", color: COLORS.DARK},
 
   searchSection: {flexDirection: "row", gap: 8, marginBottom: 8},
-  iconButton: {width: 50, height: 50, borderRadius: 12, justifyContent: "center", alignItems: "center"},
+  iconButton: {width: 50, height: 50, borderRadius: 8, justifyContent: "center", alignItems: "center"},
   filterButton: {backgroundColor: COLORS.PRIMARY, shadowColor: COLORS.PRIMARY, shadowOpacity: 0.3, elevation: 4},
-
   categoriesSection: {marginBottom: 12},
-  categoriesContainer: {gap: 12},
+  categoriesContainer: {gap: 4},
   categoryItem: {alignItems: "center", width: 64},
   categoryIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 36,
+    height: 36,
+    borderRadius: 4,
     backgroundColor: "#F3F4F6",
     justifyContent: "center",
     alignItems: "center",
@@ -614,23 +612,23 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   categoryIconContainerActive: {backgroundColor: COLORS.PRIMARY, borderWidth: 2, borderColor: "#FFD1D1"},
-  categoryImage: {width: "100%", height: "100%", borderRadius: 18},
+  categoryImage: {width: "100%", height: "100%", borderRadius: 4},
   categoryName: {fontSize: 11, fontWeight: "500", color: COLORS.DARK_GRAY, textAlign: "center"},
   categoryNameActive: {color: COLORS.PRIMARY, fontWeight: "700"},
 
   bannersContainer: {gap: 12, marginBottom: 12, paddingRight: 20},
   bannerCard: {
-    width: width - 40,
+    width: width - 160,
     borderRadius: 12,
     padding: 16,
     flexDirection: "row",
-    height: 70,
+    height: 50,
     alignItems: "center",
   },
   bannerContent: {flexDirection: "row", alignItems: "center", gap: 12},
   bannerIconBg: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 20,
     backgroundColor: "white",
     justifyContent: "center",

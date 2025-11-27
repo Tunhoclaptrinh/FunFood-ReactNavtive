@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from "react";
-import {View, ScrollView, StyleSheet, Text, Switch, TouchableOpacity, Alert, SafeAreaView} from "react-native";
+import {View, ScrollView, StyleSheet, Text, Switch, TouchableOpacity, Alert} from "react-native";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import Button from "@/src/components/common/Button";
 import {COLORS} from "@/src/styles/colors";
