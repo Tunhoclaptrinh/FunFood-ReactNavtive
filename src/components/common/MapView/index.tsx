@@ -5,7 +5,7 @@
  * - Draw routes with polyline
  * - Track current location
  * - Directions API integration
- * * UPDATED: Migrated from @react-native-community/geolocation to expo-location
+ * - Added route to selected location on map
  */
 
 import React, {useEffect, useState, useRef} from "react";
@@ -14,7 +14,7 @@ import ReactNativeMap, {Marker, Polyline, PROVIDER_GOOGLE, Region} from "react-n
 
 import * as Location from "expo-location";
 import {Ionicons} from "@expo/vector-icons";
-import {MapService, Location as MapLocation, DirectionsResult} from "@services/map.service"; // Alias Location interface to avoid conflict
+import {MapService, Location as MapLocation, DirectionsResult} from "@services/map.service";
 import {COLORS} from "@/src/styles/colors";
 import {MapViewProps} from "./types";
 import {styles} from "./styles";
@@ -35,6 +35,8 @@ const MapView: React.FC<MapViewProps> = ({
   const [isTracking, setIsTracking] = useState(false);
   const [directions, setDirections] = useState<DirectionsResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<MapLocation | null>(null);
+  const [showSelectedRoute, setShowSelectedRoute] = useState(false);
   const [region, setRegion] = useState<Region>(
     initialRegion || {
       latitude: 21.0285,
@@ -60,9 +62,16 @@ const MapView: React.FC<MapViewProps> = ({
   // Fetch directions when destination changes
   useEffect(() => {
     if (showRoute && currentLocation && destination) {
-      fetchDirections();
+      fetchDirections(destination);
     }
   }, [showRoute, currentLocation, destination]);
+
+  // Fetch directions when selected destination changes
+  useEffect(() => {
+    if (showSelectedRoute && currentLocation && selectedDestination) {
+      fetchDirections(selectedDestination);
+    }
+  }, [showSelectedRoute, currentLocation, selectedDestination]);
 
   // Start/Stop tracking
   useEffect(() => {
@@ -76,7 +85,6 @@ const MapView: React.FC<MapViewProps> = ({
   // Fit map to show all markers
   useEffect(() => {
     if (markers.length > 0 && mapRef.current) {
-      // Add small delay to ensure map is ready
       setTimeout(() => fitToMarkers(), 500);
     }
   }, [markers]);
@@ -88,7 +96,6 @@ const MapView: React.FC<MapViewProps> = ({
     try {
       // Web platform check
       if (Platform.OS === "web") {
-        // Mock location for web to prevent crash
         const mockLoc = {latitude: 21.0285, longitude: 105.8542};
         setCurrentLocation(mockLoc);
         return;
@@ -114,7 +121,6 @@ const MapView: React.FC<MapViewProps> = ({
       });
     } catch (error) {
       console.error("Error getting location:", error);
-      // Don't alert on mount to avoid annoying user if gps is off
     }
   };
 
@@ -126,7 +132,6 @@ const MapView: React.FC<MapViewProps> = ({
       const {status} = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
 
-      // Stop existing subscription if any
       if (locationSubscription.current) {
         stopTracking();
       }
@@ -134,15 +139,14 @@ const MapView: React.FC<MapViewProps> = ({
       const sub = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          distanceInterval: 10, // Update every 10 meters
-          timeInterval: 5000, // Update every 5 seconds
+          distanceInterval: 10,
+          timeInterval: 5000,
         },
         (location) => {
           const {latitude, longitude} = location.coords;
           const coords = {latitude, longitude};
           setCurrentLocation(coords);
 
-          // Auto center map to current location
           if (mapRef.current) {
             mapRef.current.animateToRegion({
               latitude,
@@ -179,28 +183,51 @@ const MapView: React.FC<MapViewProps> = ({
   };
 
   /**
+   * Handle long press on map to select destination
+   */
+  const handleMapLongPress = (event: any) => {
+    const {latitude, longitude} = event.nativeEvent.coordinate;
+    const newDestination = {latitude, longitude};
+
+    setSelectedDestination(newDestination);
+    setShowSelectedRoute(true);
+
+    // Show feedback
+    Alert.alert(
+      "Điểm đến đã chọn",
+      `Tọa độ: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}\nNhấn nút "X" để xóa đường đi.`,
+      [{text: "OK"}]
+    );
+  };
+
+  /**
+   * Clear selected destination and route
+   */
+  const handleClearRoute = () => {
+    setSelectedDestination(null);
+    setShowSelectedRoute(false);
+    setDirections(null);
+  };
+
+  /**
    * Fetch directions from current location to destination
    */
-  const fetchDirections = async () => {
-    if (!currentLocation || !destination) return;
+  const fetchDirections = async (dest: MapLocation) => {
+    if (!currentLocation || !dest) return;
 
     try {
       setLoading(true);
-      const result = await MapService.getDirections(currentLocation, destination);
+      const result = await MapService.getDirections(currentLocation, dest);
 
       if (result) {
         setDirections(result);
-        // Fit map to show entire route
         if (mapRef.current && result.coordinates.length > 0) {
           const regionToFit = MapService.getRegionForCoordinates(result.coordinates);
           mapRef.current.animateToRegion(regionToFit, 1000);
         }
-      } else {
-        // Alert.alert("Lỗi", "Không thể tìm đường đi");
       }
     } catch (error) {
       console.error("Error fetching directions:", error);
-      // Alert.alert("Lỗi", "Không thể tải chỉ đường");
     } finally {
       setLoading(false);
     }
@@ -272,6 +299,10 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
+  // Determine which destination to show
+  const activeDestination = showSelectedRoute && selectedDestination ? selectedDestination : destination;
+  const shouldShowRoute = (showRoute || showSelectedRoute) && directions;
+
   return (
     <View style={[styles.container, style]}>
       {/* Map */}
@@ -280,11 +311,12 @@ const MapView: React.FC<MapViewProps> = ({
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={region}
-        showsUserLocation={false} // We'll use custom marker
+        showsUserLocation={false}
         showsMyLocationButton={false}
         showsCompass={true}
         showsScale={true}
         loadingEnabled={true}
+        onLongPress={handleMapLongPress}
       >
         {/* Current Location Marker */}
         {currentLocation && (
@@ -297,6 +329,22 @@ const MapView: React.FC<MapViewProps> = ({
             <View style={[styles.currentLocationMarker, isTracking && styles.trackingMarker]}>
               <View style={styles.currentLocationMarkerIcon}>
                 <Ionicons name="navigate-circle" size={24} color={COLORS.INFO} />
+              </View>
+            </View>
+          </Marker>
+        )}
+
+        {/* Selected Destination Marker */}
+        {selectedDestination && showSelectedRoute && (
+          <Marker
+            coordinate={selectedDestination}
+            title="Điểm đến"
+            description="Vị trí được chọn"
+            pinColor={COLORS.PRIMARY}
+          >
+            <View style={styles.markerContainer}>
+              <View style={[styles.markerIcon, {backgroundColor: COLORS.PRIMARY}]}>
+                <Ionicons name="flag" size={20} color={COLORS.WHITE} />
               </View>
             </View>
           </Marker>
@@ -321,7 +369,7 @@ const MapView: React.FC<MapViewProps> = ({
         ))}
 
         {/* Route Polyline */}
-        {showRoute && directions && directions.coordinates.length > 0 && (
+        {shouldShowRoute && directions.coordinates.length > 0 && (
           <Polyline
             coordinates={directions.coordinates}
             strokeWidth={4}
@@ -332,7 +380,7 @@ const MapView: React.FC<MapViewProps> = ({
       </ReactNativeMap>
 
       {/* Route Info Card */}
-      {showRoute && directions && (
+      {shouldShowRoute && (
         <View style={styles.routeInfoCard}>
           <View style={styles.routeInfoRow}>
             <Ionicons name="car-outline" size={20} color={COLORS.PRIMARY} />
@@ -340,11 +388,25 @@ const MapView: React.FC<MapViewProps> = ({
               {directions.distance.text} • {directions.duration.text}
             </Text>
           </View>
+          {showSelectedRoute && selectedDestination && (
+            <Text style={styles.routeInfoSubtext}>Nhấn giữ trên bản đồ để chọn điểm đến khác</Text>
+          )}
         </View>
       )}
 
       {/* Control Buttons */}
       <View style={styles.controls}>
+        {/* Clear Route Button */}
+        {showSelectedRoute && selectedDestination && (
+          <TouchableOpacity
+            style={[styles.controlButton, styles.clearRouteButton]}
+            onPress={handleClearRoute}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close" size={24} color={COLORS.WHITE} />
+          </TouchableOpacity>
+        )}
+
         {/* Center Location Button */}
         <TouchableOpacity style={styles.controlButton} onPress={handleCenterLocation} activeOpacity={0.7}>
           <Ionicons name="locate" size={24} color={COLORS.PRIMARY} />
@@ -373,10 +435,10 @@ const MapView: React.FC<MapViewProps> = ({
         )}
 
         {/* Refresh Directions Button */}
-        {showRoute && destination && (
+        {shouldShowRoute && activeDestination && (
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={fetchDirections}
+            onPress={() => fetchDirections(activeDestination)}
             activeOpacity={0.7}
             disabled={loading}
           >
@@ -394,6 +456,14 @@ const MapView: React.FC<MapViewProps> = ({
         <View style={styles.trackingStatus}>
           <View style={styles.trackingDot} />
           <Text style={styles.trackingText}>Đang theo dõi vị trí</Text>
+        </View>
+      )}
+
+      {/* Instructions */}
+      {!showSelectedRoute && !showRoute && (
+        <View style={styles.instructionsCard}>
+          <Ionicons name="information-circle-outline" size={20} color={COLORS.PRIMARY} />
+          <Text style={styles.instructionsText}>Nhấn giữ trên bản đồ để chọn điểm đến</Text>
         </View>
       )}
     </View>
