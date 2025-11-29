@@ -8,6 +8,7 @@ import {apiClient} from "@config/api.client";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import {COLORS} from "@/src/styles/colors";
+import styles from "./styles";
 
 const EditProfileScreen = ({navigation}: any) => {
   const {user} = useAuth();
@@ -24,15 +25,15 @@ const EditProfileScreen = ({navigation}: any) => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Tên là bắt buộc";
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
+      newErrors.name = "Tên phải có ít nhất 2 ký tự";
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required";
+      newErrors.phone = "Số điện thoại là bắt buộc";
     } else if (!/^(0|\+84)[0-9]{9}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone number format";
+      newErrors.phone = "Định dạng số điện thoại không hợp lệ";
     }
 
     setErrors(newErrors);
@@ -89,12 +90,13 @@ const EditProfileScreen = ({navigation}: any) => {
   };
 
   const handleAvatarPress = () => {
-    Alert.alert("Change Avatar", "Choose an option", [
-      {text: "Take Photo", onPress: handleTakePhoto},
-      {text: "Choose from Library", onPress: handlePickImage},
-      {text: "Cancel", style: "cancel"},
+    Alert.alert("Thay đổi ảnh đại diện", "Chọn một tùy chọn", [
+      { text: "Chụp ảnh", onPress: handleTakePhoto },
+      { text: "Chọn từ thư viện", onPress: handlePickImage },
+      { text: "Hủy", style: "cancel" },
     ]);
   };
+
 
   const handleSave = async () => {
     if (!validateForm()) {
@@ -156,7 +158,7 @@ const EditProfileScreen = ({navigation}: any) => {
               <Ionicons name="camera" size={20} color={COLORS.WHITE} />
             </View>
           </TouchableOpacity>
-          <Text style={styles.avatarHint}>Tap to change photo</Text>
+          <Text style={styles.avatarHint}>Nhấn để đổi ảnh đại diện</Text>
         </View>
 
         {/* Form Section */}
@@ -170,7 +172,8 @@ const EditProfileScreen = ({navigation}: any) => {
             <View style={styles.readonlyInput}>
               <Text style={styles.readonlyText}>{user?.email}</Text>
               <View style={styles.readonlyBadge}>
-                <Text style={styles.readonlyBadgeText}>Verified</Text>
+                {/* <Text style={styles.readonlyBadgeText}>Verified</Text> */}
+                <Text style={styles.readonlyBadgeText}>Đã xác thực</Text>
               </View>
             </View>
           </View>
@@ -179,12 +182,12 @@ const EditProfileScreen = ({navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelContainer}>
               <Ionicons name="person-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Full Name *</Text>
+              <Text style={styles.label}>Họ và tên *</Text>
             </View>
             <Input
               value={formData.name}
               onChangeText={(name) => setFormData({...formData, name})}
-              placeholder="Enter your full name"
+              placeholder="Nhập họ tên của bạn"
               error={errors.name}
               containerStyle={styles.input}
             />
@@ -194,7 +197,7 @@ const EditProfileScreen = ({navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelContainer}>
               <Ionicons name="call-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Phone Number *</Text>
+              <Text style={styles.label}>Số điện thoại *</Text>
             </View>
             <Input
               value={formData.phone}
@@ -210,12 +213,12 @@ const EditProfileScreen = ({navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelContainer}>
               <Ionicons name="location-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Address</Text>
+              <Text style={styles.label}>Địa chỉ</Text>
             </View>
             <Input
               value={formData.address}
               onChangeText={(address) => setFormData({...formData, address})}
-              placeholder="Enter your address"
+              placeholder="Nhập địa chỉ của bạn"
               multiline
               numberOfLines={3}
               containerStyle={styles.input}
@@ -225,7 +228,7 @@ const EditProfileScreen = ({navigation}: any) => {
           {/* Required Fields Note */}
           <View style={styles.noteContainer}>
             <Ionicons name="information-circle-outline" size={16} color={COLORS.INFO} />
-            <Text style={styles.noteText}>Fields marked with * are required</Text>
+            <Text style={styles.noteText}>Các trường có dấu * là bắt buộc</Text>
           </View>
         </View>
       </ScrollView>
@@ -233,17 +236,17 @@ const EditProfileScreen = ({navigation}: any) => {
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <Button
-          title="Cancel"
+          title="Hủy"
           onPress={() => {
             if (hasChanges()) {
-              Alert.alert("Discard Changes?", "You have unsaved changes. Are you sure you want to discard them?", [
-                {text: "Keep Editing", style: "cancel"},
-                {
-                  text: "Discard",
-                  onPress: () => navigation.goBack(),
-                  style: "destructive",
-                },
-              ]);
+              Alert.alert(
+                "Bỏ thay đổi?",
+                "Bạn có các thay đổi chưa lưu. Bạn có chắc muốn bỏ chúng không?",
+                [
+                  {text: "Tiếp tục chỉnh sửa", style: "cancel"},
+                  {text: "Bỏ", onPress: () => navigation.goBack(), style: "destructive"},
+                ]
+              );
             } else {
               navigation.goBack();
             }
@@ -253,7 +256,7 @@ const EditProfileScreen = ({navigation}: any) => {
         />
 
         <Button
-          title={loading ? "Saving..." : "Save Changes"}
+          title={loading ? "Đang lưu..." : "Lưu thay đổi"}
           onPress={handleSave}
           loading={loading}
           disabled={loading || !hasChanges()}
@@ -263,140 +266,5 @@ const EditProfileScreen = ({navigation}: any) => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-  },
-  avatarSection: {
-    alignItems: "center",
-    paddingVertical: 32,
-    backgroundColor: COLORS.LIGHT_GRAY,
-  },
-  avatarContainer: {
-    position: "relative",
-    marginBottom: 12,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 4,
-    borderColor: COLORS.WHITE,
-  },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.PRIMARY,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 4,
-    borderColor: COLORS.WHITE,
-  },
-  avatarText: {
-    fontSize: 48,
-    fontWeight: "bold",
-    color: COLORS.WHITE,
-  },
-  cameraIconContainer: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.PRIMARY,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: COLORS.WHITE,
-  },
-  avatarHint: {
-    fontSize: 13,
-    color: COLORS.GRAY,
-    fontWeight: "500",
-  },
-  formSection: {
-    padding: 16,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  labelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-  },
-  input: {
-    marginVertical: 0,
-  },
-  readonlyInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  readonlyText: {
-    fontSize: 15,
-    color: COLORS.GRAY,
-  },
-  readonlyBadge: {
-    backgroundColor: COLORS.SUCCESS,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  readonlyBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: COLORS.WHITE,
-  },
-  noteContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#E3F2FD",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  noteText: {
-    fontSize: 12,
-    color: COLORS.INFO,
-    flex: 1,
-  },
-  bottomButtons: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
-    backgroundColor: COLORS.WHITE,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.LIGHT_GRAY,
-    elevation: 5,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    justifyContent: "space-between",
-  },
-  actionButton: {
-    flex: 1,
-  },
-});
 
 export default EditProfileScreen;
