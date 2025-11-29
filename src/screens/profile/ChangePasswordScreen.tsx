@@ -147,21 +147,6 @@ const ChangePasswordScreen = ({navigation}: any) => {
                 error={errors.currentPassword}
                 containerStyle={styles.input}
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() =>
-                  setShowPasswords({
-                    ...showPasswords,
-                    current: !showPasswords.current,
-                  })
-                }
-              >
-                <Ionicons
-                  name={showPasswords.current ? "eye-outline" : "eye-off-outline"}
-                  size={22}
-                  color={COLORS.GRAY}
-                />
-              </TouchableOpacity>
             </View>
           </View>
 
@@ -177,17 +162,6 @@ const ChangePasswordScreen = ({navigation}: any) => {
                 error={errors.newPassword}
                 containerStyle={styles.input}
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() =>
-                  setShowPasswords({
-                    ...showPasswords,
-                    new: !showPasswords.new,
-                  })
-                }
-              >
-                <Ionicons name={showPasswords.new ? "eye-outline" : "eye-off-outline"} size={22} color={COLORS.GRAY} />
-              </TouchableOpacity>
             </View>
 
             {/* Password Strength Indicator */}
@@ -225,21 +199,6 @@ const ChangePasswordScreen = ({navigation}: any) => {
                 error={errors.confirmPassword}
                 containerStyle={styles.input}
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() =>
-                  setShowPasswords({
-                    ...showPasswords,
-                    confirm: !showPasswords.confirm,
-                  })
-                }
-              >
-                <Ionicons
-                  name={showPasswords.confirm ? "eye-outline" : "eye-off-outline"}
-                  size={22}
-                  color={COLORS.GRAY}
-                />
-              </TouchableOpacity>
             </View>
 
             {/* Match Indicator */}
