@@ -25,7 +25,7 @@ import OrderDetailScreen from "@screens/orders/OrderDetailScreen";
 // Profile Stack Screens
 import ProfileScreen from "@screens/profile/ProfileScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
-import ChangePasswordScreen from "@screens/profile/ChangePasswordScreen";
+import ChangePasswordScreen from "@/src/screens/profile/ChangePasswordScreen";
 import AddressListScreen from "@screens/profile/AddressListScreen";
 import AddAddressScreen from "@screens/profile/AddAddressScreen";
 import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
