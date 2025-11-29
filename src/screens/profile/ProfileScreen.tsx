@@ -99,32 +99,32 @@ const ProfileScreen = ({navigation}: any) => {
   const mainMenuItems = [
     {
       icon: "person-outline",
-      title: "Edit Profile",
-      subtitle: "Update your personal information",
+      title: "Chỉnh sửa hồ sơ",
+      subtitle: "Cập nhật thông tin cá nhân của bạn",
       screen: "EditProfile",
       color: COLORS.PRIMARY,
       bgColor: "#FFE5E5",
     },
     {
       icon: "location-outline",
-      title: "Delivery Addresses",
-      subtitle: "Manage your saved addresses",
+      title: "Địa chỉ giao hàng",
+      subtitle: "Quản lý các địa chỉ đã lưu",
       screen: "AddressList",
       color: "#2ECC71",
       bgColor: "#E8F8F1",
     },
     {
       icon: "heart-outline",
-      title: "My Favorites",
-      subtitle: "Your favorite restaurants & foods",
+      title: "Yêu thích của tôi",
+      subtitle: "Nhà hàng & món ăn bạn yêu thích",
       screen: "FavoritesList",
       color: "#E91E63",
       bgColor: "#FCE4EC",
     },
     {
       icon: "receipt-outline",
-      title: "Order History",
-      subtitle: "View all your past orders",
+      title: "Lịch sử đơn hàng",
+      subtitle: "Xem tất cả đơn hàng trước đây",
       screen: "Orders",
       color: "#9C27B0",
       bgColor: "#F3E5F5",
@@ -134,26 +134,26 @@ const ProfileScreen = ({navigation}: any) => {
   const settingsItems = [
     {
       icon: "lock-closed-outline",
-      title: "Change Password",
-      subtitle: "Update your password",
+      title: "Đổi mật khẩu",
+      subtitle: "Cập nhật mật khẩu của bạn",
       screen: "ChangePassword",
     },
     {
       icon: "notifications-outline",
-      title: "Notifications",
-      subtitle: "Manage notification settings",
+      title: "Thông báo",
+      subtitle: "Quản lý cài đặt thông báo",
       screen: "NotificationSettings",
     },
     {
       icon: "help-circle-outline",
-      title: "Help & Support",
-      subtitle: "Get help or contact support",
+      title: "Trợ giúp & Hỗ trợ",
+      subtitle: "Nhận trợ giúp hoặc liên hệ hỗ trợ",
       screen: "Support",
     },
     {
       icon: "document-text-outline",
-      title: "Terms & Privacy",
-      subtitle: "Read our terms and privacy policy",
+      title: "Điều khoản & Quyền riêng tư",
+      subtitle: "Đọc điều khoản và chính sách quyền riêng tư",
       screen: "TermsPrivacy",
     },
   ];
@@ -163,7 +163,7 @@ const ProfileScreen = ({navigation}: any) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
+          <Text style={styles.loadingText}>Đang tải hồ sơ...</Text>
         </View>
       </SafeAreaView>
     );
@@ -227,9 +227,9 @@ const ProfileScreen = ({navigation}: any) => {
               <View style={styles.statsCardIcon}>
                 <Ionicons name="receipt-outline" size={24} color={COLORS.PRIMARY} />
               </View>
-              <Text style={styles.statsCardLabel}>Total Orders</Text>
+              <Text style={styles.statsCardLabel}>Tổng số đơn hàng</Text>
               <Text style={styles.statsCardValue}>{stats.totalOrders}</Text>
-              <Text style={styles.statsCardDetail}>{stats.completedOrders} completed</Text>
+              <Text style={styles.statsCardDetail}>{stats.completedOrders} đã hoàn thành</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -240,12 +240,12 @@ const ProfileScreen = ({navigation}: any) => {
               <View style={styles.statsCardIcon}>
                 <Ionicons name="wallet-outline" size={24} color="#FFA000" />
               </View>
-              <Text style={styles.statsCardLabel}>Total Spent</Text>
+              <Text style={styles.statsCardLabel}>Tổng chi tiêu</Text>
               <Text style={styles.statsCardValue}>
                 {formatCurrency(stats.totalSpent).substring(0, formatCurrency(stats.totalSpent).length - 3)}
               </Text>
               <Text style={styles.statsCardDetail}>
-                Avg {formatCurrency(stats.avgOrderValue).substring(0, formatCurrency(stats.avgOrderValue).length - 3)}
+                trung bình {formatCurrency(stats.avgOrderValue).substring(0, formatCurrency(stats.avgOrderValue).length - 3)}
               </Text>
             </TouchableOpacity>
 
@@ -257,9 +257,9 @@ const ProfileScreen = ({navigation}: any) => {
               <View style={styles.statsCardIcon}>
                 <Ionicons name="heart" size={24} color="#E91E63" />
               </View>
-              <Text style={styles.statsCardLabel}>Favorites</Text>
+              <Text style={styles.statsCardLabel}>Yêu thích</Text>
               <Text style={styles.statsCardValue}>{stats.totalFavorites}</Text>
-              <Text style={styles.statsCardDetail}>Saved items</Text>
+              <Text style={styles.statsCardDetail}>Mục đã lưu</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -270,16 +270,16 @@ const ProfileScreen = ({navigation}: any) => {
               <View style={styles.statsCardIcon}>
                 <Ionicons name="star" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.statsCardLabel}>Avg Rating</Text>
+              <Text style={styles.statsCardLabel}>AĐánh giá TB</Text>
               <Text style={styles.statsCardValue}>{stats.avgRating.toFixed(1)} ⭐</Text>
-              <Text style={styles.statsCardDetail}>{stats.totalReviews} reviews</Text>
+              <Text style={styles.statsCardDetail}>{stats.totalReviews} đánh giá</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Main Menu Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Tài khoản</Text>
           <View style={styles.menuContainer}>
             {mainMenuItems.map((item, index) => (
               <TouchableOpacity
@@ -303,7 +303,7 @@ const ProfileScreen = ({navigation}: any) => {
 
         {/* Settings Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>Cài đặt</Text>
           <View style={styles.menuContainer}>
             {settingsItems.map((item, index) => (
               <TouchableOpacity
@@ -329,7 +329,7 @@ const ProfileScreen = ({navigation}: any) => {
         <View style={styles.logoutSection}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.7}>
             <Ionicons name="log-out-outline" size={22} color={COLORS.WHITE} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
 
