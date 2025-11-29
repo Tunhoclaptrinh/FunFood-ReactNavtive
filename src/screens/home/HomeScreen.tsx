@@ -173,7 +173,6 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   // --- Renders ---
-
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       {/* Greeting & Notif */}
