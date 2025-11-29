@@ -76,17 +76,19 @@ const ProfileScreen = ({navigation}: any) => {
     setRefreshing(false);
   };
 
-  // Logout alert
-Alert.alert("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", [
-  {text: "Hủy", style: "cancel"},
-  {
-    text: "Đăng xuất",
-    onPress: async () => {
-      await signOut();
-    },
-    style: "destructive",
-  },
-]);
+  const handleLogout = () => {
+   // Logout alert
+    Alert.alert("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", [
+      {text: "Hủy", style: "cancel"},
+      {
+        text: "Đăng xuất",
+        onPress: async () => {
+          await signOut();
+        },
+        style: "destructive",
+      },
+    ]);
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
