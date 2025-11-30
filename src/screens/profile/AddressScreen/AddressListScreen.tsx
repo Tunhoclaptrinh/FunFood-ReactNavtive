@@ -28,17 +28,17 @@ const AddressListScreen = ({navigation}: any) => {
   );
 
   const loadAddresses = async () => {
-    try {
-      setLoading(true);
-      const response = await AddressService.getAddresses();
+    setLoading(true);
+
+    const response = await AddressService.getAddresses();
+
+    // Check if we got data
+    if (response) {
       setAddresses(response.data || []);
-    } catch (error: any) {
-      console.error("Lỗi khi tải địa chỉ:", error);
-      Alert.alert("Lỗi", error.message || "Không thể tải danh sách địa chỉ");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
+
+    setLoading(false);
+    setRefreshing(false);
   };
 
   const handleRefresh = () => {
@@ -47,9 +47,10 @@ const AddressListScreen = ({navigation}: any) => {
   };
 
   const handleSetDefault = async (id: number, label: string) => {
-    try {
-      await AddressService.setAsDefault(id);
-      // Cập nhật state local
+    const result = await AddressService.setAsDefault(id);
+
+    if (result) {
+      // Update local state
       setAddresses(
         addresses.map((addr) => ({
           ...addr,
@@ -57,24 +58,21 @@ const AddressListScreen = ({navigation}: any) => {
         }))
       );
       Alert.alert("Thành công", `Đã đặt "${label}" làm địa chỉ mặc định`);
-    } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không thể đặt địa chỉ mặc định");
     }
   };
 
-  const handleDelete = (id: number, label: string) => {
+  const handleDelete = async (id: number, label: string) => {
     Alert.alert("Xóa địa chỉ", `Bạn có chắc muốn xóa địa chỉ "${label}"?`, [
       {text: "Hủy", style: "cancel"},
       {
         text: "Xóa",
         style: "destructive",
         onPress: async () => {
-          try {
-            await AddressService.deleteAddress(id);
+          const success = await AddressService.deleteAddress(id);
+
+          if (success) {
             setAddresses(addresses.filter((addr) => addr.id !== id));
             Alert.alert("Thành công", "Đã xóa địa chỉ");
-          } catch (error: any) {
-            Alert.alert("Lỗi", error.message || "Không thể xóa địa chỉ");
           }
         },
       },

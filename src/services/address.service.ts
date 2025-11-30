@@ -1,5 +1,7 @@
+// src/services/address.service.ts
 import {BaseApiService, PaginatedResponse} from "@/src/base/BaseApiService";
 import {apiClient} from "@config/api.client";
+import {isValidPhoneNumber} from "../utils/helpers";
 
 export interface Address {
   id: number;
@@ -30,30 +32,42 @@ export interface CreateAddressRequest {
 export interface UpdateAddressRequest extends Partial<CreateAddressRequest> {}
 
 /**
- * Address Service - Extends BaseApiService
+ * Validation Result
+ */
+interface ValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+}
+
+/**
+ * Enhanced Address Service
  *
  * Features:
- * - CRUD operations for addresses
- * - Get default address
- * - Set address as default
- * - Validation with backend schema
+ * - Automatic error handling (no try-catch needed in UI)
+ * - Built-in validation
+ * - CRUD operations
+ * - Default address management
  *
  * Usage:
  * ```typescript
- * // Get all addresses
+ * // Get addresses - no try-catch needed!
  * const addresses = await AddressService.getAddresses();
+ * if (addresses) {
+ *   setAddresses(addresses.data);
+ * }
  *
- * // Create new address
- * await AddressService.createAddress({
- *   label: "Home",
- *   address: "123 Main St",
- *   recipientName: "John Doe",
- *   recipientPhone: "0912345678",
- *   isDefault: true
- * });
+ * // Create address with validation
+ * const validation = AddressService.validateAddress(formData);
+ * if (!validation.isValid) {
+ *   setErrors(validation.errors);
+ *   return;
+ * }
  *
- * // Get default address
- * const defaultAddr = await AddressService.getDefaultAddress();
+ * const newAddress = await AddressService.createAddress(formData);
+ * if (newAddress) {
+ *   // Success!
+ *   navigation.goBack();
+ * }
  * ```
  */
 class AddressServiceClass extends BaseApiService<Address> {
@@ -61,6 +75,7 @@ class AddressServiceClass extends BaseApiService<Address> {
 
   /**
    * Get all user addresses
+   * Returns paginated response or empty array on error
    */
   async getAddresses(params?: any): Promise<PaginatedResponse<Address>> {
     return this.getAll(params);
@@ -68,97 +83,62 @@ class AddressServiceClass extends BaseApiService<Address> {
 
   /**
    * Get default address
+   * Returns null if not found or error occurs
    */
   async getDefaultAddress(): Promise<Address | null> {
-    try {
-      const response = await apiClient.get<{data: Address}>(`${this.baseEndpoint}/default`);
-      return response.data.data;
-    } catch (error) {
-      console.error("Error getting default address:", error);
-      return null;
-    }
+    return this.safeCall(
+      async () => {
+        const data = await apiClient.get<Address>(`${this.baseEndpoint}/default`);
+        return data;
+      },
+      null,
+      {silent: true} // Don't show error if no default address
+    );
   }
 
   /**
    * Get address by ID
    */
-  async getAddressById(id: number): Promise<Address> {
+  async getAddressById(id: number): Promise<Address | null> {
     return this.getById(id);
   }
 
   /**
    * Create new address
+   * Returns created address or null on error
    */
-  async createAddress(data: CreateAddressRequest): Promise<Address> {
-    const response = await apiClient.post<{data: Address}>(this.baseEndpoint, data);
-    return response.data.data;
+  async createAddress(data: CreateAddressRequest): Promise<Address | null> {
+    return this.safeCall(async () => {
+      const result = await apiClient.post<Address>(this.baseEndpoint, data);
+      return result;
+    }, null);
   }
 
   /**
    * Update address
+   * Returns updated address or null on error
    */
-  async updateAddress(id: number, data: UpdateAddressRequest): Promise<Address> {
+  async updateAddress(id: number, data: UpdateAddressRequest): Promise<Address | null> {
     return this.update(id, data as any);
   }
 
   /**
    * Set address as default
+   * Returns updated address or null on error
    */
-  async setAsDefault(id: number): Promise<Address> {
-    const response = await apiClient.patch<{data: Address}>(`${this.baseEndpoint}/${id}/default`);
-    return response.data.data;
+  async setAsDefault(id: number): Promise<Address | null> {
+    return this.safeCall(async () => {
+      const result = await apiClient.patch<Address>(`${this.baseEndpoint}/${id}/default`);
+      return result;
+    }, null);
   }
 
   /**
    * Delete address
+   * Returns true on success, false on error
    */
-  async deleteAddress(id: number): Promise<void> {
-    await this.delete(id);
-  }
-
-  /**
-   * Validate address data before submit
-   */
-  validateAddress(data: CreateAddressRequest): {isValid: boolean; errors: Record<string, string>} {
-    const errors: Record<string, string> = {};
-
-    // Label validation
-    if (!data.label || data.label.trim().length === 0) {
-      errors.label = "Label is required";
-    } else if (data.label.length < 1 || data.label.length > 50) {
-      errors.label = "Label must be between 1-50 characters";
-    }
-
-    // Address validation
-    if (!data.address || data.address.trim().length === 0) {
-      errors.address = "Address is required";
-    } else if (data.address.length < 10 || data.address.length > 200) {
-      errors.address = "Address must be between 10-200 characters";
-    }
-
-    // Recipient name validation
-    if (!data.recipientName || data.recipientName.trim().length === 0) {
-      errors.recipientName = "Recipient name is required";
-    } else if (data.recipientName.length < 2 || data.recipientName.length > 100) {
-      errors.recipientName = "Recipient name must be between 2-100 characters";
-    }
-
-    // Recipient phone validation
-    if (!data.recipientPhone || data.recipientPhone.trim().length === 0) {
-      errors.recipientPhone = "Phone number is required";
-    } else if (!/^(0|\+84)[0-9]{9}$/.test(data.recipientPhone)) {
-      errors.recipientPhone = "Invalid phone number format (e.g., 0912345678)";
-    }
-
-    // Note validation (optional)
-    if (data.note && data.note.length > 500) {
-      errors.note = "Note must not exceed 500 characters";
-    }
-
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors,
-    };
+  async deleteAddress(id: number): Promise<boolean> {
+    return this.delete(id);
   }
 
   /**
@@ -173,6 +153,102 @@ class AddressServiceClass extends BaseApiService<Address> {
    */
   async getAddressCount(): Promise<number> {
     return this.count();
+  }
+
+  /**
+   * Validate address data
+   * Returns validation result with specific error messages
+   *
+   * Usage:
+   * ```typescript
+   * const validation = AddressService.validateAddress(formData);
+   * if (!validation.isValid) {
+   *   setErrors(validation.errors);
+   *   return;
+   * }
+   * // Proceed with API call
+   * ```
+   */
+  validateAddress(data: CreateAddressRequest): ValidationResult {
+    const errors: Record<string, string> = {};
+
+    // Label validation
+    if (!data.label || data.label.trim().length === 0) {
+      errors.label = "Nhãn địa chỉ là bắt buộc";
+    } else if (data.label.length < 1 || data.label.length > 50) {
+      errors.label = "Nhãn địa chỉ phải từ 1-50 ký tự";
+    }
+
+    // Address validation
+    if (!data.address || data.address.trim().length === 0) {
+      errors.address = "Địa chỉ là bắt buộc";
+    } else if (data.address.length < 10 || data.address.length > 200) {
+      errors.address = "Địa chỉ phải từ 10-200 ký tự";
+    }
+
+    // Recipient name validation
+    if (!data.recipientName || data.recipientName.trim().length === 0) {
+      errors.recipientName = "Tên người nhận là bắt buộc";
+    } else if (data.recipientName.length < 2 || data.recipientName.length > 100) {
+      errors.recipientName = "Tên người nhận phải từ 2-100 ký tự";
+    }
+
+    // Recipient phone validation
+    if (!data.recipientPhone || data.recipientPhone.trim().length === 0) {
+      errors.recipientPhone = "Số điện thoại là bắt buộc";
+    } else if (isValidPhoneNumber(data.recipientPhone)) {
+      errors.recipientPhone = "Số điện thoại không hợp lệ (VD: 0912345678)";
+    }
+
+    // Note validation (optional)
+    if (data.note && data.note.length > 500) {
+      errors.note = "Ghi chú không được vượt quá 500 ký tự";
+    }
+
+    // GPS validation (optional but should be valid if provided)
+    if (data.latitude !== undefined && (data.latitude < -90 || data.latitude > 90)) {
+      errors.latitude = "Latitude không hợp lệ (-90 đến 90)";
+    }
+    if (data.longitude !== undefined && (data.longitude < -180 || data.longitude > 180)) {
+      errors.longitude = "Longitude không hợp lệ (-180 đến 180)";
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Helper: Get address suggestions based on partial input
+   */
+  async getAddressSuggestions(query: string): Promise<Address[]> {
+    if (query.length < 2) return [];
+
+    const result = await this.search(query, {limit: 5});
+    return result.data || [];
+  }
+
+  /**
+   * Helper: Validate all addresses before batch operation
+   */
+  validateBatch(addresses: CreateAddressRequest[]): {
+    valid: CreateAddressRequest[];
+    invalid: Array<{index: number; data: CreateAddressRequest; errors: Record<string, string>}>;
+  } {
+    const valid: CreateAddressRequest[] = [];
+    const invalid: Array<{index: number; data: CreateAddressRequest; errors: Record<string, string>}> = [];
+
+    addresses.forEach((address, index) => {
+      const validation = this.validateAddress(address);
+      if (validation.isValid) {
+        valid.push(address);
+      } else {
+        invalid.push({index, data: address, errors: validation.errors});
+      }
+    });
+
+    return {valid, invalid};
   }
 }
 
