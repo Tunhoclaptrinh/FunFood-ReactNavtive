@@ -6,7 +6,7 @@ import {apiClient} from "@config/api.client";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import {COLORS} from "@/src/styles/colors";
-import styles from "./styles"
+import styles from "./styles";
 
 const ChangePasswordScreen = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
@@ -26,10 +26,10 @@ const ChangePasswordScreen = ({navigation}: any) => {
     const errors: string[] = [];
 
     if (password.length < 6) {
-      errors.push("At least 6 characters");
+      errors.push("Ít nhất 6 ký tự");
     }
     if (!/[A-Z]/.test(password) && !/[0-9]/.test(password)) {
-      errors.push("At least one uppercase letter or number");
+      errors.push("Có ít nhất một chữ in hoa hoặc một số");
     }
 
     return errors;
@@ -39,11 +39,11 @@ const ChangePasswordScreen = ({navigation}: any) => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.currentPassword) {
-      newErrors.currentPassword = "Current password is required";
+      newErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
     }
 
     if (!formData.newPassword) {
-      newErrors.newPassword = "New password is required";
+      newErrors.newPassword = "Vui lòng nhập mật khẩu mới";
     } else {
       const passwordErrors = validatePassword(formData.newPassword);
       if (passwordErrors.length > 0) {
@@ -52,13 +52,13 @@ const ChangePasswordScreen = ({navigation}: any) => {
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
     } else if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Mật khẩu không trùng khớp";
     }
 
     if (formData.currentPassword && formData.newPassword && formData.currentPassword === formData.newPassword) {
-      newErrors.newPassword = "New password must be different from current password";
+      newErrors.newPassword = "Mật khẩu mới phải khác mật khẩu hiện tại";
     }
 
     setErrors(newErrors);
@@ -77,11 +77,11 @@ const ChangePasswordScreen = ({navigation}: any) => {
 
     const levels = [
       {strength: 0, label: "", color: ""},
-      {strength: 1, label: "Weak", color: COLORS.ERROR},
-      {strength: 2, label: "Weak", color: COLORS.ERROR},
-      {strength: 3, label: "Medium", color: COLORS.WARNING},
-      {strength: 4, label: "Strong", color: COLORS.SUCCESS},
-      {strength: 5, label: "Very Strong", color: COLORS.SUCCESS},
+      {strength: 1, label: "Yếu", color: COLORS.ERROR},
+      {strength: 2, label: "Yếu", color: COLORS.ERROR},
+      {strength: 3, label: "Trung bình", color: COLORS.WARNING},
+      {strength: 4, label: "Mạnh", color: COLORS.SUCCESS},
+      {strength: 5, label: "Rất mạnh", color: COLORS.SUCCESS},
     ];
 
     return levels[strength];
@@ -99,7 +99,7 @@ const ChangePasswordScreen = ({navigation}: any) => {
         newPassword: formData.newPassword,
       });
 
-      Alert.alert("Success", "Your password has been changed successfully", [
+      Alert.alert("Thành công", "Mật khẩu của bạn đã được đổi thành công", [
         {
           text: "OK",
           onPress: () => navigation.goBack(),
@@ -114,7 +114,7 @@ const ChangePasswordScreen = ({navigation}: any) => {
       });
     } catch (error: any) {
       console.error("Error changing password:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to change password");
+      Alert.alert("Lỗi", error.response?.data?.message || "Đổi mật khẩu thất bại");
     } finally {
       setLoading(false);
     }
@@ -130,20 +130,20 @@ const ChangePasswordScreen = ({navigation}: any) => {
           <View style={styles.iconContainer}>
             <Ionicons name="lock-closed" size={32} color={COLORS.PRIMARY} />
           </View>
-          <Text style={styles.headerTitle}>Change Password</Text>
-          <Text style={styles.headerSubtitle}>Please enter your current password and choose a new secure password</Text>
+          <Text style={styles.headerTitle}>Đổi mật khẩu</Text>
+          <Text style={styles.headerSubtitle}>Vui lòng nhập mật khẩu hiện tại và chọn một mật khẩu mới an toàn</Text>
         </View>
 
         {/* Form Section */}
         <View style={styles.formSection}>
           {/* Current Password */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Current Password</Text>
+            <Text style={styles.label}>Mật khẩu hiện tại</Text>
             <View style={styles.passwordInputContainer}>
               <Input
                 value={formData.currentPassword}
                 onChangeText={(currentPassword) => setFormData({...formData, currentPassword})}
-                placeholder="Enter current password"
+                placeholder="Nhập mật khẩu hiện tại"
                 secureTextEntry={!showPasswords.current}
                 error={errors.currentPassword}
                 containerStyle={styles.input}
@@ -153,12 +153,12 @@ const ChangePasswordScreen = ({navigation}: any) => {
 
           {/* New Password */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>New Password</Text>
+            <Text style={styles.label}>Mật khẩu mới</Text>
             <View style={styles.passwordInputContainer}>
               <Input
                 value={formData.newPassword}
                 onChangeText={(newPassword) => setFormData({...formData, newPassword})}
-                placeholder="Enter new password"
+                placeholder="Nhập mật khẩu mới"
                 secureTextEntry={!showPasswords.new}
                 error={errors.newPassword}
                 containerStyle={styles.input}
@@ -190,12 +190,12 @@ const ChangePasswordScreen = ({navigation}: any) => {
 
           {/* Confirm Password */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm New Password</Text>
+            <Text style={styles.label}>Xác nhận mật khẩu mới</Text>
             <View style={styles.passwordInputContainer}>
               <Input
                 value={formData.confirmPassword}
                 onChangeText={(confirmPassword) => setFormData({...formData, confirmPassword})}
-                placeholder="Re-enter new password"
+                placeholder="Nhập lại mật khẩu mới"
                 secureTextEntry={!showPasswords.confirm}
                 error={errors.confirmPassword}
                 containerStyle={styles.input}
@@ -218,7 +218,9 @@ const ChangePasswordScreen = ({navigation}: any) => {
                     },
                   ]}
                 >
-                  {formData.newPassword === formData.confirmPassword ? "Passwords match" : "Passwords do not match"}
+                  {formData.newPassword === formData.confirmPassword
+                    ? "Mật khẩu trùng khớp"
+                    : "Mật khẩu không trùng khớp"}
                 </Text>
               </View>
             )}
@@ -226,15 +228,17 @@ const ChangePasswordScreen = ({navigation}: any) => {
 
           {/* Password Requirements */}
           <View style={styles.requirementsContainer}>
-            <Text style={styles.requirementsTitle}>Password Requirements:</Text>
+            <Text style={styles.requirementsTitle}>Yêu cầu mật khẩu:</Text>
+
             <View style={styles.requirement}>
               <Ionicons
                 name={formData.newPassword.length >= 6 ? "checkmark-circle" : "ellipse-outline"}
                 size={16}
                 color={formData.newPassword.length >= 6 ? COLORS.SUCCESS : COLORS.GRAY}
               />
-              <Text style={styles.requirementText}>At least 6 characters</Text>
+              <Text style={styles.requirementText}>Ít nhất 6 ký tự</Text>
             </View>
+
             <View style={styles.requirement}>
               <Ionicons
                 name={
@@ -249,7 +253,7 @@ const ChangePasswordScreen = ({navigation}: any) => {
                     : COLORS.GRAY
                 }
               />
-              <Text style={styles.requirementText}>At least one uppercase letter or number</Text>
+              <Text style={styles.requirementText}>Có ít nhất một chữ in hoa hoặc một số</Text>
             </View>
           </View>
         </View>
@@ -258,7 +262,7 @@ const ChangePasswordScreen = ({navigation}: any) => {
         <View style={styles.buttonContainer}>
           <View style={styles.button}>
             <Button
-              title={loading ? "Changing Password..." : "Change Password"}
+              title={loading ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
               onPress={handleChangePassword}
               loading={loading}
               disabled={loading || !formData.currentPassword || !formData.newPassword || !formData.confirmPassword}
@@ -269,6 +273,5 @@ const ChangePasswordScreen = ({navigation}: any) => {
     </SafeAreaView>
   );
 };
-
 
 export default ChangePasswordScreen;
