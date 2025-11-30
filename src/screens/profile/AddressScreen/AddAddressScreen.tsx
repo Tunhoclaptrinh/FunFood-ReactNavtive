@@ -498,11 +498,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderTopWidth: 1,
     borderTopColor: COLORS.LIGHT_GRAY,
-    elevation: 5,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   cancelButton: {
     flex: 1,

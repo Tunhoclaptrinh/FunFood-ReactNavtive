@@ -64,10 +64,7 @@ const CustomBackHeader = (navigation: any, title?: string) => ({
   headerBackVisible: false,
   headerTitle: title, // ẩn title mặc định => ghi đè bằng title tùy chỉnh
   headerLeft: () => (
-    <TouchableOpacity
-      onPress={() => navigation.goBack()}
-      style={{flexDirection: "row", alignItems: "center", marginLeft: 8}}
-    >
+    <TouchableOpacity onPress={() => navigation.goBack()} style={{flexDirection: "row", alignItems: "center"}}>
       <Ionicons name="arrow-back" size={24} color={COLORS.WHITE} />
       {/* {title && <Text style={{color: COLORS.WHITE, fontSize: 16, marginLeft: 6}}>{title}</Text>} */}
     </TouchableOpacity>

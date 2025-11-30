@@ -250,9 +250,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.DARK,
     marginBottom: 4,
+    margin: "auto",
   },
   headerSubtitle: {
     fontSize: 14,
+    margin: "auto",
     color: COLORS.GRAY,
   },
   loadingContainer: {
