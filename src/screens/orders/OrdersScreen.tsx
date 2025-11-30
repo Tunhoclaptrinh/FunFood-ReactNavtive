@@ -17,12 +17,20 @@ interface Order {
   items: any[];
 }
 
-const OrdersScreen = ({navigation}: any) => {
+const OrdersScreen = ({navigation, route}: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeTab, setActiveTab] = useState(route.params?.initialTab || 0);
+
+  // Lắng nghe thay đổi từ route.params (khi navigate từ Stats Screen sang)
+  useEffect(() => {
+    if (route.params?.initialTab !== undefined) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params]);
 
   // Load orders when screen is focused
   useFocusEffect(

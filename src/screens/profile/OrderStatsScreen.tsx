@@ -8,9 +8,13 @@ import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 
+// Interface cập nhật khớp với Backend trả về
 interface OrderStats {
   totalOrders: number;
   completedOrders: number;
+  pendingOrders: number; // Mới thêm
+  shippingOrders: number; // Mới thêm
+  cancelledOrders: number; // Mới thêm
   totalSpent: number;
   avgOrderValue: number;
   totalReviews: number;
@@ -20,7 +24,7 @@ interface OrderStats {
 
 interface RecentOrder {
   id: number;
-  restaurantName: string;
+  restaurantName: string; // Backend trả về restaurantName hoặc cần map từ restaurantId
   total: number;
   status: string;
   createdAt: string;
@@ -45,10 +49,14 @@ const OrderStatsScreen = ({navigation}: any) => {
       const response = await apiClient.get(`/users/${user.id}/activity`);
       const data = (response.data as {data: any}).data;
 
+      // Map dữ liệu an toàn
       setStats(
         data.stats || {
           totalOrders: 0,
           completedOrders: 0,
+          pendingOrders: 0,
+          shippingOrders: 0,
+          cancelledOrders: 0,
           totalSpent: 0,
           avgOrderValue: 0,
           totalReviews: 0,
@@ -57,7 +65,14 @@ const OrderStatsScreen = ({navigation}: any) => {
         }
       );
 
-      setRecentOrders(data.recentOrders || []);
+      // Xử lý recentOrders (đảm bảo có restaurantName nếu backend trả về object)
+      const formattedOrders = (data.recentOrders || []).map((order: any) => ({
+        ...order,
+        // Nếu backend chưa join bảng restaurant, hiển thị ID tạm hoặc "Nhà hàng"
+        restaurantName: order.restaurant?.name || order.restaurantName || `Nhà hàng #${order.restaurantId}`,
+      }));
+
+      setRecentOrders(formattedOrders);
     } catch (error) {
       console.error("Error loading stats:", error);
     } finally {
@@ -71,36 +86,54 @@ const OrderStatsScreen = ({navigation}: any) => {
     loadData();
   };
 
+  // Hàm điều hướng thông minh: 0 = Tab Đang xử lý, 1 = Tab Lịch sử
+  const navigateToOrders = (tabIndex: number = 0) => {
+    navigation.navigate("Orders", {initialTab: tabIndex});
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending: "#FFA000",
-      confirmed: "#4ECDC4",
-      preparing: "#FFB800",
-      delivering: "#3498DB",
-      delivered: "#2ECC71",
-      cancelled: "#E74C3C",
+      pending: "#FFA000", // Cam
+      confirmed: "#4ECDC4", // Xanh ngọc
+      preparing: "#FFB800", // Vàng
+      on_the_way: "#3498DB", // Xanh dương
+      shipping: "#3498DB", // Xanh dương
+      delivered: "#2ECC71", // Xanh lá
+      cancelled: "#E74C3C", // Đỏ
     };
     return colors[status] || COLORS.GRAY;
   };
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      pending: "Pending",
-      confirmed: "Confirmed",
-      preparing: "Preparing",
-      delivering: "Delivering",
-      delivered: "Delivered",
-      cancelled: "Cancelled",
+      pending: "Chờ xác nhận",
+      confirmed: "Đã xác nhận",
+      preparing: "Đang chuẩn bị",
+      shipping: "Đang giao",
+      on_the_way: "Đang giao",
+      delivered: "Đã giao",
+      cancelled: "Đã hủy",
     };
     return labels[status] || status;
   };
+
+  // Component thẻ thống kê nhỏ (Clickable)
+  const StatGridItem = ({icon, title, value, color, tabIndex}: any) => (
+    <TouchableOpacity style={styles.gridItem} onPress={() => navigateToOrders(tabIndex)} activeOpacity={0.7}>
+      <View style={[styles.gridIcon, {backgroundColor: color + "20"}]}>
+        <Ionicons name={icon} size={24} color={color} />
+      </View>
+      <Text style={styles.gridValue}>{value || 0}</Text>
+      <Text style={styles.gridTitle}>{title}</Text>
+    </TouchableOpacity>
+  );
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          <Text style={styles.loadingText}>Loading statistics...</Text>
+          <Text style={styles.loadingText}>Đang tải thống kê...</Text>
         </View>
       </SafeAreaView>
     );
@@ -121,13 +154,14 @@ const OrderStatsScreen = ({navigation}: any) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Order Statistics</Text>
-          <Text style={styles.headerSubtitle}>Your ordering history & insights</Text>
+          <View>
+            <Text style={styles.headerSubtitle}>Lịch sử và chi tiết chi tiêu của bạn</Text>
+          </View>
         </View>
 
         {stats && (
           <>
-            {/* Summary Cards */}
+            {/* 1. Tổng quan & Chi tiêu */}
             <View style={styles.summarySection}>
               <View style={styles.summaryCard}>
                 <View style={[styles.summaryIcon, {backgroundColor: "#FFE5E5"}]}>
@@ -135,10 +169,10 @@ const OrderStatsScreen = ({navigation}: any) => {
                 </View>
                 <View style={styles.summaryContent}>
                   <Text style={styles.summaryValue}>{stats.totalOrders}</Text>
-                  <Text style={styles.summaryLabel}>Total Orders</Text>
+                  <Text style={styles.summaryLabel}>Tổng đơn hàng</Text>
                   <View style={styles.summarySubinfo}>
                     <Ionicons name="checkmark-circle" size={14} color={COLORS.SUCCESS} />
-                    <Text style={styles.summarySubtext}>{stats.completedOrders} completed</Text>
+                    <Text style={styles.summarySubtext}>{stats.completedOrders} thành công</Text>
                   </View>
                 </View>
               </View>
@@ -149,22 +183,58 @@ const OrderStatsScreen = ({navigation}: any) => {
                 </View>
                 <View style={styles.summaryContent}>
                   <Text style={styles.summaryValue}>{formatCurrency(stats.totalSpent)}</Text>
-                  <Text style={styles.summaryLabel}>Total Spent</Text>
+                  <Text style={styles.summaryLabel}>Tổng chi tiêu</Text>
                   <View style={styles.summarySubinfo}>
                     <Ionicons name="trending-up" size={14} color="#FFA000" />
-                    <Text style={styles.summarySubtext}>Avg {formatCurrency(stats.avgOrderValue)}</Text>
+                    <Text style={styles.summarySubtext}>TB {formatCurrency(stats.avgOrderValue)}</Text>
                   </View>
                 </View>
               </View>
             </View>
 
-            {/* Detailed Stats */}
+            {/* 2. Grid Trạng thái (Clickable) - PHẦN MỚI THÊM */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Performance Metrics</Text>
+              <Text style={styles.sectionTitle}>Trạng thái đơn hàng</Text>
+              <View style={styles.gridContainer}>
+                <StatGridItem
+                  icon="time-outline"
+                  title="Chờ xác nhận"
+                  value={stats.pendingOrders}
+                  color={COLORS.WARNING}
+                  tabIndex={0}
+                />
+                <StatGridItem
+                  icon="bicycle-outline"
+                  title="Đang giao"
+                  value={stats.shippingOrders}
+                  color={COLORS.INFO}
+                  tabIndex={0}
+                />
+                <StatGridItem
+                  icon="checkmark-circle-outline"
+                  title="Hoàn thành"
+                  value={stats.completedOrders}
+                  color={COLORS.SUCCESS}
+                  tabIndex={1}
+                />
+                <StatGridItem
+                  icon="close-circle-outline"
+                  title="Đã hủy"
+                  value={stats.cancelledOrders}
+                  color={COLORS.ERROR}
+                  tabIndex={1}
+                />
+              </View>
+            </View>
+
+            {/* 3. Chỉ số hoạt động */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Chỉ số hoạt động</Text>
               <View style={styles.statsCard}>
+                {/* Tỷ lệ hoàn thành */}
                 <View style={styles.statRow}>
                   <View style={styles.statInfo}>
-                    <Text style={styles.statLabel}>Completion Rate</Text>
+                    <Text style={styles.statLabel}>Tỷ lệ hoàn thành</Text>
                     <Text style={styles.statValue}>
                       {stats.totalOrders > 0 ? ((stats.completedOrders / stats.totalOrders) * 100).toFixed(1) : 0}%
                     </Text>
@@ -183,10 +253,11 @@ const OrderStatsScreen = ({navigation}: any) => {
 
                 <View style={styles.statDivider} />
 
+                {/* Đánh giá */}
                 <View style={styles.statRow}>
                   <View style={styles.statIconLabel}>
                     <Ionicons name="star" size={20} color="#FFB800" />
-                    <Text style={styles.statLabel}>Average Rating</Text>
+                    <Text style={styles.statLabel}>Đánh giá trung bình</Text>
                   </View>
                   <View style={styles.statRightContent}>
                     <Text style={[styles.statValue, {color: "#FFB800"}]}>{stats.avgRating.toFixed(1)}</Text>
@@ -205,55 +276,32 @@ const OrderStatsScreen = ({navigation}: any) => {
 
                 <View style={styles.statDivider} />
 
-                <View style={styles.statRow}>
-                  <View style={styles.statIconLabel}>
-                    <Ionicons name="chatbox-outline" size={20} color={COLORS.INFO} />
-                    <Text style={styles.statLabel}>Total Reviews</Text>
+                {/* Yêu thích & Review */}
+                <View style={styles.rowBetween}>
+                  <View style={styles.miniStat}>
+                    <Ionicons name="chatbox-outline" size={20} color={COLORS.INFO} style={{marginBottom: 4}} />
+                    <Text style={styles.statLabel}>Đánh giá</Text>
+                    <Text style={styles.statValue}>{stats.totalReviews}</Text>
                   </View>
-                  <Text style={styles.statValue}>{stats.totalReviews}</Text>
-                </View>
-
-                <View style={styles.statDivider} />
-
-                <View style={styles.statRow}>
-                  <View style={styles.statIconLabel}>
-                    <Ionicons name="heart" size={20} color="#E91E63" />
-                    <Text style={styles.statLabel}>Favorites</Text>
+                  <View style={styles.verticalDivider} />
+                  <View style={styles.miniStat}>
+                    <Ionicons name="heart" size={20} color="#E91E63" style={{marginBottom: 4}} />
+                    <Text style={styles.statLabel}>Yêu thích</Text>
+                    <Text style={styles.statValue}>{stats.totalFavorites}</Text>
                   </View>
-                  <Text style={styles.statValue}>{stats.totalFavorites}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Spending Breakdown */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Spending Overview</Text>
-              <View style={styles.spendingCard}>
-                <View style={styles.spendingRow}>
-                  <Text style={styles.spendingLabel}>Average Order Value</Text>
-                  <Text style={styles.spendingValue}>{formatCurrency(stats.avgOrderValue)}</Text>
-                </View>
-                <View style={styles.spendingRow}>
-                  <Text style={styles.spendingLabel}>Total Orders</Text>
-                  <Text style={styles.spendingValue}>{stats.totalOrders}</Text>
-                </View>
-                <View style={styles.spendingDivider} />
-                <View style={styles.spendingRow}>
-                  <Text style={styles.spendingTotalLabel}>Total Spent</Text>
-                  <Text style={styles.spendingTotalValue}>{formatCurrency(stats.totalSpent)}</Text>
                 </View>
               </View>
             </View>
           </>
         )}
 
-        {/* Recent Orders */}
+        {/* 4. Đơn hàng gần đây */}
         {recentOrders.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Orders</Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Orders")}>
-                <Text style={styles.viewAllText}>View All</Text>
+              <Text style={styles.sectionTitle}>Đơn hàng gần đây</Text>
+              <TouchableOpacity onPress={() => navigateToOrders(0)}>
+                <Text style={styles.viewAllText}>Xem tất cả</Text>
               </TouchableOpacity>
             </View>
 
@@ -265,9 +313,11 @@ const OrderStatsScreen = ({navigation}: any) => {
                 activeOpacity={0.7}
               >
                 <View style={styles.orderHeader}>
-                  <View>
-                    <Text style={styles.orderRestaurant}>{order.restaurantName}</Text>
-                    <Text style={styles.orderId}>Order #{order.id}</Text>
+                  <View style={{flex: 1, marginRight: 8}}>
+                    <Text style={styles.orderRestaurant} numberOfLines={1}>
+                      {order.restaurantName}
+                    </Text>
+                    <Text style={styles.orderId}>Mã đơn #{order.id}</Text>
                   </View>
                   <View style={[styles.orderStatus, {backgroundColor: getStatusColor(order.status) + "20"}]}>
                     <Text style={[styles.orderStatusText, {color: getStatusColor(order.status)}]}>
@@ -281,7 +331,7 @@ const OrderStatsScreen = ({navigation}: any) => {
                   <Text style={styles.orderDate}>
                     {new Date(order.createdAt).toLocaleDateString("vi-VN", {
                       day: "2-digit",
-                      month: "short",
+                      month: "2-digit",
                       year: "numeric",
                     })}
                   </Text>
@@ -294,13 +344,13 @@ const OrderStatsScreen = ({navigation}: any) => {
         {/* Action Buttons */}
         <View style={styles.actionsSection}>
           <Button
-            title="View All Orders"
-            onPress={() => navigation.navigate("Orders")}
+            title="Xem tất cả đơn"
+            onPress={() => navigateToOrders(0)}
             variant="outline"
             containerStyle={styles.actionButton}
           />
           <Button
-            title="Order Again"
+            title="Đặt món ngay"
             onPress={() => navigation.navigate("Home")}
             containerStyle={styles.actionButton}
           />
@@ -328,18 +378,18 @@ const styles = StyleSheet.create({
     color: COLORS.GRAY,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 24,
     backgroundColor: COLORS.WHITE,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 8,
+  backButton: {
+    marginRight: 16,
+    padding: 4,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: COLORS.GRAY,
   },
   summarySection: {
@@ -401,6 +451,45 @@ const styles = StyleSheet.create({
     color: COLORS.DARK,
     marginBottom: 12,
   },
+  // Styles mới cho Grid
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    justifyContent: "space-between",
+  },
+  gridItem: {
+    width: "48%",
+    backgroundColor: COLORS.WHITE,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 4,
+  },
+  gridIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  gridValue: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: COLORS.DARK,
+    marginBottom: 4,
+  },
+  gridTitle: {
+    fontSize: 13,
+    color: COLORS.GRAY,
+  },
+  // End Styles mới
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -425,8 +514,26 @@ const styles = StyleSheet.create({
   statRow: {
     paddingVertical: 12,
   },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingTop: 12,
+  },
+  miniStat: {
+    alignItems: "center",
+    flex: 1,
+  },
+  verticalDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.LIGHT_GRAY,
+  },
   statInfo: {
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   statIconLabel: {
     flexDirection: "row",
@@ -440,7 +547,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: COLORS.DARK,
   },
@@ -449,6 +556,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginTop: 8,
+    justifyContent: "flex-end",
   },
   starsContainer: {
     flexDirection: "row",
@@ -469,47 +577,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.LIGHT_GRAY,
     marginVertical: 4,
-  },
-  spendingCard: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  spendingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  spendingLabel: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.9)",
-    fontWeight: "500",
-  },
-  spendingValue: {
-    fontSize: 14,
-    color: COLORS.WHITE,
-    fontWeight: "600",
-  },
-  spendingDivider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    marginVertical: 8,
-  },
-  spendingTotalLabel: {
-    fontSize: 16,
-    color: COLORS.WHITE,
-    fontWeight: "bold",
-  },
-  spendingTotalValue: {
-    fontSize: 20,
-    color: COLORS.WHITE,
-    fontWeight: "bold",
   },
   orderCard: {
     backgroundColor: COLORS.WHITE,
@@ -542,6 +609,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
+    alignSelf: "flex-start",
   },
   orderStatusText: {
     fontSize: 11,
