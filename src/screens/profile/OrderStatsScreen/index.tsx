@@ -9,28 +9,7 @@ import {formatCurrency} from "@utils/formatters";
 import {COLORS, ORDER_STATUS_COLOR} from "@/src/styles/colors";
 import styles from "./styles";
 import {ORDER_STATUS_LABEL} from "@/src/config/constants";
-
-// Interface cập nhật khớp với Backend trả về
-interface OrderStats {
-  totalOrders: number;
-  completedOrders: number;
-  pendingOrders: number; // Mới thêm
-  shippingOrders: number; // Mới thêm
-  cancelledOrders: number; // Mới thêm
-  totalSpent: number;
-  avgOrderValue: number;
-  totalReviews: number;
-  avgRating: number;
-  totalFavorites: number;
-}
-
-interface RecentOrder {
-  id: number;
-  restaurantName: string; // Backend trả về restaurantName hoặc cần map từ restaurantId
-  total: number;
-  status: string;
-  createdAt: string;
-}
+import {OrderStats, RecentOrder} from "./types";
 
 const OrderStatsScreen = ({navigation}: any) => {
   const {user} = useAuth();

@@ -26,12 +26,12 @@ import OrderDetailScreen from "@screens/orders/OrderDetailScreen";
 import ProfileScreen from "@screens/profile/ProfileScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import ChangePasswordScreen from "@/src/screens/profile/ChangePasswordScreen";
-import AddressListScreen from "@screens/profile/AddressListScreen";
-import AddAddressScreen from "@screens/profile/AddAddressScreen";
+import AddressListScreen from "@/src/screens/profile/AddressScreen/AddressListScreen";
+import AddAddressScreen from "@/src/screens/profile/AddressScreen/AddAddressScreen";
 import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
 import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
-import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen/OrderStatsScreen";
+import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
 
 const Stack = createNativeStackNavigator();
