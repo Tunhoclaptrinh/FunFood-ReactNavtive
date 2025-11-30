@@ -31,7 +31,7 @@ import AddAddressScreen from "@screens/profile/AddAddressScreen";
 import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
 import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
-import OrderStatsScreen from "@screens/profile/OrderStatsScreen";
+import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen/OrderStatsScreen";
 import {he} from "date-fns/locale";
 
 const Stack = createNativeStackNavigator();

@@ -30,11 +30,12 @@ export const PAYMENT_METHODS = {
   ZALOPAY: "zalopay",
 };
 
-export const ORDER_STATUS_LABELS: {[key: string]: string} = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  preparing: "Preparing",
-  delivering: "Delivering",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
+export const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "Chờ xác nhận",
+  confirmed: "Đã xác nhận",
+  preparing: "Đang chuẩn bị",
+  delivering: "Đang giao",
+  on_the_way: "Đang giao",
+  delivered: "Đã giao",
+  cancelled: "Đã hủy",
 };
