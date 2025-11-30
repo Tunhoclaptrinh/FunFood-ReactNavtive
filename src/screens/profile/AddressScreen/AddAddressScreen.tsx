@@ -1,17 +1,17 @@
 import React, {useState, useEffect} from "react";
-import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, Switch} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, Switch, TextInput} from "react-native";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
-import {apiClient} from "@config/api.client";
 import {useGeolocation} from "@hooks/useGeolocation";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import {COLORS} from "@/src/styles/colors";
+import {AddressService, CreateAddressRequest} from "@/src/services/address.service";
 
-const LABEL_OPTIONS = [
-  {label: "Home", icon: "home"},
-  {label: "Office", icon: "business"},
-  {label: "Other", icon: "location"},
+const PRESET_LABELS = [
+  {label: "Nhà riêng", icon: "home"},
+  {label: "Công ty", icon: "business"},
+  {label: "Khác", icon: "location"},
 ];
 
 const AddAddressScreen = ({route, navigation}: any) => {
@@ -20,7 +20,14 @@ const AddAddressScreen = ({route, navigation}: any) => {
 
   const {location, requestLocation} = useGeolocation();
   const [loading, setLoading] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState(existingAddress?.label || "Home");
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(
+    existingAddress?.label && PRESET_LABELS.some((p) => p.label === existingAddress.label)
+      ? existingAddress.label
+      : null
+  );
+  const [customLabel, setCustomLabel] = useState(
+    existingAddress?.label && !PRESET_LABELS.some((p) => p.label === existingAddress.label) ? existingAddress.label : ""
+  );
   const [formData, setFormData] = useState({
     address: existingAddress?.address || "",
     recipientName: existingAddress?.recipientName || "",
@@ -34,35 +41,48 @@ const AddAddressScreen = ({route, navigation}: any) => {
 
   useEffect(() => {
     if (!isEdit && location) {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         latitude: location.latitude,
         longitude: location.longitude,
-      });
+      }));
     }
-  }, [location]);
+  }, [location, isEdit]);
+
+  const handlePresetSelect = (label: string) => {
+    setSelectedPreset(label);
+    setCustomLabel("");
+  };
+
+  const getCurrentLabel = (): string => {
+    if (selectedPreset) return selectedPreset;
+    if (customLabel.trim()) return customLabel.trim();
+    return "";
+  };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const label = getCurrentLabel();
+    const addressData: CreateAddressRequest = {
+      label,
+      address: formData.address.trim(),
+      recipientName: formData.recipientName.trim(),
+      recipientPhone: formData.recipientPhone.trim(),
+      note: formData.note.trim() || undefined,
+      latitude: formData.latitude || undefined,
+      longitude: formData.longitude || undefined,
+      isDefault: formData.isDefault,
+    };
 
-    if (!formData.address.trim()) {
-      newErrors.address = "Address is required";
-    } else if (formData.address.trim().length < 10) {
-      newErrors.address = "Address is too short";
+    const validation = AddressService.validateAddress(addressData);
+
+    // Thêm validation cho custom label nếu không chọn preset
+    if (!selectedPreset && !customLabel.trim()) {
+      validation.errors.label = "Vui lòng chọn hoặc nhập nhãn địa chỉ";
+      validation.isValid = false;
     }
 
-    if (!formData.recipientName.trim()) {
-      newErrors.recipientName = "Recipient name is required";
-    }
-
-    if (!formData.recipientPhone.trim()) {
-      newErrors.recipientPhone = "Phone number is required";
-    } else if (!/^(0|\+84)[0-9]{9}$/.test(formData.recipientPhone)) {
-      newErrors.recipientPhone = "Invalid phone number format";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(validation.errors);
+    return validation.isValid;
   };
 
   const handleGetCurrentLocation = async () => {
@@ -74,10 +94,10 @@ const AddAddressScreen = ({route, navigation}: any) => {
           latitude: location.latitude,
           longitude: location.longitude,
         });
-        Alert.alert("Success", "Current location captured");
+        Alert.alert("Thành công", "Đã lấy vị trí hiện tại");
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to get current location");
+      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại");
     }
   };
 
@@ -88,28 +108,28 @@ const AddAddressScreen = ({route, navigation}: any) => {
 
     setLoading(true);
     try {
-      const data = {
-        label: selectedLabel,
+      const data: CreateAddressRequest = {
+        label: getCurrentLabel(),
         address: formData.address.trim(),
         recipientName: formData.recipientName.trim(),
         recipientPhone: formData.recipientPhone.trim(),
         note: formData.note.trim() || undefined,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
+        latitude: formData.latitude || undefined,
+        longitude: formData.longitude || undefined,
         isDefault: formData.isDefault,
       };
 
       if (isEdit) {
-        await apiClient.put(`/addresses/${existingAddress.id}`, data);
-        Alert.alert("Success", "Address updated successfully", [
+        await AddressService.updateAddress(existingAddress.id, data);
+        Alert.alert("Thành công", "Đã cập nhật địa chỉ", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
           },
         ]);
       } else {
-        await apiClient.post("/addresses", data);
-        Alert.alert("Success", "Address added successfully", [
+        await AddressService.createAddress(data);
+        Alert.alert("Thành công", "Đã thêm địa chỉ mới", [
           {
             text: "OK",
             onPress: () => navigation.goBack(),
@@ -117,8 +137,8 @@ const AddAddressScreen = ({route, navigation}: any) => {
         ]);
       }
     } catch (error: any) {
-      console.error("Error saving address:", error);
-      Alert.alert("Error", error.response?.data?.message || "Failed to save address");
+      console.error("Lỗi khi lưu địa chỉ:", error);
+      Alert.alert("Lỗi", error.message || "Không thể lưu địa chỉ");
     } finally {
       setLoading(false);
     }
@@ -129,9 +149,9 @@ const AddAddressScreen = ({route, navigation}: any) => {
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{isEdit ? "Edit Address" : "Add New Address"}</Text>
+          <Text style={styles.headerTitle}>{isEdit ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}</Text>
           <Text style={styles.headerSubtitle}>
-            {isEdit ? "Update your delivery address details" : "Enter details for your new delivery address"}
+            {isEdit ? "Cập nhật thông tin địa chỉ giao hàng" : "Nhập thông tin địa chỉ giao hàng mới"}
           </Text>
         </View>
 
@@ -139,27 +159,43 @@ const AddAddressScreen = ({route, navigation}: any) => {
         <View style={styles.formSection}>
           {/* Label Selection */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Address Label</Text>
+            <Text style={styles.label}>Nhãn địa chỉ *</Text>
             <View style={styles.labelOptions}>
-              {LABEL_OPTIONS.map((option) => (
+              {PRESET_LABELS.map((option) => (
                 <TouchableOpacity
                   key={option.label}
-                  style={[styles.labelOption, selectedLabel === option.label && styles.labelOptionActive]}
-                  onPress={() => setSelectedLabel(option.label)}
+                  style={[styles.labelOption, selectedPreset === option.label && styles.labelOptionActive]}
+                  onPress={() => handlePresetSelect(option.label)}
                   activeOpacity={0.7}
                 >
                   <Ionicons
                     name={option.icon as any}
                     size={20}
-                    color={selectedLabel === option.label ? COLORS.WHITE : COLORS.PRIMARY}
+                    color={selectedPreset === option.label ? COLORS.WHITE : COLORS.PRIMARY}
                   />
                   <Text
-                    style={[styles.labelOptionText, selectedLabel === option.label && styles.labelOptionTextActive]}
+                    style={[styles.labelOptionText, selectedPreset === option.label && styles.labelOptionTextActive]}
                   >
                     {option.label}
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Custom Label Input */}
+            <View style={styles.customLabelContainer}>
+              <Text style={styles.customLabelTitle}>Hoặc nhập nhãn tùy chỉnh:</Text>
+              <Input
+                value={customLabel}
+                onChangeText={(text) => {
+                  setCustomLabel(text);
+                  setSelectedPreset(null);
+                }}
+                placeholder="VD: Nhà bạn gái, Nhà bố mẹ..."
+                maxLength={50}
+                error={!selectedPreset && !customLabel.trim() ? errors.label : undefined}
+                containerStyle={styles.customLabelInput}
+              />
             </View>
           </View>
 
@@ -167,12 +203,12 @@ const AddAddressScreen = ({route, navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Ionicons name="person-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Recipient Name *</Text>
+              <Text style={styles.label}>Tên người nhận *</Text>
             </View>
             <Input
               value={formData.recipientName}
               onChangeText={(recipientName) => setFormData({...formData, recipientName})}
-              placeholder="Enter recipient name"
+              placeholder="Nhập tên người nhận"
               error={errors.recipientName}
               containerStyle={styles.input}
             />
@@ -182,7 +218,7 @@ const AddAddressScreen = ({route, navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Ionicons name="call-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Phone Number *</Text>
+              <Text style={styles.label}>Số điện thoại *</Text>
             </View>
             <Input
               value={formData.recipientPhone}
@@ -198,12 +234,12 @@ const AddAddressScreen = ({route, navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Ionicons name="location-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Full Address *</Text>
+              <Text style={styles.label}>Địa chỉ đầy đủ *</Text>
             </View>
             <Input
               value={formData.address}
               onChangeText={(address) => setFormData({...formData, address})}
-              placeholder="Enter street address, building, floor..."
+              placeholder="Nhập số nhà, tên đường, phường/xã, quận/huyện..."
               multiline
               numberOfLines={4}
               error={errors.address}
@@ -215,7 +251,7 @@ const AddAddressScreen = ({route, navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Ionicons name="navigate-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>GPS Location (Optional)</Text>
+              <Text style={styles.label}>Vị trí GPS (Tùy chọn)</Text>
             </View>
             <View style={styles.gpsContainer}>
               <View style={styles.gpsInfo}>
@@ -224,14 +260,14 @@ const AddAddressScreen = ({route, navigation}: any) => {
                     <Text style={styles.gpsText}>
                       📍 {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
                     </Text>
-                    <Text style={styles.gpsSubtext}>Location captured</Text>
+                    <Text style={styles.gpsSubtext}>Đã lưu tọa độ</Text>
                   </>
                 ) : (
-                  <Text style={styles.gpsPlaceholder}>No GPS coordinates yet</Text>
+                  <Text style={styles.gpsPlaceholder}>Chưa có tọa độ GPS</Text>
                 )}
               </View>
               <Button
-                title="Get Location"
+                title="Lấy vị trí"
                 onPress={handleGetCurrentLocation}
                 variant="outline"
                 size="small"
@@ -244,14 +280,15 @@ const AddAddressScreen = ({route, navigation}: any) => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Ionicons name="chatbubble-outline" size={20} color={COLORS.GRAY} />
-              <Text style={styles.label}>Delivery Notes (Optional)</Text>
+              <Text style={styles.label}>Ghi chú giao hàng (Tùy chọn)</Text>
             </View>
             <Input
               value={formData.note}
               onChangeText={(note) => setFormData({...formData, note})}
-              placeholder="e.g., Ring the bell, Call when arrived..."
+              placeholder="VD: Bấm chuông, Gọi điện khi đến..."
               multiline
               numberOfLines={2}
+              error={errors.note}
               containerStyle={styles.input}
             />
           </View>
@@ -261,8 +298,8 @@ const AddAddressScreen = ({route, navigation}: any) => {
             <View style={styles.defaultInfo}>
               <Ionicons name="star" size={20} color={COLORS.WARNING} />
               <View style={styles.defaultText}>
-                <Text style={styles.defaultTitle}>Set as Default</Text>
-                <Text style={styles.defaultSubtitle}>Use this address as default for checkout</Text>
+                <Text style={styles.defaultTitle}>Đặt làm địa chỉ mặc định</Text>
+                <Text style={styles.defaultSubtitle}>Sử dụng địa chỉ này làm mặc định khi đặt hàng</Text>
               </View>
             </View>
             <Switch
@@ -276,7 +313,7 @@ const AddAddressScreen = ({route, navigation}: any) => {
           {/* Required Fields Note */}
           <View style={styles.noteContainer}>
             <Ionicons name="information-circle-outline" size={16} color={COLORS.INFO} />
-            <Text style={styles.noteText}>Fields marked with * are required</Text>
+            <Text style={styles.noteText}>Các trường có dấu * là bắt buộc</Text>
           </View>
         </View>
       </ScrollView>
@@ -284,14 +321,14 @@ const AddAddressScreen = ({route, navigation}: any) => {
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <Button
-          title="Cancel"
+          title="Hủy"
           onPress={() => navigation.goBack()}
           variant="outline"
           containerStyle={styles.cancelButton}
         />
 
         <Button
-          title={loading ? "Saving..." : isEdit ? "Update" : "Add Address"}
+          title={loading ? "Đang lưu..." : isEdit ? "Cập nhật" : "Thêm địa chỉ"}
           onPress={handleSave}
           loading={loading}
           disabled={loading}
@@ -346,6 +383,7 @@ const styles = StyleSheet.create({
   labelOptions: {
     flexDirection: "row",
     gap: 12,
+    marginBottom: 12,
   },
   labelOption: {
     flex: 1,
@@ -370,6 +408,17 @@ const styles = StyleSheet.create({
   },
   labelOptionTextActive: {
     color: COLORS.WHITE,
+  },
+  customLabelContainer: {
+    marginTop: 8,
+  },
+  customLabelTitle: {
+    fontSize: 13,
+    color: COLORS.GRAY,
+    marginBottom: 8,
+  },
+  customLabelInput: {
+    marginVertical: 0,
   },
   gpsContainer: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from "react";
+import React, {useState, useCallback} from "react";
 import {
   View,
   StyleSheet,
@@ -12,21 +12,9 @@ import {
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
-import {apiClient} from "@config/api.client";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {COLORS} from "@/src/styles/colors";
-
-interface Address {
-  id: number;
-  label: string;
-  address: string;
-  recipientName: string;
-  recipientPhone: string;
-  latitude?: number;
-  longitude?: number;
-  note?: string;
-  isDefault: boolean;
-}
+import {Address, AddressService} from "@/src/services/address.service";
 
 const AddressListScreen = ({navigation}: any) => {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -42,11 +30,11 @@ const AddressListScreen = ({navigation}: any) => {
   const loadAddresses = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/addresses");
-      setAddresses(response.data.data || []);
-    } catch (error) {
-      console.error("Error loading addresses:", error);
-      Alert.alert("Error", "Failed to load addresses");
+      const response = await AddressService.getAddresses();
+      setAddresses(response.data || []);
+    } catch (error: any) {
+      console.error("Lỗi khi tải địa chỉ:", error);
+      Alert.alert("Lỗi", error.message || "Không thể tải danh sách địa chỉ");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -58,35 +46,35 @@ const AddressListScreen = ({navigation}: any) => {
     loadAddresses();
   };
 
-  const handleSetDefault = async (id: number) => {
+  const handleSetDefault = async (id: number, label: string) => {
     try {
-      await apiClient.patch(`/addresses/${id}/default`);
-      // Update local state
+      await AddressService.setAsDefault(id);
+      // Cập nhật state local
       setAddresses(
         addresses.map((addr) => ({
           ...addr,
           isDefault: addr.id === id,
         }))
       );
-      Alert.alert("Success", "Default address updated");
+      Alert.alert("Thành công", `Đã đặt "${label}" làm địa chỉ mặc định`);
     } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.message || "Failed to set default address");
+      Alert.alert("Lỗi", error.message || "Không thể đặt địa chỉ mặc định");
     }
   };
 
   const handleDelete = (id: number, label: string) => {
-    Alert.alert("Delete Address", `Are you sure you want to delete "${label}"?`, [
-      {text: "Cancel", style: "cancel"},
+    Alert.alert("Xóa địa chỉ", `Bạn có chắc muốn xóa địa chỉ "${label}"?`, [
+      {text: "Hủy", style: "cancel"},
       {
-        text: "Delete",
+        text: "Xóa",
         style: "destructive",
         onPress: async () => {
           try {
-            await apiClient.delete(`/addresses/${id}`);
+            await AddressService.deleteAddress(id);
             setAddresses(addresses.filter((addr) => addr.id !== id));
-            Alert.alert("Success", "Address deleted");
+            Alert.alert("Thành công", "Đã xóa địa chỉ");
           } catch (error: any) {
-            Alert.alert("Error", error.response?.data?.message || "Failed to delete address");
+            Alert.alert("Lỗi", error.message || "Không thể xóa địa chỉ");
           }
         },
       },
@@ -97,30 +85,28 @@ const AddressListScreen = ({navigation}: any) => {
     navigation.navigate("AddAddress", {address});
   };
 
+  const getIconForLabel = (label: string) => {
+    const lowerLabel = label.toLowerCase();
+    if (lowerLabel.includes("nhà") || lowerLabel.includes("home")) return "home";
+    if (lowerLabel.includes("công ty") || lowerLabel.includes("office") || lowerLabel.includes("business"))
+      return "business";
+    return "location";
+  };
+
   const renderAddressCard = ({item}: {item: Address}) => (
     <View style={styles.addressCard}>
       {/* Default Badge */}
       {item.isDefault && (
         <View style={styles.defaultBadge}>
           <Ionicons name="checkmark-circle" size={14} color={COLORS.SUCCESS} />
-          <Text style={styles.defaultText}>Default</Text>
+          <Text style={styles.defaultText}>Mặc định</Text>
         </View>
       )}
 
       {/* Label */}
       <View style={styles.labelContainer}>
         <View style={styles.labelIconContainer}>
-          <Ionicons
-            name={
-              item.label.toLowerCase() === "home"
-                ? "home"
-                : item.label.toLowerCase() === "office"
-                ? "business"
-                : "location"
-            }
-            size={20}
-            color={COLORS.PRIMARY}
-          />
+          <Ionicons name={getIconForLabel(item.label) as any} size={20} color={COLORS.PRIMARY} />
         </View>
         <Text style={styles.label}>{item.label}</Text>
       </View>
@@ -143,6 +129,16 @@ const AddressListScreen = ({navigation}: any) => {
         <Text style={styles.addressText}>{item.address}</Text>
       </View>
 
+      {/* GPS Coordinates */}
+      {item.latitude && item.longitude && (
+        <View style={styles.gpsSection}>
+          <Ionicons name="navigate-outline" size={14} color={COLORS.INFO} />
+          <Text style={styles.gpsText}>
+            GPS: {item.latitude.toFixed(6)}, {item.longitude.toFixed(6)}
+          </Text>
+        </View>
+      )}
+
       {/* Note */}
       {item.note && (
         <View style={styles.noteSection}>
@@ -154,15 +150,19 @@ const AddressListScreen = ({navigation}: any) => {
       {/* Actions */}
       <View style={styles.actionsContainer}>
         {!item.isDefault && (
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleSetDefault(item.id)} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleSetDefault(item.id, item.label)}
+            activeOpacity={0.7}
+          >
             <Ionicons name="star-outline" size={18} color={COLORS.PRIMARY} />
-            <Text style={styles.actionText}>Set as Default</Text>
+            <Text style={styles.actionText}>Đặt mặc định</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)} activeOpacity={0.7}>
           <Ionicons name="create-outline" size={18} color={COLORS.INFO} />
-          <Text style={styles.actionText}>Edit</Text>
+          <Text style={[styles.actionText, {color: COLORS.INFO}]}>Sửa</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -171,7 +171,7 @@ const AddressListScreen = ({navigation}: any) => {
           activeOpacity={0.7}
         >
           <Ionicons name="trash-outline" size={18} color={COLORS.ERROR} />
-          <Text style={[styles.actionText, {color: COLORS.ERROR}]}>Delete</Text>
+          <Text style={[styles.actionText, {color: COLORS.ERROR}]}>Xóa</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -182,7 +182,7 @@ const AddressListScreen = ({navigation}: any) => {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          <Text style={styles.loadingText}>Loading addresses...</Text>
+          <Text style={styles.loadingText}>Đang tải danh sách địa chỉ...</Text>
         </View>
       </SafeAreaView>
     );
@@ -190,12 +190,20 @@ const AddressListScreen = ({navigation}: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Địa chỉ của tôi</Text>
+        <Text style={styles.headerSubtitle}>
+          {addresses.length > 0 ? `Bạn có ${addresses.length} địa chỉ đã lưu` : "Thêm địa chỉ giao hàng của bạn"}
+        </Text>
+      </View>
+
       {addresses.length === 0 ? (
         <View style={styles.emptyContainer}>
           <EmptyState
             icon="location-outline"
-            title="No Addresses"
-            subtitle="Add your delivery addresses for faster checkout"
+            title="Chưa có địa chỉ"
+            subtitle="Thêm địa chỉ giao hàng để đặt món nhanh hơn"
             containerStyle={styles.emptyState}
           />
         </View>
@@ -229,6 +237,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8F9FA",
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: COLORS.WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.LIGHT_GRAY,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: COLORS.DARK,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: COLORS.GRAY,
   },
   loadingContainer: {
     flex: 1,
@@ -320,7 +345,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: "#F5F5F5",
@@ -330,6 +355,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.DARK,
     lineHeight: 20,
+  },
+  gpsSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
+  gpsText: {
+    fontSize: 12,
+    color: COLORS.INFO,
+    fontFamily: "monospace",
   },
   noteSection: {
     flexDirection: "row",
