@@ -16,6 +16,7 @@ import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
 import {LinearGradient} from "expo-linear-gradient";
 import {COLORS} from "@/src/styles/colors";
+import {getImageUrl} from "@/src/utils/formatters";
 
 interface UserStats {
   totalOrders: number;
@@ -77,7 +78,7 @@ const ProfileScreen = ({navigation}: any) => {
   };
 
   const handleLogout = () => {
-   // Logout alert
+    // Logout alert
     Alert.alert("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", [
       {text: "Hủy", style: "cancel"},
       {
@@ -194,7 +195,7 @@ const ProfileScreen = ({navigation}: any) => {
             <View style={styles.avatarSection}>
               <View style={styles.avatarContainer}>
                 {user?.avatar ? (
-                  <Image source={{uri: user.avatar}} style={styles.avatar} />
+                  <Image source={{uri: getImageUrl(user.avatar)}} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || "U"}</Text>
@@ -246,7 +247,8 @@ const ProfileScreen = ({navigation}: any) => {
                 {formatCurrency(stats.totalSpent).substring(0, formatCurrency(stats.totalSpent).length - 3)}
               </Text>
               <Text style={styles.statsCardDetail}>
-                trung bình {formatCurrency(stats.avgOrderValue).substring(0, formatCurrency(stats.avgOrderValue).length - 3)}
+                trung bình{" "}
+                {formatCurrency(stats.avgOrderValue).substring(0, formatCurrency(stats.avgOrderValue).length - 3)}
               </Text>
             </TouchableOpacity>
 

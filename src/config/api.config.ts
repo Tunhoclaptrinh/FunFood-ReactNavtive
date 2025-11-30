@@ -1,6 +1,6 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL_DEV || "http://localhost:3000/api",
-  TIMEOUT: 10000,
+  BASE_URL: process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL_DEV || "http://10.0.2.2:3000/api",
+  TIMEOUT: 15000,
   RETRY_COUNT: 3,
 };
 
