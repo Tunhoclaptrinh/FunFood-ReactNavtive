@@ -41,6 +41,26 @@ export const useAuth = () => {
     }
   }, [logout]);
 
+  /**
+   * Bổ sung: Hàm làm mới thông tin user từ server
+   * Sử dụng sau khi update profile, avatar...
+   */
+  const refreshUser = useCallback(async () => {
+    try {
+      // Gọi API /auth/me để lấy user & token mới nhất
+      const result = await AuthService.getMe();
+
+      // Cập nhật lại vào store
+      if (result && result.user) {
+        await setUser(result.user, result.token);
+      }
+      return result;
+    } catch (error) {
+      console.error("Refresh user failed:", error);
+      throw error;
+    }
+  }, [setUser]);
+
   return {
     user,
     token,
@@ -50,5 +70,6 @@ export const useAuth = () => {
     register,
     signOut,
     restoreSession,
+    refreshUser,
   };
 };
