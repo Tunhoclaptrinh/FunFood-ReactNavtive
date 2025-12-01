@@ -214,7 +214,22 @@ const ProfileStack = () => (
       component={OrderStatsScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Thống kê đơn hàng")}
     />
-  </Stack.Navigator>
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.SUPPORT}
+      component={SupportScreen}
+      options={{title: "Trợ giúp", headerBackVisible: false}}
+    />
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.TERMS_PRIVACY}
+      component={TermsPrivacyScreen}
+      options={{title: "Điều khoản", headerBackVisible: false}}
+    />
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.REVIEW_DETAIL}
+      component={ReviewDetailScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết đánh giá")}
+    />
+    </Stack.Navigator>
 );
 
 /* ==============================
