@@ -113,7 +113,7 @@ const OrderStatsScreen = ({navigation}: any) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{margin: "auto"}}>
             <Text style={styles.headerSubtitle}>Lịch sử và chi tiết chi tiêu của bạn</Text>
           </View>
         </View>
@@ -263,20 +263,20 @@ const OrderStatsScreen = ({navigation}: any) => {
                 <Text style={styles.viewAllText}>Xem tất cả</Text>
               </TouchableOpacity>
             </View>
-
             {recentOrders.slice(0, 5).map((order) => (
               <TouchableOpacity
                 key={order.id}
                 style={styles.orderCard}
+                // Điều hướng tới OrderDetail
                 onPress={() => navigation.navigate("OrderDetail", {orderId: order.id})}
                 activeOpacity={0.7}
               >
                 <View style={styles.orderHeader}>
                   <View style={{flex: 1, marginRight: 8}}>
+                    <Text style={styles.orderId}>Mã đơn #{order.id}</Text>
                     <Text style={styles.orderRestaurant} numberOfLines={1}>
                       {order.restaurantName}
                     </Text>
-                    <Text style={styles.orderId}>Mã đơn #{order.id}</Text>
                   </View>
                   <View style={[styles.orderStatus, {backgroundColor: getStatusColor(order.status) + "20"}]}>
                     <Text style={[styles.orderStatusText, {color: getStatusColor(order.status)}]}>
@@ -299,7 +299,6 @@ const OrderStatsScreen = ({navigation}: any) => {
             ))}
           </View>
         )}
-
         {/* Action Buttons */}
         <View style={styles.actionsSection}>
           <Button

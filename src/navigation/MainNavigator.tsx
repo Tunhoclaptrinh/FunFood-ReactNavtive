@@ -33,6 +33,7 @@ import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScr
 import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
 import AddAddressScreen from "../screens/profile/AddressScreen/AddAddressScreen";
+import SettingsScreen from "../screens/profile/SettingsScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -211,9 +212,33 @@ const ProfileStack = () => (
       component={OrderStatsScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Thống kê đơn hàng")}
     />
+
+    {/* --- THÊM CÁC MÀN HÌNH CHI TIẾT VÀO ĐÂY --- */}
+    <Stack.Screen
+      name="OrderDetail"
+      component={OrderDetailScreen}
+      options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
+    />
+    <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
+      <Stack.Screen
+        name="RestaurantDetail"
+        component={RestaurantDetailScreen}
+        options={({navigation}: any) => CustomBackHeader(navigation, "Thực đơn nhà hàng")}
+      />
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
+      />
+    </Stack.Group>
+
+    <Stack.Screen
+      name="Settings" // Tên này phải khớp với navigation.navigate("Settings") ở ProfileScreen
+      component={SettingsScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Cài đặt")}
+    />
   </Stack.Navigator>
 );
-
 /* ==============================
    MAIN TAB NAVIGATOR
    ==============================*/

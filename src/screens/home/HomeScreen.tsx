@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
+import {useTheme} from "@/src/hooks/useTheme";
 
 // --- Stores & Hooks ---
 import {useNearbyRestaurants, useRestaurantStore, useRestaurantFilters} from "@stores/restaurantStore";
@@ -26,7 +27,7 @@ import {CategoryService, Category} from "@services/category.service";
 import {MapService, MapMarker} from "@services/map.service";
 import MapView from "@/src/components/common/MapView";
 import Button from "@/src/components/common/Button";
-import Input from "@/src/components/common/Input/Input"; 
+import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import SearchBar from "@/src/components/common/SearchBar";
 import {formatCurrency} from "@utils/formatters";
@@ -39,6 +40,8 @@ type DataSourceType = "nearby" | "all" | "toprated";
 type LayoutModeType = "list" | "map";
 
 const HomeScreen = ({navigation}: any) => {
+  const {colors, isDark} = useTheme();
+
   // --- Hooks & Stores ---
   const {location, requestLocation} = useGeolocation();
   const nearbyStore = useNearbyRestaurants();
@@ -174,11 +177,11 @@ const HomeScreen = ({navigation}: any) => {
 
   // --- Renders ---
   const renderHeader = () => (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, {backgroundColor: colors.CARD_BG}]}>
       {/* Greeting & Notif */}
       <View style={styles.greetingSection}>
         <View>
-          <Text style={styles.greeting}>Chào buổi sáng ☀️</Text>
+          <Text style={[styles.greeting, {color: colors.TEXT_PRIMARY}]}>Chào buổi sáng ☀️</Text>
           <Text style={styles.greetingSubtitle}>Hôm nay bạn muốn ăn gì?</Text>
         </View>
         <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate("Notifications")}>
@@ -530,33 +533,26 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   return (
-  <SafeAreaView style={styles.container}>
-    <StatusBar barStyle="dark-content" backgroundColor={COLORS.WHITE} />
+    <SafeAreaView style={[styles.container, {backgroundColor: colors.BACKGROUND}]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={COLORS.WHITE} />
 
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={store.isRefreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
-      }
-      contentContainerStyle={{ paddingBottom: 50 }}
-    >
-      {renderHeader()}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={store.isRefreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
+        }
+        contentContainerStyle={{paddingBottom: 50, backgroundColor: colors.BACKGROUND}}
+      >
+        {renderHeader()}
 
-      {/* Khi ở chế độ map, ta show MapView */}
-      {layoutMode === "map" ? (
-        <View style={{height: 400, marginTop: 10}}>
-          {renderMapView()}
-        </View>
-      ) : (
-        renderListView()
-      )}
-    </ScrollView>
+        {/* Khi ở chế độ map, ta show MapView */}
+        {layoutMode === "map" ? <View style={{height: 400, marginTop: 10}}>{renderMapView()}</View> : renderListView()}
+      </ScrollView>
 
-    {renderFilterModal()}
-    {renderMapPreviewModal()}
-  </SafeAreaView>
-);
-
+      {renderFilterModal()}
+      {renderMapPreviewModal()}
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({

@@ -28,8 +28,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.GRAY,
+    margin: "auto",
   },
   summarySection: {
     paddingHorizontal: 16,
@@ -234,13 +235,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 12,
   },
-  orderRestaurant: {
+  orderId: {
     fontSize: 15,
     fontWeight: "600",
     color: COLORS.DARK,
     marginBottom: 4,
   },
-  orderId: {
+  orderRestaurant: {
     fontSize: 12,
     color: COLORS.GRAY,
   },
