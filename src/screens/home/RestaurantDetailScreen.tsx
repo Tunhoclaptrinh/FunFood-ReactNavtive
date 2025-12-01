@@ -308,9 +308,21 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
                     <Text style={styles.productName} numberOfLines={2}>
                       {item.name}
                     </Text>
+
+                    {/* Trạng thái còn hàng / hết hàng */}
+                    <Text style={[styles.stockStatus, {color: item.available ? COLORS.SUCCESS : COLORS.ERROR}]}>
+                      {item.available ? "Còn hàng" : "Hết hàng"}
+                    </Text>
+
                     <View style={styles.priceRow}>
                       <Text style={styles.productPrice}>{formatCurrency(item.price)}</Text>
-                      <TouchableOpacity style={styles.addBtnMini} onPress={() => handleAddToCart(item)}>
+
+                      {/* Disable nút add nếu hết hàng */}
+                      <TouchableOpacity
+                        style={[styles.addBtnMini, !item.available && {backgroundColor: COLORS.GRAY, opacity: 0.6}]}
+                        onPress={() => item.available && handleAddToCart(item)}
+                        disabled={!item.available}
+                      >
                         {addingId === item.id ? (
                           <ActivityIndicator size="small" color={COLORS.WHITE} />
                         ) : (
@@ -558,8 +570,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.DARK,
-    marginBottom: 8,
+    marginBottom: 4,
     height: 40,
+  },
+  stockStatus: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
   },
   priceRow: {
     flexDirection: "row",
