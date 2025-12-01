@@ -147,19 +147,6 @@ const NotificationsScreen = ({navigation}: any) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Thông báo</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleMarkAllAsRead}>
-            <Ionicons name="checkmark-done" size={20} color={COLORS.PRIMARY} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton} onPress={handleClearAll}>
-            <Ionicons name="trash-outline" size={20} color={COLORS.ERROR} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -176,6 +163,14 @@ const NotificationsScreen = ({navigation}: any) => {
             Chưa đọc ({unreadCount})
           </Text>
         </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleMarkAllAsRead}>
+            <Ionicons name="checkmark-done" size={20} color={COLORS.PRIMARY} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={handleClearAll}>
+            <Ionicons name="trash-outline" size={20} color={COLORS.ERROR} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* List */}
@@ -258,21 +253,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.GRAY,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-  },
   headerActions: {
     flexDirection: "row",
     gap: 12,
@@ -294,8 +274,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 8,
     alignItems: "center",
     backgroundColor: COLORS.LIGHT_GRAY,
   },

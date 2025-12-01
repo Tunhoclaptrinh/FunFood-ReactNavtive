@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.WHITE,
     marginTop: -25,
+    marginBottom: -25,
   },
 });
 

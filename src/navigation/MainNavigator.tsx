@@ -83,6 +83,12 @@ const HomeStack = () => (
       component={HomeScreen}
       options={{title: "Khám phá", headerBackVisible: false}}
     />
+
+    <Stack.Screen
+      name={ROUTE_NAMES.COMMON.NOTIFICATIONS}
+      component={NotificationsScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Thông báo")}
+    />
     <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
       <Stack.Screen
         name={ROUTE_NAMES.HOME.RESTAURANT_DETAIL}
@@ -95,12 +101,6 @@ const HomeStack = () => (
         name={ROUTE_NAMES.HOME.PRODUCT_DETAIL}
         component={ProductDetailScreen}
         options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
-      />
-
-      <Stack.Screen
-        name={ROUTE_NAMES.COMMON.NOTIFICATIONS}
-        component={NotificationsScreen}
-        options={({navigation}: any) => CustomBackHeader(navigation, "Thông báo")}
       />
 
       <Stack.Screen
