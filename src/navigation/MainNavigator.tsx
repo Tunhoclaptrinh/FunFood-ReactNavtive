@@ -27,12 +27,12 @@ import ProfileScreen from "@screens/profile/ProfileScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import ChangePasswordScreen from "@/src/screens/profile/ChangePasswordScreen";
 import AddressListScreen from "@/src/screens/profile/AddressScreen/AddressListScreen";
-import AddAddressScreen from "@/src/screens/profile/AddressScreen/AddAddressScreen";
 import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
 import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
 import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
+import AddAddressScreen from "../screens/profile/AddressScreen/AddAddressScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();

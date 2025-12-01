@@ -1,20 +1,12 @@
-import React, {useState, useCallback} from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
+import {useState, useCallback} from "react";
+import {View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl} from "react-native";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {useFocusEffect} from "@react-navigation/native";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {COLORS} from "@/src/styles/colors";
 import {Address, AddressService} from "@/src/services/address.service";
+import styles from "./styles";
 
 const AddressListScreen = ({navigation}: any) => {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -149,16 +141,19 @@ const AddressListScreen = ({navigation}: any) => {
 
       {/* Actions */}
       <View style={styles.actionsContainer}>
-        {!item.isDefault && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleSetDefault(item.id, item.label)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="star-outline" size={18} color={COLORS.PRIMARY} />
-            <Text style={styles.actionText}>Đặt mặc định</Text>
-          </TouchableOpacity>
-        )}
+        {/* {!item.isDefault && ( */}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleSetDefault(item.id, item.label)}
+          activeOpacity={0.7}
+          disabled={item.isDefault}
+        >
+          <Ionicons name="star-outline" size={18} color={item.isDefault ? COLORS.DARK_GRAY : COLORS.PRIMARY} />
+          <Text style={item.isDefault ? styles.actionTextDisabled : styles.actionText}>
+            {item.isDefault ? "Đã mặc định" : "Đặt mặc định"}
+          </Text>
+        </TouchableOpacity>
+        {/* )} */}
 
         <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)} activeOpacity={0.7}>
           <Ionicons name="create-outline" size={18} color={COLORS.INFO} />
@@ -192,7 +187,6 @@ const AddressListScreen = ({navigation}: any) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Địa chỉ của tôi</Text>
         <Text style={styles.headerSubtitle}>
           {addresses.length > 0 ? `Bạn có ${addresses.length} địa chỉ đã lưu` : "Thêm địa chỉ giao hàng của bạn"}
         </Text>
@@ -232,193 +226,5 @@ const AddressListScreen = ({navigation}: any) => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 4,
-    margin: "auto",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    margin: "auto",
-    color: COLORS.GRAY,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: COLORS.GRAY,
-  },
-  emptyContainer: {
-    flex: 1,
-  },
-  emptyState: {
-    flex: 1,
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  addressCard: {
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  defaultBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E8F8F1",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    gap: 4,
-  },
-  defaultText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.SUCCESS,
-  },
-  labelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 12,
-  },
-  labelIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FFE5E5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  label: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-  },
-  recipientSection: {
-    flexDirection: "row",
-    gap: 20,
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  recipientName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-  },
-  recipientPhone: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-  },
-  addressSection: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    marginBottom: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F5F5F5",
-  },
-  addressText: {
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.DARK,
-    lineHeight: 20,
-  },
-  gpsSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
-    paddingLeft: 4,
-  },
-  gpsText: {
-    fontSize: 12,
-    color: COLORS.INFO,
-    fontFamily: "monospace",
-  },
-  noteSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#F0F9FF",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  noteText: {
-    flex: 1,
-    fontSize: 12,
-    color: COLORS.INFO,
-  },
-  actionsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F5F5F5",
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 6,
-  },
-  actionText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: COLORS.PRIMARY,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: COLORS.PRIMARY,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-});
 
 export default AddressListScreen;
