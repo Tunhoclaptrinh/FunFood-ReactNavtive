@@ -9,5 +9,6 @@ export type RootStackParamList = {
   RestaurantDetail: {restaurantId: number};
   ProductDetail: {productId: number};
   OrderDetail: {orderId: number};
+  REVIEW_DETAIL: "ReviewDetailScreen";
   Checkout: undefined;
 };
