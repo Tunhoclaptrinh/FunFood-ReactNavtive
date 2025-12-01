@@ -109,12 +109,7 @@ const MyReviewsScreen = ({navigation}: any) => {
   };
 
   const renderReview = ({item}: {item: Review}) => (
-    <TouchableOpacity
-      onPress={() =>
-        navigation.navigate("ReviewDetailScreen", { review: item })
-      }
-      style={styles.reviewCard}
-    ></TouchableOpacity>
+    <View style={styles.reviewCard} >
       <View style={styles.reviewHeader}>
         <View style={styles.reviewInfo}>
           <Ionicons name={item.type === "restaurant" ? "storefront" : "fast-food"} size={20} color={COLORS.PRIMARY} />
