@@ -34,6 +34,7 @@ import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
 import AddAddressScreen from "../screens/profile/AddressScreen/AddAddressScreen";
 import SettingsScreen from "../screens/profile/SettingsScreen";
+import NotificationsScreen from "../screens/notifications/NotificationsScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -94,6 +95,18 @@ const HomeStack = () => (
         name={ROUTE_NAMES.HOME.PRODUCT_DETAIL}
         component={ProductDetailScreen}
         options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
+      />
+
+      <Stack.Screen
+        name={ROUTE_NAMES.COMMON.NOTIFICATIONS}
+        component={NotificationsScreen}
+        options={({navigation}: any) => CustomBackHeader(navigation, "Thông báo")}
+      />
+
+      <Stack.Screen
+        name={ROUTE_NAMES.ORDERS.DETAIL}
+        component={OrderDetailScreen}
+        options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
       />
     </Stack.Group>
   </Stack.Navigator>
