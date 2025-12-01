@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 8,
+    borderRadius: 8,
     alignItems: "center",
     backgroundColor: COLORS.LIGHT_GRAY,
   },

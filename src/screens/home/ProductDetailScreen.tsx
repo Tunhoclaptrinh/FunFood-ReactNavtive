@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import {
   View,
   ScrollView,
@@ -9,48 +9,50 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   StatusBar,
+  Animated,
+  ImageBackground,
   Platform,
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {ProductService} from "@services/product.service";
 import {ReviewService} from "@services/review.service";
-import {FavoriteService} from "@services/favorite.service";
 import {useCart} from "@hooks/useCart";
+import {useFavoriteStore} from "@/src/stores/favoriteStore";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 
+const HEADER_HEIGHT = 300;
+
 const ProductDetailScreen = ({route, navigation}: any) => {
   const {productId} = route.params;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-  // --- State ---
+  const {addItem} = useCart();
+  const {isFavorite, toggleFavorite, fetchFavorites} = useFavoriteStore();
+
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
 
-  const {addItem} = useCart();
+  const isLiked = isFavorite("product", productId);
 
-  // --- Effects ---
   useEffect(() => {
-    loadProductData();
+    loadData();
+    fetchFavorites();
   }, [productId]);
 
-  // --- Load Data ---
-  const loadProductData = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const res = await ProductService.getById(productId);
+      const res = await ProductService.getWithRestaurant(productId);
       setProduct(res);
-      // setIsFavorite(res.isFavorite); // Giả sử API trả về
-
-      // Load review mẫu (nếu API lỗi thì bỏ qua)
       try {
-        const reviewsRes = await ReviewService.getRestaurantReviews(res.restaurantId, 1, 3);
+        const reviewsRes = await ReviewService.getProductReviews(productId, 1, 3);
         setReviews((reviewsRes as any)?.data || []);
-      } catch (e) {}
-    } catch (error) {
+      } catch {}
+    } catch {
       Alert.alert("Lỗi", "Không thể tải thông tin món ăn");
       navigation.goBack();
     } finally {
@@ -58,22 +60,20 @@ const ProductDetailScreen = ({route, navigation}: any) => {
     }
   };
 
-  // --- Handlers ---
-  const handleToggleFavorite = async () => {
-    setIsFavorite(!isFavorite);
-    // Gọi API update favorite
-    try {
-      await FavoriteService.toggleFavorite("product", productId);
-    } catch (e) {
-      setIsFavorite(!isFavorite);
-    }
-  };
-
+  const handleToggleFavorite = () => toggleFavorite("product", productId);
   const handleAddToCart = () => {
     if (product) {
       addItem(product, quantity);
-      navigation.goBack();
-      Alert.alert("Thành công", `Đã thêm ${quantity} ${product.name} vào giỏ hàng`);
+      Alert.alert("Đã thêm vào giỏ", `Bạn đã thêm ${quantity} ${product.name}`, [
+        {text: "Xem tiếp", style: "cancel"},
+        {text: "Đến giỏ hàng", onPress: () => navigation.navigate("Cart")},
+      ]);
+    }
+  };
+
+  const goToRestaurant = () => {
+    if (product?.restaurantId) {
+      navigation.push("RestaurantDetail", {restaurantId: product.restaurantId});
     }
   };
 
@@ -91,120 +91,151 @@ const ProductDetailScreen = ({route, navigation}: any) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 120}}>
-        {/* --- Image --- */}
-        <View style={styles.imageWrapper}>
-          {product.image ? (
-            <Image source={{uri: product.image}} style={styles.productImage} resizeMode="cover" />
-          ) : (
-            <View style={[styles.productImage, styles.placeholderImage]}>
-              <Ionicons name="fast-food" size={60} color={COLORS.GRAY} />
-            </View>
-          )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 100}}
+        onScroll={Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {useNativeDriver: false})}
+        scrollEventThrottle={16}
+      >
+        {/* --- Hero Image --- */}
+        <ImageBackground source={{uri: product.image}} style={styles.heroImage} resizeMode="cover">
+          <View style={styles.imageOverlay} />
+
+          {/* Badge Rating góc dưới trái */}
+          <View style={styles.ratingTag}>
+            <Ionicons name="star" size={14} color={COLORS.WHITE} />
+            <Text style={styles.ratingTagText}>{(product.rating || 5.0).toFixed(1)}</Text>
+          </View>
+
+          {/* Discount Badge góc trên phải */}
           {product.discount > 0 && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>GIẢM {product.discount}%</Text>
+            <View style={styles.discountBadgeTopRight}>
+              <Text style={styles.discountTextTopRight}>GIẢM {product.discount}%</Text>
             </View>
           )}
-        </View>
+        </ImageBackground>
 
-        {/* --- Info --- */}
-        <View style={styles.infoContainer}>
-          <View style={styles.nameRow}>
-            <Text style={styles.productName}>{product.name}</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFB800" />
-              <Text style={styles.ratingText}>{product.rating || 5.0}</Text>
+        <View style={styles.contentContainer}>
+          {/* Header Info */}
+          <View style={styles.headerInfo}>
+            <View style={{flex: 1, paddingRight: 10}}>
+              <Text style={styles.productName}>{product.name}</Text>
+
+              <View style={styles.ratingRow}>
+                <Text style={styles.categoryText}>Danh mục</Text>
+                <View style={styles.dot} />
+                <Text style={styles.categoryText}>{product.category?.name || "Món ngon"}</Text>
+              </View>
             </View>
-            <View style={styles.ratingContainer}>
-              <TouchableOpacity style={styles.favoriteIcon} onPress={handleToggleFavorite}>
+            {/* --- Header Buttons (Share + Favorite) --- */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity onPress={handleToggleFavorite} style={styles.actionIconCircle}>
                 <Ionicons
-                  name={isFavorite ? "heart" : "heart-outline"}
+                  name={isLiked ? "heart" : "heart-outline"}
                   size={24}
-                  color={isFavorite ? COLORS.PRIMARY : COLORS.DARK}
+                  color={isLiked ? COLORS.PRIMARY : COLORS.BLACK}
                 />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.actionIconCircle}>
+                <Ionicons name="share-social-outline" size={22} color={COLORS.BLACK} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <Text style={styles.description}>
-            {product.description || "Món ăn ngon tuyệt vời, được chế biến từ nguyên liệu tươi sạch."}
-          </Text>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Đơn giá:</Text>
-            <View style={{flexDirection: "row", alignItems: "baseline", gap: 8}}>
-              {product.discount > 0 && <Text style={styles.originalPrice}>{formatCurrency(product.price)}</Text>}
-              <Text style={styles.finalPrice}>{formatCurrency(finalPrice)}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* --- Quantity --- */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Số lượng</Text>
-          <View style={styles.quantityRow}>
-            <TouchableOpacity
-              style={[styles.qtyBtn, quantity <= 1 && styles.qtyBtnDisabled]}
-              onPress={() => setQuantity(Math.max(1, quantity - 1))}
-              disabled={quantity <= 1}
-            >
-              <Ionicons name="remove" size={24} color={quantity <= 1 ? COLORS.GRAY : COLORS.DARK} />
-            </TouchableOpacity>
-
-            <Text style={styles.qtyValue}>{quantity}</Text>
-
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(Math.min(20, quantity + 1))}>
-              <Ionicons name="add" size={24} color={COLORS.DARK} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* --- Reviews Preview --- */}
-        <View style={styles.section}>
-          <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12}}>
-            <Text style={styles.sectionTitle}>Đánh giá ({reviews.length})</Text>
-            <TouchableOpacity>
-              <Text style={{color: COLORS.PRIMARY, fontSize: 13, fontWeight: "600"}}>Xem tất cả</Text>
-            </TouchableOpacity>
+          {/* Price */}
+          <View style={styles.priceContainer}>
+            <Text style={styles.finalPrice}>{formatCurrency(finalPrice)}</Text>
+            {product.discount > 0 && <Text style={styles.originalPrice}>{formatCurrency(product.price)}</Text>}
           </View>
 
-          {reviews.length === 0 ? (
-            <Text style={{color: COLORS.GRAY, fontStyle: "italic"}}>Chưa có đánh giá nào.</Text>
-          ) : (
-            reviews.map((review, index) => (
-              <View key={index} style={styles.reviewItem}>
-                <View style={{flexDirection: "row", gap: 4, marginBottom: 4}}>
-                  {Array.from({length: 5}).map((_, i) => (
-                    <Ionicons key={i} name={i < review.rating ? "star" : "star-outline"} size={12} color="#FFB800" />
-                  ))}
-                </View>
-                <Text style={styles.reviewText}>{review.comment}</Text>
+          <View style={styles.divider} />
+
+          {/* Description */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mô tả</Text>
+            <Text style={styles.description}>
+              {product.description || "Món ăn tươi ngon, đảm bảo vệ sinh an toàn thực phẩm."}
+            </Text>
+          </View>
+
+          {/* Restaurant Card */}
+          {product.restaurant && (
+            <TouchableOpacity style={styles.restaurantCard} onPress={goToRestaurant} activeOpacity={0.8}>
+              <Image source={{uri: product.restaurant.image}} style={styles.restaurantAvatar} />
+              <View style={{flex: 1, marginLeft: 8}}>
+                <Text style={styles.restaurantLabel}>Được bán bởi</Text>
+                <Text style={styles.restaurantName} numberOfLines={1}>
+                  {product.restaurant.name}
+                </Text>
               </View>
-            ))
+              <View style={styles.visitButton}>
+                <Text style={styles.visitText}>Xem</Text>
+                <Ionicons name="chevron-forward" size={14} color={COLORS.PRIMARY} />
+              </View>
+            </TouchableOpacity>
           )}
+
+          <View style={styles.divider} />
+
+          {/* Reviews */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Đánh giá</Text>
+            </View>
+
+            {reviews.length === 0 ? (
+              <Text style={{color: COLORS.GRAY, fontStyle: "italic", marginTop: 8}}>Chưa có đánh giá nào.</Text>
+            ) : (
+              reviews.map((review, index) => (
+                <View key={index} style={styles.reviewItem}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewerName}>Người dùng ẩn danh</Text>
+                    <View style={styles.starRow}>
+                      {Array.from({length: 5}).map((_, i) => (
+                        <Ionicons
+                          key={i}
+                          name={i < review.rating ? "star" : "star-outline"}
+                          size={12}
+                          color="#FFB800"
+                        />
+                      ))}
+                    </View>
+                  </View>
+                  <Text style={styles.reviewText}>{review.comment}</Text>
+                </View>
+              ))
+            )}
+          </View>
         </View>
       </ScrollView>
 
-      {/* --- Bottom Action --- */}
+      {/* Bottom Bar */}
       <View style={styles.bottomBar}>
-        <View style={styles.totalInfo}>
-          <Text style={{fontSize: 12, color: COLORS.GRAY}}>Tổng tiền</Text>
-          <Text style={{fontSize: 20, fontWeight: "bold", color: COLORS.DARK}}>
-            {formatCurrency(finalPrice * quantity)}
-          </Text>
+        <View style={styles.quantityControl}>
+          <TouchableOpacity
+            style={[styles.qtyBtn, quantity <= 1 && styles.qtyBtnDisabled]}
+            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+            disabled={quantity <= 1}
+          >
+            <Ionicons name="remove" size={20} color={quantity <= 1 ? COLORS.GRAY : COLORS.DARK} />
+          </TouchableOpacity>
+
+          <Text style={styles.qtyValue}>{quantity}</Text>
+
+          <TouchableOpacity style={styles.qtyBtn} onPress={() => setQuantity(Math.min(20, quantity + 1))}>
+            <Ionicons name="add" size={20} color={COLORS.DARK} />
+          </TouchableOpacity>
         </View>
+
         <Button
-          title="Thêm vào giỏ"
+          title={`Thêm • ${formatCurrency(finalPrice * quantity)}`}
           onPress={handleAddToCart}
-          containerStyle={{width: 150, marginLeft: 20, marginRight: 0}}
+          containerStyle={{flex: 1}}
           disabled={!product.available}
+          leftIcon="cart-outline"
         />
       </View>
     </View>
@@ -212,126 +243,67 @@ const ProductDetailScreen = ({route, navigation}: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-  },
-  centered: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  imageWrapper: {
+  container: {flex: 1, backgroundColor: COLORS.WHITE},
+  centered: {justifyContent: "center", alignItems: "center"},
+  heroImage: {
     width: "100%",
-    height: 300,
-    backgroundColor: COLORS.LIGHT_GRAY,
+    height: HEADER_HEIGHT,
+    justifyContent: "flex-end",
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
-  productImage: {
-    width: "100%",
-    height: "100%",
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.05)",
   },
-  placeholderImage: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  discountBadge: {
+  ratingTag: {
     position: "absolute",
-    bottom: 16,
-    right: 16,
-    backgroundColor: COLORS.ERROR,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    bottom: 40,
+    left: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
+    gap: 4,
   },
-  discountText: {
+  ratingTagText: {
     color: COLORS.WHITE,
     fontWeight: "bold",
     fontSize: 12,
   },
-  infoContainer: {
-    padding: 20,
-  },
-  nameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  productName: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginRight: 10,
-  },
-  ratingContainer: {
+  discountBadgeTopRight: {
+    position: "absolute",
+    bottom: 40,
+    right: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF8E1",
+    backgroundColor: COLORS.ERROR,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
+    borderRadius: 8,
   },
-  ratingText: {
-    color: "#FFB800",
+  discountTextTopRight: {
+    color: COLORS.WHITE,
+    fontSize: 12,
     fontWeight: "bold",
-    fontSize: 14,
   },
-  favoriteIcon: {
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  description: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-    lineHeight: 22,
-    marginBottom: 20,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.LIGHT_GRAY,
-    padding: 16,
-    borderRadius: 12,
-  },
-  priceLabel: {
-    fontSize: 14,
-    color: COLORS.DARK_GRAY,
-  },
-  originalPrice: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-    textDecorationLine: "line-through",
-  },
-  finalPrice: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.PRIMARY,
-  },
-  divider: {
-    height: 8,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    opacity: 0.5,
-  },
-  section: {
-    paddingVertical: 12,
+
+  contentContainer: {
+    backgroundColor: COLORS.WHITE,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginTop: -30,
     paddingHorizontal: 20,
+    paddingTop: 24,
+    minHeight: 500,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 8,
-  },
-  quantityRow: {
+  actionButtons: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 20,
+    gap: 12,
   },
-  qtyBtn: {
+  actionIconCircle: {
     width: 36,
     height: 36,
     borderRadius: 22,
@@ -339,26 +311,50 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  qtyBtnDisabled: {
-    opacity: 0.5,
+  headerInfo: {flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start"},
+  productName: {fontSize: 22, fontWeight: "bold", color: COLORS.DARK, lineHeight: 28, marginBottom: 6},
+  ratingRow: {flexDirection: "row", alignItems: "center", gap: 6},
+  ratingText: {fontSize: 13, color: COLORS.DARK_GRAY, fontWeight: "600"},
+  dot: {width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.GRAY},
+  categoryText: {fontSize: 13, color: COLORS.GRAY},
+  discountTag: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: COLORS.ERROR,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  qtyValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    width: 40,
-    textAlign: "center",
-  },
-  reviewItem: {
-    padding: 12,
-    backgroundColor: COLORS.LIGHT_GRAY,
+  discountText: {color: COLORS.WHITE, fontSize: 10, fontWeight: "bold"},
+  priceContainer: {flexDirection: "row", alignItems: "baseline", marginTop: 12, gap: 10},
+  finalPrice: {fontSize: 24, fontWeight: "800", color: COLORS.PRIMARY},
+  originalPrice: {fontSize: 16, color: COLORS.GRAY, textDecorationLine: "line-through"},
+  divider: {height: 1, backgroundColor: "#F0F0F0", marginVertical: 20},
+  section: {marginBottom: 16},
+  sectionTitle: {fontSize: 16, fontWeight: "700", color: COLORS.DARK, marginBottom: 8},
+  description: {fontSize: 14, color: COLORS.DARK_GRAY, lineHeight: 22},
+  restaurantCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "#FAFAFA",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#EEEEEE",
     marginBottom: 10,
   },
-  reviewText: {
-    fontSize: 13,
-    color: COLORS.DARK,
-  },
+  restaurantAvatar: {width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.LIGHT_GRAY},
+  restaurantLabel: {fontSize: 11, color: COLORS.GRAY, marginBottom: 2},
+  restaurantName: {fontSize: 15, fontWeight: "700", color: COLORS.DARK},
+  visitButton: {flexDirection: "row", alignItems: "center", padding: 4},
+  visitText: {fontSize: 12, color: COLORS.PRIMARY, fontWeight: "600"},
+  sectionHeader: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12},
+  reviewItem: {marginBottom: 12, padding: 12, backgroundColor: "#FAFAFA", borderRadius: 12},
+  reviewHeader: {flexDirection: "row", justifyContent: "space-between", marginBottom: 6},
+  reviewerName: {fontSize: 13, fontWeight: "600", color: COLORS.DARK},
+  starRow: {flexDirection: "row", gap: 1},
+  reviewText: {fontSize: 13, color: COLORS.DARK_GRAY, lineHeight: 18},
   bottomBar: {
     position: "absolute",
     bottom: 0,
@@ -366,22 +362,36 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: COLORS.WHITE,
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingBottom: Platform.OS === "ios" ? 30 : 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 16,
     borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER,
+    borderTopColor: "#EEEEEE",
     shadowColor: "#000",
     shadowOffset: {width: 0, height: -4},
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowRadius: 10,
+    elevation: 20,
   },
-  totalInfo: {
+  quantityControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    padding: 4,
+  },
+  qtyBtn: {
+    width: 36,
+    height: 36,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 10,
   },
+  qtyBtnDisabled: {opacity: 0.5, backgroundColor: "transparent"},
+  qtyValue: {fontSize: 16, fontWeight: "bold", color: COLORS.DARK, width: 40, textAlign: "center"},
 });
 
 export default ProductDetailScreen;
