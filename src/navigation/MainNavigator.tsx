@@ -35,6 +35,8 @@ import {he} from "date-fns/locale";
 import AddAddressScreen from "../screens/profile/AddressScreen/AddAddressScreen";
 import SettingsScreen from "../screens/profile/SettingsScreen";
 import NotificationsScreen from "../screens/notifications/NotificationsScreen";
+import SupportScreen from "../screens/profile/SupportScreen";
+import TermsPrivacyScreen from "../screens/profile/TermsPrivacyScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -226,27 +228,41 @@ const ProfileStack = () => (
       options={({navigation}: any) => CustomBackHeader(navigation, "Thống kê đơn hàng")}
     />
 
-    {/* --- THÊM CÁC MÀN HÌNH CHI TIẾT VÀO ĐÂY --- */}
     <Stack.Screen
-      name="OrderDetail"
+      name={ROUTE_NAMES.PROFILE.SUPPORT}
+      component={SupportScreen}
+      options={{title: "Trợ giúp", headerBackVisible: false}}
+    />
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.TERMS_PRIVACY}
+      component={TermsPrivacyScreen}
+      options={{title: "Điều khoản", headerBackVisible: false}}
+    />
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.REVIEW_DETAIL}
+      component={OrderDetailScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết đánh giá")}
+    />
+
+    <Stack.Screen
+      name={ROUTE_NAMES.ORDERS.DETAIL}
       component={OrderDetailScreen}
       options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
     />
     <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
       <Stack.Screen
-        name="RestaurantDetail"
+        name={ROUTE_NAMES.HOME.RESTAURANT_DETAIL}
         component={RestaurantDetailScreen}
         options={({navigation}: any) => CustomBackHeader(navigation, "Thực đơn nhà hàng")}
       />
       <Stack.Screen
-        name="ProductDetail"
+        name={ROUTE_NAMES.HOME.PRODUCT_DETAIL}
         component={ProductDetailScreen}
         options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
       />
     </Stack.Group>
-
     <Stack.Screen
-      name="Settings" // Tên này phải khớp với navigation.navigate("Settings") ở ProfileScreen
+      name={ROUTE_NAMES.COMMON.SETTINGS}
       component={SettingsScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Cài đặt")}
     />
