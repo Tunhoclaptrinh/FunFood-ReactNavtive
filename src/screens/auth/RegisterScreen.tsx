@@ -1,9 +1,11 @@
 import React, {useState} from "react";
-import {View, StyleSheet, ScrollView, TouchableOpacity, Text} from "react-native";
+import {View, StyleSheet, ScrollView, TouchableOpacity, Text, Image} from "react-native";
 import {useAuth} from "@hooks/useAuth";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import {COLORS} from "@/src/styles/colors";
+// @ts-ignore
+import logo from "@/assets/funfood-logo/logo5.png";
 
 const RegisterScreen = ({navigation}: any) => {
   const [formData, setFormData] = useState({
@@ -30,6 +32,8 @@ const RegisterScreen = ({navigation}: any) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Image source={logo} style={styles.logo} resizeMode="contain" />
+
       <Text style={styles.title}>Create Account</Text>
 
       <Input
@@ -84,11 +88,18 @@ const RegisterScreen = ({navigation}: any) => {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: COLORS.WHITE},
-  content: {padding: 20},
+  content: {padding: 20, justifyContent: "center", flexGrow: 1},
   title: {fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center", color: COLORS.PRIMARY},
   button: {marginTop: 20, width: "100%"},
   footer: {marginTop: 20, alignItems: "center"},
   linkText: {color: COLORS.PRIMARY, fontWeight: "600", textAlign: "center"},
+  logo: {
+    alignSelf: "center",
+    marginBottom: 20,
+    resizeMode: "contain",
+    width: 120,
+    height: 36,
+  },
 });
 
 export default RegisterScreen;

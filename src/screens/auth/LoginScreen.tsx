@@ -1,8 +1,10 @@
 import React, {useState} from "react";
-import {View, StyleSheet, ScrollView, TouchableOpacity, Text} from "react-native";
+import {View, StyleSheet, ScrollView, TouchableOpacity, Text, Image} from "react-native";
 import {useAuth} from "@hooks/useAuth";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
+// @ts-ignore
+import logo from "@/assets/funfood-logo/logo5.png";
 
 import {validateEmail, validatePassword} from "@utils/validation";
 import {COLORS} from "@/src/styles/colors";
@@ -41,7 +43,8 @@ const LoginScreen = ({navigation}: any) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>FunFood</Text>
+      <Image source={logo} style={styles.logo} resizeMode="contain" />
+
       <Text style={styles.subtitle}>Welcome Back!</Text>
 
       {errors.general && <Text style={styles.errorText}>{errors.general}</Text>}
@@ -89,6 +92,13 @@ const styles = StyleSheet.create({
   footer: {flexDirection: "row", justifyContent: "center", marginTop: 20},
   footerText: {color: COLORS.GRAY},
   linkText: {color: COLORS.PRIMARY, fontWeight: "600"},
+  logo: {
+    alignSelf: "center",
+    marginBottom: 20,
+    resizeMode: "contain",
+    width: 120,
+    height: 36,
+  },
 });
 
 export default LoginScreen;

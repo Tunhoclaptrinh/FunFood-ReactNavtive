@@ -239,12 +239,6 @@ const ProfileStack = () => (
       options={{title: "Điều khoản", headerBackVisible: false}}
     />
     <Stack.Screen
-      name={ROUTE_NAMES.PROFILE.REVIEW_DETAIL}
-      component={OrderDetailScreen}
-      options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết đánh giá")}
-    />
-
-    <Stack.Screen
       name={ROUTE_NAMES.ORDERS.DETAIL}
       component={OrderDetailScreen}
       options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
