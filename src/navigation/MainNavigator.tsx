@@ -26,13 +26,17 @@ import OrderDetailScreen from "@screens/orders/OrderDetailScreen";
 import ProfileScreen from "@screens/profile/ProfileScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import ChangePasswordScreen from "@/src/screens/profile/ChangePasswordScreen";
-import AddressListScreen from "@screens/profile/AddressListScreen";
-import AddAddressScreen from "@screens/profile/AddAddressScreen";
+import AddressListScreen from "@/src/screens/profile/AddressScreen/AddressListScreen";
 import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
 import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
 import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
-import OrderStatsScreen from "@screens/profile/OrderStatsScreen";
+import OrderStatsScreen from "@/src/screens/profile/OrderStatsScreen";
 import {he} from "date-fns/locale";
+import AddAddressScreen from "../screens/profile/AddressScreen/AddAddressScreen";
+import SettingsScreen from "../screens/profile/SettingsScreen";
+import NotificationsScreen from "../screens/notifications/NotificationsScreen";
+import SupportScreen from "../screens/profile/SupportScreen";
+import TermsPrivacyScreen from "../screens/profile/TermsPrivacyScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,10 +68,7 @@ const CustomBackHeader = (navigation: any, title?: string) => ({
   headerBackVisible: false,
   headerTitle: title, // ẩn title mặc định => ghi đè bằng title tùy chỉnh
   headerLeft: () => (
-    <TouchableOpacity
-      onPress={() => navigation.goBack()}
-      style={{flexDirection: "row", alignItems: "center", marginLeft: 8}}
-    >
+    <TouchableOpacity onPress={() => navigation.goBack()} style={{flexDirection: "row", alignItems: "center"}}>
       <Ionicons name="arrow-back" size={24} color={COLORS.WHITE} />
       {/* {title && <Text style={{color: COLORS.WHITE, fontSize: 16, marginLeft: 6}}>{title}</Text>} */}
     </TouchableOpacity>
@@ -84,6 +85,12 @@ const HomeStack = () => (
       component={HomeScreen}
       options={{title: "Khám phá", headerBackVisible: false}}
     />
+
+    <Stack.Screen
+      name={ROUTE_NAMES.COMMON.NOTIFICATIONS}
+      component={NotificationsScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Thông báo")}
+    />
     <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
       <Stack.Screen
         name={ROUTE_NAMES.HOME.RESTAURANT_DETAIL}
@@ -96,6 +103,12 @@ const HomeStack = () => (
         name={ROUTE_NAMES.HOME.PRODUCT_DETAIL}
         component={ProductDetailScreen}
         options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
+      />
+
+      <Stack.Screen
+        name={ROUTE_NAMES.ORDERS.DETAIL}
+        component={OrderDetailScreen}
+        options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
       />
     </Stack.Group>
   </Stack.Navigator>
@@ -214,6 +227,7 @@ const ProfileStack = () => (
       component={OrderStatsScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Thống kê đơn hàng")}
     />
+
     <Stack.Screen
       name={ROUTE_NAMES.PROFILE.SUPPORT}
       component={SupportScreen}
@@ -226,12 +240,34 @@ const ProfileStack = () => (
     />
     <Stack.Screen
       name={ROUTE_NAMES.PROFILE.REVIEW_DETAIL}
-      component={ReviewDetailScreen}
+      component={OrderDetailScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết đánh giá")}
     />
-    </Stack.Navigator>
-);
 
+    <Stack.Screen
+      name={ROUTE_NAMES.ORDERS.DETAIL}
+      component={OrderDetailScreen}
+      options={({route, navigation}: any) => CustomBackHeader(navigation, `Đơn hàng #${route.params?.orderId}`)}
+    />
+    <Stack.Group screenOptions={SCREEN_OPTIONS.MODAL}>
+      <Stack.Screen
+        name={ROUTE_NAMES.HOME.RESTAURANT_DETAIL}
+        component={RestaurantDetailScreen}
+        options={({navigation}: any) => CustomBackHeader(navigation, "Thực đơn nhà hàng")}
+      />
+      <Stack.Screen
+        name={ROUTE_NAMES.HOME.PRODUCT_DETAIL}
+        component={ProductDetailScreen}
+        options={({navigation}: any) => CustomBackHeader(navigation, "Chi tiết sản phẩm")}
+      />
+    </Stack.Group>
+    <Stack.Screen
+      name={ROUTE_NAMES.COMMON.SETTINGS}
+      component={SettingsScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Cài đặt")}
+    />
+  </Stack.Navigator>
+);
 /* ==============================
    MAIN TAB NAVIGATOR
    ==============================*/

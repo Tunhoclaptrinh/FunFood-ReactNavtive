@@ -26,7 +26,7 @@ import {CategoryService, Category} from "@services/category.service";
 import {MapService, MapMarker} from "@services/map.service";
 import MapView from "@/src/components/common/MapView";
 import Button from "@/src/components/common/Button";
-import Input from "@/src/components/common/Input/Input"; 
+import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import SearchBar from "@/src/components/common/SearchBar";
 import {formatCurrency} from "@utils/formatters";
@@ -530,33 +530,26 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   return (
-  <SafeAreaView style={styles.container}>
-    <StatusBar barStyle="dark-content" backgroundColor={COLORS.WHITE} />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.WHITE} />
 
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={store.isRefreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
-      }
-      contentContainerStyle={{ paddingBottom: 50 }}
-    >
-      {renderHeader()}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={store.isRefreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
+        }
+        contentContainerStyle={{paddingBottom: 50}}
+      >
+        {renderHeader()}
 
-      {/* Khi ở chế độ map, ta show MapView */}
-      {layoutMode === "map" ? (
-        <View style={{height: 400, marginTop: 10}}>
-          {renderMapView()}
-        </View>
-      ) : (
-        renderListView()
-      )}
-    </ScrollView>
+        {/* Khi ở chế độ map, ta show MapView */}
+        {layoutMode === "map" ? <View style={{height: 400, marginTop: 10}}>{renderMapView()}</View> : renderListView()}
+      </ScrollView>
 
-    {renderFilterModal()}
-    {renderMapPreviewModal()}
-  </SafeAreaView>
-);
-
+      {renderFilterModal()}
+      {renderMapPreviewModal()}
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({

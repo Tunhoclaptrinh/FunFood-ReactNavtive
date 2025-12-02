@@ -14,11 +14,12 @@ export const COLORS = {
   BORDER: "#E5E7EB",
 };
 
-export const ORDER_STATUS_COLORS: {[key: string]: string} = {
-  pending: "#FFA500",
-  confirmed: "#4ECDC4",
-  preparing: "#FFB800",
-  delivering: "#3498DB",
-  delivered: "#2ECC71",
-  cancelled: "#E74C3C",
+export const ORDER_STATUS_COLOR: Record<string, string> = {
+  pending: COLORS.WARNING, // Chờ xác nhận
+  confirmed: "#4ECDC4", // Đã xác nhận
+  preparing: "#FFB800", // Đang chuẩn bị
+  shipping: "#3498DB", // Đang giao
+  on_the_way: "#3498DB", // Đồng nghĩa shipping
+  delivered: COLORS.SUCCESS, // Đã giao
+  cancelled: COLORS.ERROR, // Đã hủy
 };

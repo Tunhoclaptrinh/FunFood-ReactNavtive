@@ -17,9 +17,9 @@ import {
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {RestaurantService} from "@services/restaurant.service";
-import {FavoriteService} from "@services/favorite.service";
 import {useCart} from "@hooks/useCart";
 import {useDebounce} from "@hooks/useDebounce";
+import {useFavoriteStore} from "@/src/stores/favoriteStore"; // [1] Import Store
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
@@ -31,6 +31,10 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const {restaurantId} = route.params;
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // --- Store & Hooks ---
+  const {addItem, items, totalPrice} = useCart();
+  const {isFavorite, toggleFavorite, fetchFavorites} = useFavoriteStore(); // [2] Sử dụng hook từ Store
+
   // --- State ---
   const [restaurant, setRestaurant] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
@@ -38,17 +42,17 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const [loading, setLoading] = useState(true);
   const [loadingMenu, setLoadingMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [addingId, setAddingId] = useState<number | null>(null);
 
-  const {addItem, items, totalPrice} = useCart();
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  // [3] Check trạng thái yêu thích từ Store thay vì state cục bộ
+  const isLiked = isFavorite("restaurant", restaurantId);
 
   // --- Effects ---
   useEffect(() => {
     loadRestaurantData();
+    fetchFavorites(); // [4] Sync dữ liệu yêu thích khi vào màn hình
   }, [restaurantId]);
 
   useEffect(() => {
@@ -78,13 +82,9 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
     try {
       setLoadingMenu(true);
       const res = (await RestaurantService.getMenu(restaurantId, pageNum, 20)) as any;
-
-      const newProducts = pageNum === 1 ? res.data || [] : [...products, ...(res.data || [])];
+      const newProducts = res.data || [];
       setProducts(newProducts);
       if (!searchQuery) setFilteredProducts(newProducts);
-
-      setHasMore(res.pagination?.hasNext || false);
-      setPage(pageNum);
     } catch (error) {
       console.error("Error loading menu:", error);
     } finally {
@@ -93,14 +93,9 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   };
 
   // --- Actions ---
-  const handleToggleFavorite = async () => {
-    try {
-      setIsFavorite(!isFavorite);
-      await FavoriteService.toggleFavorite("restaurant", restaurantId);
-    } catch (error) {
-      setIsFavorite(!isFavorite);
-      console.error("Favorite error", error);
-    }
+  const handleToggleFavorite = () => {
+    // [5] Gọi action từ Store
+    toggleFavorite("restaurant", restaurantId);
   };
 
   const handlePhoneCall = () => {
@@ -110,9 +105,7 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
         {text: "Hủy", style: "cancel"},
         {
           text: "Gọi ngay",
-          onPress: () => {
-            Linking.openURL(`tel:${phoneNumber}`);
-          },
+          onPress: () => Linking.openURL(`tel:${phoneNumber}`),
         },
       ]);
     }
@@ -157,7 +150,10 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
 
   const handleAddToCart = (product: any) => {
     setAddingId(product.id);
-    addItem(product, 1);
+    // Truyền thêm thông tin restaurant vào item để cart có thể validate/group
+    const productWithRestaurant = {...product, restaurantId: restaurant.id};
+    addItem(productWithRestaurant, 1);
+
     setTimeout(() => setAddingId(null), 300);
   };
 
@@ -242,14 +238,16 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionButton} onPress={handleToggleFavorite}>
-              <View style={[styles.actionIconCircle, {backgroundColor: "#ffe0edff"}]}>
+              <View style={[styles.actionIconCircle, {backgroundColor: isLiked ? "#FFE5E5" : "#F5F5F5"}]}>
                 <Ionicons
-                  name={isFavorite ? "heart" : "heart-outline"}
+                  name={isLiked ? "heart" : "heart-outline"}
                   size={20}
-                  color={isFavorite ? COLORS.PRIMARY : COLORS.BLACK}
+                  color={isLiked ? COLORS.PRIMARY : COLORS.BLACK}
                 />
               </View>
-              <Text style={styles.actionButtonText}>Yêu thích</Text>
+              <Text style={[styles.actionButtonText, isLiked && {color: COLORS.PRIMARY, fontWeight: "700"}]}>
+                Yêu thích
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -310,9 +308,21 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
                     <Text style={styles.productName} numberOfLines={2}>
                       {item.name}
                     </Text>
+
+                    {/* Trạng thái còn hàng / hết hàng */}
+                    <Text style={[styles.stockStatus, {color: item.available ? COLORS.SUCCESS : COLORS.ERROR}]}>
+                      {item.available ? "Còn hàng" : "Hết hàng"}
+                    </Text>
+
                     <View style={styles.priceRow}>
                       <Text style={styles.productPrice}>{formatCurrency(item.price)}</Text>
-                      <TouchableOpacity style={styles.addBtnMini} onPress={() => handleAddToCart(item)}>
+
+                      {/* Disable nút add nếu hết hàng */}
+                      <TouchableOpacity
+                        style={[styles.addBtnMini, !item.available && {backgroundColor: COLORS.GRAY, opacity: 0.6}]}
+                        onPress={() => item.available && handleAddToCart(item)}
+                        disabled={!item.available}
+                      >
                         {addingId === item.id ? (
                           <ActivityIndicator size="small" color={COLORS.WHITE} />
                         ) : (
@@ -560,8 +570,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: COLORS.DARK,
-    marginBottom: 8,
+    marginBottom: 4,
     height: 40,
+  },
+  stockStatus: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
   },
   priceRow: {
     flexDirection: "row",
@@ -583,7 +598,7 @@ const styles = StyleSheet.create({
   },
   floatingCartContainer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 40,
     left: 20,
     right: 20,
   },

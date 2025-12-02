@@ -185,7 +185,7 @@ const ProfileScreen = ({navigation}: any) => {
         }
       >
         {/* Compact Header with Gradient */}
-        <LinearGradient colors={[COLORS.PRIMARY, "#FF8E8E"]} style={styles.headerGradient}>
+        <LinearGradient colors={[COLORS.SECONDARY, COLORS.DARK_GRAY]} style={styles.headerGradient}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate("Settings")}>
               <Ionicons name="settings-outline" size={24} color={COLORS.WHITE} />
@@ -273,7 +273,7 @@ const ProfileScreen = ({navigation}: any) => {
               <View style={styles.statsCardIcon}>
                 <Ionicons name="star" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.statsCardLabel}>AĐánh giá TB</Text>
+              <Text style={styles.statsCardLabel}>Đánh giá TB</Text>
               <Text style={styles.statsCardValue}>{stats.avgRating.toFixed(1)} ⭐</Text>
               <Text style={styles.statsCardDetail}>{stats.totalReviews} đánh giá</Text>
             </TouchableOpacity>
@@ -479,10 +479,8 @@ const styles = StyleSheet.create({
   statsCardIcon: {
     width: 42,
     height: 42,
-    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 6,
   },
   statsCardLabel: {
     fontSize: 11,

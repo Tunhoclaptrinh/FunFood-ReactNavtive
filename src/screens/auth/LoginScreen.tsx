@@ -6,6 +6,8 @@ import Button from "@/src/components/common/Button";
 
 import {validateEmail, validatePassword} from "@utils/validation";
 import {COLORS} from "@/src/styles/colors";
+import {useTranslation} from "@/src/utils/i18n";
+import {useTheme} from "@react-navigation/native";
 
 const LoginScreen = ({navigation}: any) => {
   const [email, setEmail] = useState("user@funfood.com");
@@ -13,6 +15,9 @@ const LoginScreen = ({navigation}: any) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const {login} = useAuth();
   const [loading, setLoading] = useState(false);
+
+  const {t} = useTranslation(); // Giả sử bạn đã thêm các key 'login_title', 'email_placeholder' vào file i18n.ts
+  const {colors} = useTheme();
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -61,7 +66,7 @@ const LoginScreen = ({navigation}: any) => {
         containerStyle={styles.input}
       />
 
-      <Button title="Login" onPress={handleLogin} loading={loading} containerStyle={styles.button} />
+      <Button title={t("login") || "Login"} onPress={handleLogin} loading={loading} containerStyle={styles.button} />
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>Don't have an account? </Text>

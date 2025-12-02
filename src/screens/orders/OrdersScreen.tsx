@@ -6,8 +6,9 @@ import {useFocusEffect} from "@react-navigation/native";
 import {OrderService} from "@services/order.service";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
-import {ORDER_STATUS_LABELS} from "@/src/config/constants";
-import {COLORS, ORDER_STATUS_COLORS} from "@/src/styles/colors";
+import {COLORS} from "@/src/styles/colors";
+import {ORDER_STATUS_COLOR} from "@/src/styles/colors";
+import {ORDER_STATUS_LABEL} from "@/src/config/constants";
 
 interface Order {
   id: number;
@@ -17,12 +18,20 @@ interface Order {
   items: any[];
 }
 
-const OrdersScreen = ({navigation}: any) => {
+const OrdersScreen = ({navigation, route}: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeTab, setActiveTab] = useState(route.params?.initialTab || 0);
+
+  // Lắng nghe thay đổi từ route.params (khi navigate từ Stats Screen sang)
+  useEffect(() => {
+    if (route.params?.initialTab !== undefined) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params]);
 
   // Load orders when screen is focused
   useFocusEffect(
@@ -70,8 +79,8 @@ const OrdersScreen = ({navigation}: any) => {
   };
 
   const renderOrderCard = ({item}: {item: Order}) => {
-    const statusColor = ORDER_STATUS_COLORS[item.status] || COLORS.GRAY;
-    const statusLabel = ORDER_STATUS_LABELS[item.status] || item.status;
+    const statusColor = ORDER_STATUS_COLOR[item.status] || COLORS.GRAY;
+    const statusLabel = ORDER_STATUS_LABEL[item.status] || item.status;
     const itemCount = item.items?.length || 0;
 
     return (
