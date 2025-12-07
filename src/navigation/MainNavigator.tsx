@@ -7,7 +7,7 @@ import {ROUTE_NAMES, SCREEN_OPTIONS} from "@/src/config/routes.config";
 import {COLORS} from "@/src/styles/colors";
 
 // Home Stack Screens
-import HomeScreen from "@screens/home/HomeScreen";
+import HomeScreen from "@/src/screens/home/HomeScreen";
 import RestaurantDetailScreen from "@screens/home/RestaurantDetailScreen";
 import ProductDetailScreen from "@screens/home/ProductDetailScreen";
 

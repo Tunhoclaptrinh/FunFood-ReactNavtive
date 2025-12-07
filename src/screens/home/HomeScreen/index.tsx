@@ -21,17 +21,19 @@ import {useNearbyRestaurants, useRestaurantStore, useRestaurantFilters} from "@s
 import {useGeolocation} from "@hooks/useGeolocation";
 import {useNotifications} from "@stores/notificationStore";
 import {CategoryService, Category} from "@services/category.service";
+import {PromotionService} from "@services/promotion.service";
 
-// --- Services & Components ---
+// --- Components ---
 import {MapService, MapMarker} from "@services/map.service";
-import MapView from "@/src/components/common/MapView";
 import Button from "@/src/components/common/Button";
 import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import SearchBar from "@/src/components/common/SearchBar";
-import {formatCurrency} from "@utils/formatters";
-import {COLORS} from "@/src/styles/colors";
+import {formatCurrency, getImageUrl} from "@utils/formatters";
 import {ROUTE_NAMES} from "@/src/navigation";
+import {COLORS} from "@/src/styles/colors";
+import MapView from "@/src/components/common/MapView";
+import styles from "./styles";
 
 const {width} = Dimensions.get("window");
 
@@ -68,36 +70,44 @@ const HomeScreen = ({navigation}: any) => {
   const [filterOpenNow, setFilterOpenNow] = useState(false);
   const [filterRating, setFilterRating] = useState<number | null>(null);
 
-  // Banners Data
-  const [banners] = useState([
-    {id: 1, title: "Giảm 50%", subtitle: "Đơn hàng đầu tiên", color: "#FF6B6B", icon: "gift"},
-    {id: 2, title: "FREESHIP", subtitle: "Đơn từ 100k", color: "#4ECDC4", icon: "bicycle"},
-    {id: 3, title: "Tích Điểm", subtitle: "Mọi đơn hàng", color: "#FFB800", icon: "star"},
-  ]);
+  // --- State: Promotions ---
+  const [promotions, setPromotions] = useState<any[]>([]);
+  const [isLoadingPromotions, setIsLoadingPromotions] = useState(false);
+  const [selectedPromotion, setSelectedPromotion] = useState<any>(null);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   const store = dataSource === "nearby" ? nearbyStore : allStore;
 
   // --- Effects ---
 
-  // 1. Fetch Categories
+  // 1. Fetch Categories & Promotions
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
       try {
-        const data = await CategoryService.getCategories();
-        setCategories(data);
+        // Fetch Categories
+        setIsLoadingCategories(true);
+        const categoriesData = await CategoryService.getCategories();
+        setCategories(categoriesData);
+
+        // Fetch Active Promotions
+        setIsLoadingPromotions(true);
+        const promotionsRes = await PromotionService.getActivePromotions();
+        setPromotions(promotionsRes.data || []);
       } catch (error) {
-        console.error("Failed to fetch categories", error);
+        console.error("Failed to fetch initial data", error);
       } finally {
         setIsLoadingCategories(false);
+        setIsLoadingPromotions(false);
       }
     };
-    fetchCategories();
+    fetchInitialData();
   }, []);
 
   // 2. Fetch Data based on Source
   useEffect(() => {
     handleFetchData();
   }, [location, dataSource]);
+
   // 3. Sync Store Items to Map Markers
   useEffect(() => {
     if (store.items.length > 0) {
@@ -113,12 +123,19 @@ const HomeScreen = ({navigation}: any) => {
   // --- Handlers ---
 
   const handleFetchData = () => {
+    const params: any = {};
+
+    // Add category filter if selected
+    if (selectedCategory) {
+      params.categoryId = selectedCategory;
+    }
+
     if (dataSource === "nearby" && location) {
       nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
     } else if (dataSource === "all") {
-      allStore.fetchAll({page: 1, limit: 10});
+      allStore.fetchAll({page: 1, limit: 10, ...params});
     } else if (dataSource === "toprated") {
-      allStore.fetchAll({rating_gte: 4.5, page: 1, limit: 10, sort: "rating", order: "desc"});
+      allStore.fetchAll({rating_gte: 4.5, page: 1, limit: 10, sort: "rating", order: "desc", ...params});
     }
   };
 
@@ -140,7 +157,6 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   const handleRestaurantPress = (restaurantId: number) => {
-    setShowMapModal(false);
     navigation.navigate(ROUTE_NAMES.HOME.RESTAURANT_DETAIL, {restaurantId});
   };
 
@@ -151,6 +167,23 @@ const HomeScreen = ({navigation}: any) => {
       setSelectedMapRestaurant(restaurant);
       setShowMapModal(true);
     }
+  };
+
+  // Handle Category Selection
+  const handleCategorySelect = (categoryId: number) => {
+    if (selectedCategory === categoryId) {
+      setSelectedCategory(null);
+      clearAllFilters();
+    } else {
+      setSelectedCategory(categoryId);
+      filterByCategory(categoryId);
+    }
+  };
+
+  // Handle Promotion Press
+  const handlePromotionPress = (promotion: any) => {
+    setSelectedPromotion(promotion);
+    setShowPromotionModal(true);
   };
 
   const applyAdvancedFilters = () => {
@@ -234,7 +267,7 @@ const HomeScreen = ({navigation}: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* List Mode Only: Categories & Banners */}
+      {/* Categories */}
       {layoutMode === "list" && (
         <>
           <View style={styles.categoriesSection}>
@@ -247,7 +280,7 @@ const HomeScreen = ({navigation}: any) => {
                 <TouchableOpacity
                   key={cat.id}
                   style={[styles.categoryItem, selectedCategory === cat.id && styles.categoryItemActive]}
-                  onPress={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                  onPress={() => handleCategorySelect(cat.id)}
                 >
                   <View
                     style={[
@@ -256,7 +289,7 @@ const HomeScreen = ({navigation}: any) => {
                     ]}
                   >
                     {cat.image ? (
-                      <Image source={{uri: cat.image}} style={styles.categoryImage} />
+                      <Image source={{uri: getImageUrl(cat.image)}} style={styles.categoryImage} />
                     ) : (
                       <Text style={{fontSize: 24}}>{cat.icon || "🍽️"}</Text>
                     )}
@@ -269,6 +302,7 @@ const HomeScreen = ({navigation}: any) => {
             </ScrollView>
           </View>
 
+          {/* Promotions Banner */}
           <ScrollView
             horizontal
             pagingEnabled
@@ -276,19 +310,36 @@ const HomeScreen = ({navigation}: any) => {
             contentContainerStyle={styles.bannersContainer}
             snapToInterval={width - 40 + 12}
           >
-            {banners.map((banner) => (
-              <TouchableOpacity key={banner.id} style={[styles.bannerCard, {backgroundColor: banner.color}]}>
-                <View style={styles.bannerContent}>
-                  <View style={styles.bannerIconBg}>
-                    <Ionicons name={banner.icon as any} size={24} color={banner.color} />
+            {isLoadingPromotions ? (
+              <View style={[styles.bannerCard, {backgroundColor: COLORS.LIGHT_GRAY, justifyContent: "center"}]}>
+                <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+              </View>
+            ) : promotions.length > 0 ? (
+              promotions.slice(0, 5).map((promo) => (
+                <TouchableOpacity
+                  key={promo.id}
+                  style={[styles.bannerCard, {backgroundColor: getBannerColor(promo.discountType)}]}
+                  onPress={() => handlePromotionPress(promo)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.bannerContent}>
+                    <View style={styles.bannerIconBg}>
+                      <Ionicons
+                        name={getBannerIcon(promo.discountType)}
+                        size={24}
+                        color={getBannerColor(promo.discountType)}
+                      />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text style={styles.bannerTitle}>{promo.code}</Text>
+                      <Text style={styles.bannerSubtitle} numberOfLines={1}>
+                        {promo.description}
+                      </Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.bannerTitle}>{banner.title}</Text>
-                    <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              ))
+            ) : null}
           </ScrollView>
         </>
       )}
@@ -314,11 +365,7 @@ const HomeScreen = ({navigation}: any) => {
         ))}
       </View>
 
-      {store.items.length > 0 && (
-        <Text style={styles.resultCountText}>
-          {store.items.length} kết quả {layoutMode === "map" ? "trên bản đồ" : ""}
-        </Text>
-      )}
+      {store.items.length > 0 && <Text style={styles.resultCountText}>{store.items.length} kết quả</Text>}
     </View>
   );
 
@@ -336,7 +383,33 @@ const HomeScreen = ({navigation}: any) => {
     );
   };
 
-  // --- [SỬA LỖI 1] Logic hiển thị ảnh nhà hàng ---
+  // Helper functions for promotion banner
+  const getBannerColor = (type: string) => {
+    switch (type) {
+      case "percentage":
+        return "#FF6B6B";
+      case "fixed":
+        return "#4ECDC4";
+      case "delivery":
+        return "#FFB800";
+      default:
+        return COLORS.PRIMARY;
+    }
+  };
+
+  const getBannerIcon = (type: string): any => {
+    switch (type) {
+      case "percentage":
+        return "pricetag";
+      case "fixed":
+        return "gift";
+      case "delivery":
+        return "bicycle";
+      default:
+        return "ticket";
+    }
+  };
+
   const renderRestaurantItem = (restaurant: any) => (
     <TouchableOpacity
       key={restaurant.id}
@@ -345,9 +418,8 @@ const HomeScreen = ({navigation}: any) => {
       activeOpacity={0.9}
     >
       <View style={styles.restaurantImageContainer}>
-        {/* Logic: Nếu có ảnh thì render Image, không thì render Placeholder */}
         {restaurant.image ? (
-          <Image source={{uri: restaurant.image}} style={styles.restaurantImage} resizeMode="cover" />
+          <Image source={{uri: getImageUrl(restaurant.image)}} style={styles.restaurantImage} resizeMode="cover" />
         ) : (
           <View style={[styles.restaurantImage, styles.placeholderImage]}>
             <Ionicons name="image-outline" size={40} color={COLORS.GRAY} />
@@ -409,7 +481,6 @@ const HomeScreen = ({navigation}: any) => {
     </ScrollView>
   );
 
-  // --- [SỬA LỖI 2] Giao diện Filter đầy đủ ---
   const renderFilterModal = () => (
     <Modal visible={showFilters} animationType="slide" transparent={true} onRequestClose={() => setShowFilters(false)}>
       <View style={styles.modalOverlay}>
@@ -422,7 +493,7 @@ const HomeScreen = ({navigation}: any) => {
           </View>
 
           <ScrollView style={styles.modalBody}>
-            {/* 1. Trạng thái */}
+            {/* Trạng thái */}
             <Text style={styles.filterSectionTitle}>Trạng thái</Text>
             <TouchableOpacity
               style={[styles.filterOptionRow, filterOpenNow && styles.filterOptionRowActive]}
@@ -432,7 +503,7 @@ const HomeScreen = ({navigation}: any) => {
               {filterOpenNow && <Ionicons name="checkmark" size={20} color={COLORS.PRIMARY} />}
             </TouchableOpacity>
 
-            {/* 2. Đánh giá (Rating Chips) */}
+            {/* Đánh giá */}
             <Text style={styles.filterSectionTitle}>Đánh giá tối thiểu</Text>
             <View style={styles.ratingFilterContainer}>
               {[3, 4, 4.5, 5].map((rate) => (
@@ -449,7 +520,7 @@ const HomeScreen = ({navigation}: any) => {
               ))}
             </View>
 
-            {/* 3. Khoảng giá (Price Inputs) */}
+            {/* Khoảng giá */}
             <Text style={styles.filterSectionTitle}>Khoảng giá (VND)</Text>
             <View style={styles.priceInputsContainer}>
               <View style={styles.priceInputWrapper}>
@@ -487,7 +558,6 @@ const HomeScreen = ({navigation}: any) => {
       </View>
     </Modal>
   );
-
   const renderMapPreviewModal = () => {
     if (!selectedMapRestaurant) return null;
     return (
@@ -529,8 +599,99 @@ const HomeScreen = ({navigation}: any) => {
     );
   };
 
+  const renderPromotionModal = () => {
+    if (!selectedPromotion) return null;
+
+    const discount =
+      selectedPromotion.discountType === "percentage"
+        ? `${selectedPromotion.discountValue}%`
+        : formatCurrency(selectedPromotion.discountValue);
+
+    return (
+      <Modal
+        visible={showPromotionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPromotionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.promotionModalContent}>
+            <View style={styles.promotionModalHeader}>
+              <View
+                style={[
+                  styles.promoIconLarge,
+                  {backgroundColor: getBannerColor(selectedPromotion.discountType) + "20"},
+                ]}
+              >
+                <Ionicons
+                  name={getBannerIcon(selectedPromotion.discountType)}
+                  size={40}
+                  color={getBannerColor(selectedPromotion.discountType)}
+                />
+              </View>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setShowPromotionModal(false)}>
+                <Ionicons name="close" size={24} color={COLORS.DARK} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.promoCodeSection}>
+              <Text style={styles.promoCodeText}>{selectedPromotion.code}</Text>
+              <TouchableOpacity style={styles.copyButton}>
+                <Ionicons name="copy-outline" size={18} color={COLORS.PRIMARY} />
+                <Text style={styles.copyText}>Sao chép</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.promoDescription}>{selectedPromotion.description}</Text>
+
+            <View style={styles.promoDetailsContainer}>
+              <View style={styles.promoDetailRow}>
+                <Ionicons name="pricetag" size={20} color={COLORS.PRIMARY} />
+                <Text style={styles.promoDetailLabel}>Giảm giá:</Text>
+                <Text style={styles.promoDetailValue}>{discount}</Text>
+              </View>
+
+              {selectedPromotion.minOrderValue > 0 && (
+                <View style={styles.promoDetailRow}>
+                  <Ionicons name="cart" size={20} color={COLORS.INFO} />
+                  <Text style={styles.promoDetailLabel}>Đơn tối thiểu:</Text>
+                  <Text style={styles.promoDetailValue}>{formatCurrency(selectedPromotion.minOrderValue)}</Text>
+                </View>
+              )}
+
+              {selectedPromotion.maxDiscount && (
+                <View style={styles.promoDetailRow}>
+                  <Ionicons name="arrow-down-circle" size={20} color={COLORS.SUCCESS} />
+                  <Text style={styles.promoDetailLabel}>Giảm tối đa:</Text>
+                  <Text style={styles.promoDetailValue}>{formatCurrency(selectedPromotion.maxDiscount)}</Text>
+                </View>
+              )}
+
+              <View style={styles.promoDetailRow}>
+                <Ionicons name="calendar" size={20} color={COLORS.WARNING} />
+                <Text style={styles.promoDetailLabel}>Hạn sử dụng:</Text>
+                <Text style={styles.promoDetailValue}>
+                  {new Date(selectedPromotion.validTo).toLocaleDateString("vi-VN")}
+                </Text>
+              </View>
+            </View>
+
+            <Button
+              title="Sử dụng ngay"
+              onPress={() => {
+                setShowPromotionModal(false);
+                navigation.navigate("Search");
+              }}
+              containerStyle={{marginTop: 20}}
+            />
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.WHITE} />
 
       <ScrollView
@@ -548,233 +709,9 @@ const HomeScreen = ({navigation}: any) => {
 
       {renderFilterModal()}
       {renderMapPreviewModal()}
-    </SafeAreaView>
+      {renderPromotionModal()}
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: "#FAFAFA"},
-  headerContainer: {
-    paddingHorizontal: 12,
-    paddingTop: Platform.OS === "android" ? 10 : 0,
-    paddingBottom: 8,
-    backgroundColor: COLORS.WHITE,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    zIndex: 10,
-  },
-  greetingSection: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8},
-  greeting: {fontSize: 22, fontWeight: "800", color: COLORS.DARK},
-  greetingSubtitle: {fontSize: 13, color: COLORS.GRAY},
-  notificationButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#FFF0F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  notificationBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: COLORS.ERROR,
-    paddingHorizontal: 4,
-    borderRadius: 8,
-  },
-  badgeText: {color: "white", fontSize: 10, fontWeight: "bold"},
-
-  locationSection: {flexDirection: "row", alignItems: "center", marginBottom: 12},
-  locationIconBg: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: "#FFF0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  locationTextContainer: {flex: 1},
-  locationLabel: {fontSize: 11, color: COLORS.GRAY},
-  locationAddress: {fontSize: 13, fontWeight: "600", color: COLORS.DARK},
-
-  searchSection: {flexDirection: "row", gap: 8, marginBottom: 8},
-  iconButton: {width: 50, height: 50, borderRadius: 8, justifyContent: "center", alignItems: "center"},
-  filterButton: {backgroundColor: COLORS.PRIMARY, shadowColor: COLORS.PRIMARY, shadowOpacity: 0.3, elevation: 4},
-  categoriesSection: {marginBottom: 12},
-  categoriesContainer: {gap: 4},
-  categoryItem: {alignItems: "center", width: 64},
-  categoryIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 4,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 4,
-    overflow: "hidden",
-  },
-  categoryIconContainerActive: {backgroundColor: COLORS.PRIMARY, borderWidth: 2, borderColor: "#FFD1D1"},
-  categoryImage: {width: "100%", height: "100%", borderRadius: 4},
-  categoryName: {fontSize: 11, fontWeight: "500", color: COLORS.DARK_GRAY, textAlign: "center"},
-  categoryNameActive: {color: COLORS.PRIMARY, fontWeight: "700"},
-
-  bannersContainer: {gap: 12, marginBottom: 12, paddingRight: 20},
-  bannerCard: {
-    width: width - 160,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    height: 50,
-    alignItems: "center",
-  },
-  bannerContent: {flexDirection: "row", alignItems: "center", gap: 12},
-  bannerIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 20,
-    backgroundColor: "white",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bannerTitle: {fontSize: 16, fontWeight: "800", color: "white"},
-  bannerSubtitle: {fontSize: 12, color: "rgba(255,255,255,0.9)"},
-
-  tabContainer: {flexDirection: "row", backgroundColor: "#F3F4F6", padding: 4, borderRadius: 8, marginBottom: 4},
-  tabButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
-  },
-  tabButtonActive: {backgroundColor: COLORS.PRIMARY},
-  tabText: {fontSize: 12, fontWeight: "600", color: COLORS.GRAY},
-  tabTextActive: {color: COLORS.WHITE},
-  resultCountText: {fontSize: 11, color: COLORS.GRAY, textAlign: "center", marginTop: 4},
-
-  // Map & List Styles
-  map: {flex: 1},
-  restaurantGrid: {gap: 16, marginTop: 10},
-  restaurantCard: {
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: "hidden",
-  },
-
-  // Image Rendering Styles
-  restaurantImageContainer: {height: 160, backgroundColor: COLORS.LIGHT_GRAY, position: "relative"},
-  restaurantImage: {width: "100%", height: "100%"},
-  placeholderImage: {alignItems: "center", justifyContent: "center"},
-
-  ratingBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-  },
-  ratingText: {color: "white", fontSize: 11, fontWeight: "bold"},
-  closedOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closedText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: COLORS.ERROR,
-    backgroundColor: "white",
-    padding: 8,
-    borderRadius: 4,
-  },
-
-  restaurantInfo: {padding: 12},
-  restaurantName: {fontSize: 16, fontWeight: "700", marginBottom: 4},
-  metaRow: {flexDirection: "row", alignItems: "center", gap: 4},
-  metaItem: {flexDirection: "row", alignItems: "center", gap: 4},
-  metaDivider: {width: 3, height: 3, backgroundColor: COLORS.GRAY, borderRadius: 1.5, marginHorizontal: 6},
-  metaText: {fontSize: 12, color: COLORS.GRAY},
-
-  // Modals Common
-  modalOverlay: {flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end"},
-  modalContent: {
-    backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 30,
-    maxHeight: "85%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderColor: COLORS.LIGHT_GRAY,
-  },
-  modalTitle: {fontSize: 18, fontWeight: "700"},
-  modalBody: {padding: 20},
-  modalRestaurantName: {fontSize: 20, fontWeight: "800", marginBottom: 4},
-  modalMetaRow: {flexDirection: "row", alignItems: "center"},
-  modalFooter: {padding: 20, borderTopWidth: 1, borderColor: COLORS.LIGHT_GRAY, flexDirection: "row"},
-
-  // Filter Specific Styles (Đã thêm lại)
-  filterSectionTitle: {fontSize: 16, fontWeight: "700", color: COLORS.DARK, marginTop: 10, marginBottom: 12},
-  filterOptionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: COLORS.LIGHT_GRAY,
-    alignItems: "center",
-  },
-  filterOptionRowActive: {backgroundColor: "#F0FDF4", borderBottomWidth: 0, paddingHorizontal: 10, borderRadius: 8},
-  filterOptionText: {fontSize: 15, color: COLORS.DARK_GRAY},
-  filterOptionTextActive: {color: COLORS.PRIMARY, fontWeight: "600"},
-
-  ratingFilterContainer: {flexDirection: "row", gap: 12},
-  ratingChip: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    gap: 4,
-  },
-  ratingChipActive: {backgroundColor: COLORS.PRIMARY, borderColor: COLORS.PRIMARY},
-  ratingChipText: {fontWeight: "600", color: COLORS.DARK_GRAY},
-  ratingChipTextActive: {color: COLORS.WHITE},
-
-  priceInputsContainer: {flexDirection: "row", alignItems: "center", gap: 12},
-  priceInputWrapper: {flex: 1},
-  priceSeparator: {fontSize: 20, color: COLORS.GRAY},
-
-  centerState: {flex: 1, justifyContent: "center", alignItems: "center"},
-  loadingText: {marginTop: 10, color: COLORS.GRAY},
-  categoryItemActive: {
-    transform: [{scale: 1.05}],
-  },
-});
 
 export default HomeScreen;
