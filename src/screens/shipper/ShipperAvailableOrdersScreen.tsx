@@ -36,6 +36,9 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
   const [filterDistance, setFilterDistance] = useState("");
 
   useEffect(() => {
+    const fetchOrders = async () => {
+      
+    }
     loadOrders(1);
   }, []);
 
