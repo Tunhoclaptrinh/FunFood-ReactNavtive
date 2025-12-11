@@ -24,6 +24,10 @@ import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 import SearchBar from "@/src/components/common/SearchBar";
+import {Review} from "@/src/types";
+import {ReviewItem} from "@/src/components/reviews/ReviewItem";
+import {WriteReviewModal} from "@/src/components/reviews/WriteReviewModal";
+import {ReviewService} from "@/src/services";
 
 const HEADER_HEIGHT = 250;
 
@@ -44,7 +48,31 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [addingId, setAddingId] = useState<number | null>(null);
 
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    try {
+      setIsSubmittingReview(true);
+      await ReviewService.createReview({
+        type: "restaurant",
+        restaurantId: restaurantId,
+        rating,
+        comment,
+      });
+
+      Alert.alert("Thành công", "Cảm ơn bạn đã đánh giá!");
+      setShowReviewModal(false);
+      loadReviews(); // Reload lại list
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể gửi đánh giá. Vui lòng thử lại.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   // [3] Check trạng thái yêu thích từ Store thay vì state cục bộ
   const isLiked = isFavorite("restaurant", restaurantId);
@@ -53,7 +81,17 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   useEffect(() => {
     loadRestaurantData();
     fetchFavorites(); // [4] Sync dữ liệu yêu thích khi vào màn hình
+    loadReviews();
   }, [restaurantId]);
+
+  const loadReviews = async () => {
+    try {
+      const res = await ReviewService.getRestaurantReviews(restaurantId, 1, 5); // Lấy 5 review mới nhất
+      setReviews(res.data);
+    } catch (error) {
+      console.log("Error loading reviews:", error);
+    }
+  };
 
   useEffect(() => {
     if (debouncedSearch) {
@@ -271,6 +309,33 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
 
           <View style={styles.divider} />
 
+          {/* --- [MỚI] Phần Đánh giá --- */}
+          <View style={styles.reviewSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Đánh giá ({reviews.length})</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(true)}>
+                <Text style={{color: COLORS.PRIMARY, fontWeight: "600"}}>Viết đánh giá</Text>
+              </TouchableOpacity>
+            </View>
+
+            {reviews.length > 0 ? (
+              reviews.map((review) => <ReviewItem key={review.id} review={review} />)
+            ) : (
+              <Text style={{color: COLORS.GRAY, fontStyle: "italic", marginBottom: 16}}>
+                Chưa có đánh giá nào. Hãy là người đầu tiên!
+              </Text>
+            )}
+
+            {/* Nút xem thêm nếu cần */}
+            {reviews.length >= 5 && (
+              <TouchableOpacity style={{alignItems: "center", padding: 10}}>
+                <Text style={{color: COLORS.GRAY}}>Xem tất cả đánh giá</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.divider} />
+
           {/* --- Search --- */}
           <View style={styles.searchSection}>
             <SearchBar
@@ -359,6 +424,14 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
           </TouchableOpacity>
         </View>
       )}
+
+      <WriteReviewModal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleSubmitReview}
+        isSubmitting={isSubmittingReview}
+        title={`Đánh giá ${restaurant?.name || "nhà hàng"}`}
+      />
     </SafeAreaView>
   );
 };
@@ -475,6 +548,16 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
+  },
+
+  reviewSection: {
+    marginBottom: 10,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
   },
   hoursRow: {
     flexDirection: "row",

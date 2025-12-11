@@ -21,6 +21,8 @@ import {useFavoriteStore} from "@/src/stores/favoriteStore";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
+import {ReviewItem} from "@/src/components/reviews/ReviewItem";
+import {WriteReviewModal} from "@/src/components/reviews/WriteReviewModal";
 
 const HEADER_HEIGHT = 300;
 
@@ -35,6 +37,8 @@ const ProductDetailScreen = ({route, navigation}: any) => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const isLiked = isFavorite("product", productId);
 
@@ -57,6 +61,30 @@ const ProductDetailScreen = ({route, navigation}: any) => {
       navigation.goBack();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (rating: number, comment: string) => {
+    try {
+      setIsSubmittingReview(true);
+      await ReviewService.createReview({
+        type: "product",
+        restaurantId: product.restaurantId, // Product review cần cả ID nhà hàng
+        productId: productId,
+        rating,
+        comment,
+      });
+
+      Alert.alert("Thành công", "Đánh giá món ăn thành công!");
+      setShowReviewModal(false);
+
+      // Reload reviews
+      const reviewsRes = await ReviewService.getProductReviews(productId, 1, 5);
+      setReviews((reviewsRes as any)?.data || []);
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể gửi đánh giá.");
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -184,29 +212,16 @@ const ProductDetailScreen = ({route, navigation}: any) => {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Đánh giá</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(true)}>
+                <Text style={{color: COLORS.PRIMARY, fontWeight: "600", fontSize: 13}}>Viết đánh giá</Text>
+              </TouchableOpacity>
             </View>
 
             {reviews.length === 0 ? (
               <Text style={{color: COLORS.GRAY, fontStyle: "italic", marginTop: 8}}>Chưa có đánh giá nào.</Text>
             ) : (
-              reviews.map((review, index) => (
-                <View key={index} style={styles.reviewItem}>
-                  <View style={styles.reviewHeader}>
-                    <Text style={styles.reviewerName}>Người dùng ẩn danh</Text>
-                    <View style={styles.starRow}>
-                      {Array.from({length: 5}).map((_, i) => (
-                        <Ionicons
-                          key={i}
-                          name={i < review.rating ? "star" : "star-outline"}
-                          size={12}
-                          color="#FFB800"
-                        />
-                      ))}
-                    </View>
-                  </View>
-                  <Text style={styles.reviewText}>{review.comment}</Text>
-                </View>
-              ))
+              // Thay thế code map cũ bằng ReviewItem
+              reviews.map((review) => <ReviewItem key={review.id} review={review} />)
             )}
           </View>
         </View>
@@ -238,6 +253,13 @@ const ProductDetailScreen = ({route, navigation}: any) => {
           leftIcon="cart-outline"
         />
       </View>
+      <WriteReviewModal
+        visible={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        onSubmit={handleSubmitReview}
+        isSubmitting={isSubmittingReview}
+        title={`Đánh giá món ăn`}
+      />
     </View>
   );
 };
@@ -350,11 +372,6 @@ const styles = StyleSheet.create({
   visitButton: {flexDirection: "row", alignItems: "center", padding: 4},
   visitText: {fontSize: 12, color: COLORS.PRIMARY, fontWeight: "600"},
   sectionHeader: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12},
-  reviewItem: {marginBottom: 12, padding: 12, backgroundColor: "#FAFAFA", borderRadius: 12},
-  reviewHeader: {flexDirection: "row", justifyContent: "space-between", marginBottom: 6},
-  reviewerName: {fontSize: 13, fontWeight: "600", color: COLORS.DARK},
-  starRow: {flexDirection: "row", gap: 1},
-  reviewText: {fontSize: 13, color: COLORS.DARK_GRAY, lineHeight: 18},
   bottomBar: {
     position: "absolute",
     bottom: 0,

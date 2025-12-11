@@ -8,26 +8,11 @@ import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
+import {ORDER_STATUSES, PAYMENT_METHODS} from "@/src/config/constants";
 
 interface RouteParams {
   orderId: number;
 }
-
-const ORDER_STATUSES = {
-  pending: {label: "Pending", color: "#FFA500", icon: "time-outline"},
-  confirmed: {label: "Confirmed", color: "#4ECDC4", icon: "checkmark-circle-outline"},
-  preparing: {label: "Preparing", color: "#FFB800", icon: "pizza-outline"},
-  delivering: {label: "Delivering", color: "#3498DB", icon: "car-outline"},
-  delivered: {label: "Delivered", color: "#2ECC71", icon: "checkmark-done-outline"},
-  cancelled: {label: "Cancelled", color: "#E74C3C", icon: "close-circle-outline"},
-};
-
-const PAYMENT_METHODS = {
-  cash: "Cash on Delivery",
-  card: "Credit Card",
-  momo: "MoMo",
-  zalopay: "ZaloPay",
-};
 
 const OrderDetailScreen = ({route, navigation}: any) => {
   const {orderId} = route.params as RouteParams;
@@ -41,9 +26,6 @@ const OrderDetailScreen = ({route, navigation}: any) => {
 
   useEffect(() => {
     loadOrderData();
-    // Refresh every 10 seconds
-    const interval = setInterval(loadOrderData, 10000);
-    return () => clearInterval(interval);
   }, [orderId]);
 
   const loadOrderData = async () => {
@@ -118,7 +100,7 @@ const OrderDetailScreen = ({route, navigation}: any) => {
     );
   }
 
-  const statusInfo = ORDER_STATUSES[order.status as keyof typeof ORDER_STATUSES] || ORDER_STATUSES.pending;
+  const statusInfo = ORDER_STATUSES[order.status as keyof typeof ORDER_STATUSES] || ORDER_STATUSES.PENDING;
   const canCancel = ["pending", "confirmed"].includes(order.status);
   const canRate = order.status === "delivered";
 
