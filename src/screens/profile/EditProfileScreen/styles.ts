@@ -1,5 +1,5 @@
-import { COLORS } from "@/src/styles/colors";
-import { StyleSheet } from "react-native";
+import {COLORS} from "@/src/styles/colors";
+import {StyleSheet} from "react-native";
 
 const styles = StyleSheet.create({
   container: {
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+    marginBottom: 25,
   },
 });
 

@@ -1,6 +1,6 @@
 import React from "react";
 import {SafeAreaView as RNSafeAreaView} from "react-native-safe-area-context";
-import {ViewStyle, StyleSheet} from "react-native";
+import {ViewStyle, StyleSheet, View} from "react-native";
 import {COLORS} from "@/src/styles/colors";
 
 interface SafeAreaWrapperProps {
@@ -25,6 +25,8 @@ const styles = StyleSheet.create({
     marginBottom: -25,
   },
 });
+
+const Nothing = ({children, style}: any) => <View style={[styles.container, style]}>{children}</View>;
 
 // 👉 Export SafeAreaWrapper nhưng đặt tên export là SafeAreaView
 export {SafeAreaWrapper as SafeAreaView};
