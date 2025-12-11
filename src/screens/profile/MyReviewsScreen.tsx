@@ -18,21 +18,21 @@ import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
 import {COLORS} from "@/src/styles/colors";
+import {ReviewService} from "@/src/services";
 
 interface Review {
   id: number;
   type: "restaurant" | "product";
   restaurantId: number;
-  restaurantName?: string;
   productId?: number;
-  productName?: string;
   rating: number;
   comment: string;
   createdAt: string;
+  target: {name: string; id: any};
 }
 
 const MyReviewsScreen = ({navigation}: any) => {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[] | any>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -49,13 +49,22 @@ const MyReviewsScreen = ({navigation}: any) => {
   const loadReviews = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/reviews/user/me");
-      setReviews(response.data.data || []);
+      const res = await ReviewService.getMyReviews(); // Lấy 5 review mới nhất
+      setReviews(res.data);
     } catch (error) {
       console.error("Error loading reviews:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleNavigate = (item: Review) => {
+    if (item.type === "restaurant") {
+      navigation.navigate("RestaurantDetail", {restaurantId: item.restaurantId});
+    } else if (item.type === "product" && item.productId) {
+      // Khi bấm vào review món ăn, thường cũng cần restaurantId để load context
+      navigation.navigate("ProductDetail", {productId: item.productId});
     }
   };
 
@@ -98,7 +107,7 @@ const MyReviewsScreen = ({navigation}: any) => {
         onPress: async () => {
           try {
             await apiClient.delete(`/reviews/${id}`);
-            setReviews(reviews.filter((r) => r.id !== id));
+            setReviews(reviews.filter((r: {id: number}) => r.id !== id));
             Alert.alert("Success", "Review deleted");
           } catch (error: any) {
             Alert.alert("Error", error.response?.data?.message || "Failed to delete review");
@@ -109,12 +118,12 @@ const MyReviewsScreen = ({navigation}: any) => {
   };
 
   const renderReview = ({item}: {item: Review}) => (
-    <View style={styles.reviewCard} >
+    <TouchableOpacity style={styles.reviewCard} onPress={() => handleNavigate(item)}>
       <View style={styles.reviewHeader}>
         <View style={styles.reviewInfo}>
           <Ionicons name={item.type === "restaurant" ? "storefront" : "fast-food"} size={20} color={COLORS.PRIMARY} />
           <View style={styles.reviewTitles}>
-            <Text style={styles.reviewName}>{item.type === "restaurant" ? item.restaurantName : item.productName}</Text>
+            <Text style={styles.reviewName}>{item.target?.name || "Unknown"}</Text>
             <Text style={styles.reviewType}>{item.type === "restaurant" ? "Restaurant" : "Product"}</Text>
           </View>
         </View>
@@ -145,14 +154,14 @@ const MyReviewsScreen = ({navigation}: any) => {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleDelete(item.id, item.type === "restaurant" ? item.restaurantName! : item.productName!)}
+            onPress={() => handleDelete(item.id, item.target?.name || "Unknown")}
           >
             <Ionicons name="trash-outline" size={18} color={COLORS.ERROR} />
             <Text style={[styles.actionText, {color: COLORS.ERROR}]}>Delete</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
