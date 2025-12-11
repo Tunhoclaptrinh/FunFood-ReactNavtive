@@ -37,6 +37,9 @@ import SettingsScreen from "../screens/profile/SettingsScreen";
 import NotificationsScreen from "../screens/notifications/NotificationsScreen";
 import SupportScreen from "../screens/profile/SupportScreen";
 import TermsPrivacyScreen from "../screens/profile/TermsPrivacyScreen";
+import FaqMissingFoodScreen from '../screens/profile/faqScreen/FaqMissingFoodScreen';
+import FaqCancelOrderScreen from '../screens/profile/faqScreen/FaqCancelOrderScreen';
+import FaqPaymentIssueScreen from '../screens/profile/faqScreen/FaqPaymentIssueScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -259,6 +262,21 @@ const ProfileStack = () => (
       name={ROUTE_NAMES.COMMON.SETTINGS}
       component={SettingsScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Cài đặt")}
+    />
+    <Stack.Screen
+      name="FaqMissingFood"
+      component={FaqMissingFoodScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Đơn hàng thiếu món")}
+    />
+    <Stack.Screen
+      name="FaqCancelOrder"
+      component={FaqCancelOrderScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Cách hủy đơn hàng")}
+    />
+    <Stack.Screen
+      name="FaqPaymentIssue"
+      component={FaqPaymentIssueScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Lỗi thanh toán")}
     />
   </Stack.Navigator>
 );
