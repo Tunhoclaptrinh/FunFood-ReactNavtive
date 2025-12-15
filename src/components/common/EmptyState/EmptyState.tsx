@@ -99,7 +99,7 @@ export default EmptyState;
 
 // 1. Basic Empty State
 <EmptyState
-  icon="inbox-outline"
+  icon="mail-outline"
   title="No items found"
   subtitle="Start adding items to see them here"
 />

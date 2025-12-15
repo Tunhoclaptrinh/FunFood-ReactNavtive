@@ -78,16 +78,58 @@ function transformStats(apiData: any): ShipperStats {
 }
 
 export class ShipperService {
+  /** Helper to normalize API order object to ShipperOrder interface */
+  private static normalizeOrder(o: any): ShipperOrder {
+    const restaurant = o.restaurant || {};
+    const customer = o.customer || {};
+
+    let estTime = 0;
+    if (typeof o.estimatedDeliveryTime === "number") estTime = o.estimatedDeliveryTime;
+    else if (typeof o.estimatedDeliveryTime === "string") {
+      const m = o.estimatedDeliveryTime.match(/(\d+)/);
+      estTime = m ? parseInt(m[1], 10) : 0;
+    } else if (typeof o.estimatedTime === "number") {
+      estTime = o.estimatedTime;
+    }
+
+    const distance = o.estimatedDistance ?? o.distance ?? 0;
+
+    return {
+      id: o.id,
+      restaurantName: restaurant.name || o.restaurantName || "",
+      restaurantAddress: restaurant.address || o.restaurantAddress || "",
+      customerName: customer.name || o.customerName || "",
+      deliveryAddress: o.deliveryAddress,
+      deliveryLatitude: o.deliveryLatitude,
+      deliveryLongitude: o.deliveryLongitude,
+      total: o.total || 0,
+      items: o.items || [],
+      status: o.status,
+      distance,
+      estimatedTime: estTime,
+      deliveryFee: o.deliveryFee || 0,
+    } as ShipperOrder;
+  }
   /**
    * Lấy đơn hàng available (chưa nhận)
    */
   static async getAvailableOrders(page = 1, limit = 10): Promise<PaginatedResponse<ShipperOrder>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<ShipperOrder>>("/shipper/orders/available", {
+      const response = await apiClient.get<PaginatedResponse<any>>("/shipper/orders/available", {
         _page: page,
         _limit: limit,
       });
-      return response.data;
+
+      // API may return fields with different names (e.g. estimatedDistance, estimatedDeliveryTime, nested restaurant/customer)
+      // Normalize the API response to our ShipperOrder interface used in the app
+      const body = response.data;
+      const normalizedData = (body.data || []).map((o: any) => ShipperService.normalizeOrder(o));
+
+      // Replace body.data with normalized data
+      return {
+        ...body,
+        data: normalizedData,   
+      } as PaginatedResponse<ShipperOrder>;
     } catch (error) {
       console.error("Error fetching available orders:", error);
       throw error;
@@ -99,8 +141,9 @@ export class ShipperService {
    */
   static async acceptOrder(orderId: number): Promise<ShipperOrder> {
     try {
-      const response = await apiClient.post<{data: ShipperOrder}>(`/shipper/orders/${orderId}/accept`);
-      return response.data.data;
+      const response = await apiClient.post<{data: any}>(`/shipper/orders/${orderId}/accept`);
+      const data = response.data.data;
+      return ShipperService.normalizeOrder(data);
     } catch (error) {
       console.error("Error accepting order:", error);
       throw error;
@@ -112,11 +155,15 @@ export class ShipperService {
    */
   static async getDeliveries(page = 1, limit = 10): Promise<PaginatedResponse<ShipperOrder>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<ShipperOrder>>("/shipper/orders/my-deliveries", {
+      const response = await apiClient.get<PaginatedResponse<any>>("/shipper/orders/my-deliveries", {
         _page: page,
         _limit: limit,
       });
-      return response.data;
+      const body = response.data;
+      const normalizedData = (body.data || []).map((o: any) => ShipperService.normalizeOrder(o));
+      return {
+        ...body,  data: normalizedData,
+      } as PaginatedResponse<ShipperOrder>;
     } catch (error) {
       console.error("Error fetching deliveries:", error);
       throw error;
@@ -141,11 +188,16 @@ export class ShipperService {
    */
   static async getDeliveryHistory(page = 1, limit = 10): Promise<PaginatedResponse<ShipperOrder>> {
     try {
-      const response = await apiClient.get<PaginatedResponse<ShipperOrder>>("/shipper/orders/history", {
+      const response = await apiClient.get<PaginatedResponse<any>>("/shipper/orders/history", {
         _page: page,
         _limit: limit,
       });
-      return response.data;
+      const body = response.data;
+      const normalizedData = (body.data || []).map((o: any) => ShipperService.normalizeOrder(o));
+      return {
+        ...body,
+        data: normalizedData,
+      } as PaginatedResponse<ShipperOrder>;
     } catch (error) {
       console.error("Error fetching delivery history:", error);
       throw error;
@@ -187,8 +239,8 @@ export class ShipperService {
    */
   static async getOrderDetail(orderId: number): Promise<ShipperOrder> {
     try {
-      const response = await apiClient.get<{data: ShipperOrder}>(`/orders/${orderId}`);
-      return response.data.data;
+      const response = await apiClient.get<{data: any}>(`/orders/${orderId}`);
+      return ShipperService.normalizeOrder(response.data.data);
     } catch (error) {
       console.error("Error fetching order detail:", error);
       throw error;

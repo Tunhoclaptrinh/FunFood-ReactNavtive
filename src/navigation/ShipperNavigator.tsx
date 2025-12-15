@@ -10,10 +10,21 @@ import {Ionicons} from "@expo/vector-icons";
 import ShipperDashboardScreen from "@screens/shipper/ShipperDashboardScreen";
 import ShipperAvailableOrdersScreen from "@screens/shipper/ShipperAvailableOrdersScreen";
 import ShipperDeliveriesScreen from "@screens/shipper/ShipperDeliveriesScreen";
-
-import ProfileScreen from "@screens/profile/ProfileScreen";
-
 import ShipperHistoryScreen from "../screens/shipper/ShipperHistoryScreen";
+import ProfileScreen from "@screens/profile/ProfileScreen";
+import EditProfileScreen from "@screens/profile/EditProfileScreen";
+import ChangePasswordScreen from "@screens/profile/ChangePasswordScreen";
+import AddressListScreen from "@screens/profile/AddressScreen/AddressListScreen";
+import AddAddressScreen from "@screens/profile/AddressScreen/AddAddressScreen";
+import FavoritesListScreen from "@screens/profile/FavoritesListScreen";
+import MyReviewsScreen from "@screens/profile/MyReviewsScreen";
+import NotificationSettingsScreen from "@screens/profile/NotificationSettingsScreen";
+import OrderStatsScreen from "@screens/profile/OrderStatsScreen";
+import SupportScreen from "@screens/profile/SupportScreen";
+import TermsPrivacyScreen from "@screens/profile/TermsPrivacyScreen";
+import SettingsScreen from "@screens/profile/SettingsScreen";
+
+
 import {COLORS} from "@/src/styles/colors";
 
 const Stack = createNativeStackNavigator();
@@ -82,6 +93,18 @@ const ProfileStack = () => (
       component={ProfileScreen}
       options={{title: "Profile", headerBackVisible: false}}
     />
+    <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{title: "Chỉnh sửa hồ sơ"}} />
+    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{title: "Đổi mật khẩu"}} />
+    <Stack.Screen name="AddressList" component={AddressListScreen} options={{title: "Địa chỉ giao hàng"}} />
+    <Stack.Screen name="AddAddress" component={AddAddressScreen} options={{title: "Thêm địa chỉ"}} />
+    <Stack.Screen name="FavoritesList" component={FavoritesListScreen} options={{title: "Yêu thích"}} />
+    <Stack.Screen name="ShipperHistoryDelivery" component={ShipperHistoryScreen} options={{title : "Lịch sử giao hàng"}}/>
+    <Stack.Screen name="MyReviews" component={MyReviewsScreen} options={{title: "Đánh giá của tôi"}} />
+    <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{title: "Cài đặt thông báo"}} />
+    <Stack.Screen name="OrderStats" component={OrderStatsScreen} options={{title: "Thống kê đơn hàng"}} />
+    <Stack.Screen name="Support" component={SupportScreen} options={{title: "Trợ giúp"}} />
+    <Stack.Screen name="TermsPrivacy" component={TermsPrivacyScreen} options={{title: "Điều khoản"}} />
+    <Stack.Screen name="Settings" component={SettingsScreen} options={{title: "Cài đặt"}} />
   </Stack.Navigator>
 );
 

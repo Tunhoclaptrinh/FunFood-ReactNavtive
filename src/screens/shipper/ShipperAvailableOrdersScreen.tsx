@@ -1,6 +1,10 @@
 /**
  * Shipper Available Orders Screen
  * Danh sách các đơn hàng chưa được nhận, ready to deliver
+ *
+ * API Endpoints:
+ * - GET /api/orders/shipper/available - Lấy đơn hàng available
+ * - POST /api/orders/shipper/:id/accept - Nhận đơn hàng
  */
 
 import React, {useEffect, useState, useCallback} from "react";
@@ -15,56 +19,90 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {ShipperService, ShipperOrder} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";
 import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
+import ShipperOrderCard from "@/src/components/shipper/ShipperOrderCard";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 
 const ShipperAvailableOrdersScreen = ({navigation}: any) => {
+  // ============ STATE ============
   const [orders, setOrders] = useState<ShipperOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<ShipperOrder[]>([]); // Cache toàn bộ data
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Filter & Modal
+  const [filterDistance, setFilterDistance] = useState("");
+  const [debouncedFilter, setDebouncedFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<ShipperOrder | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [filterDistance, setFilterDistance] = useState("");
 
+  // ============ LIFECYCLE ============
+  // Load orders on mount
   useEffect(() => {
-    const fetchOrders = async () => {
-      
-    }
     loadOrders(1);
   }, []);
 
+  // Debounce filter input (simple 300ms)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedFilter(filterDistance), 300);
+    return () => clearTimeout(t);
+  }, [filterDistance]);
+
   const loadOrders = async (pageNum: number) => {
     try {
-      if (pageNum === 1) setLoading(true);
+      if (pageNum === 1) {
+        setLoading(true);
+        setError(null);
+      }
 
+      // Call API: GET /api/orders/shipper/available
       const res = await ShipperService.getAvailableOrders(pageNum, 15);
       const newOrders = res.data || [];
+      console.log("Shipper: loadOrders() fetched", newOrders.length, "orders");
 
       // Filter by distance if needed
       let filtered = newOrders;
-      if (filterDistance) {
-        const maxDistance = parseFloat(filterDistance);
-        filtered = newOrders.filter((order) => order.distance <= maxDistance);
-      }
+      // if (filterDistance) {
+      //   const maxDistance = parseFloat(filterDistance);
+      //   filtered = newOrders.filter((order) => order.distance <= maxDistance);
+      // }
 
       if (pageNum === 1) {
+        setAllOrders(newOrders);
         setOrders(filtered);
+        console.log("Shipper: setOrders (page 1)", filtered.length);
       } else {
-        setOrders([...orders, ...filtered]);
+        // Append to both cache and visible list (respecting current filter)
+        setAllOrders((prev) => [...prev, ...newOrders]);
+
+        setOrders((prev) => {
+          // If a filter is active, append only the filtered subset
+          if (filterDistance && filterDistance.trim() !== "") {
+            return [...prev, ...filtered];
+          }
+          return [...prev, ...filtered];
+        });
+
+        console.log("Shipper: appended orders", filtered.length);
       }
 
       setHasMore(res.pagination?.hasNext || false);
       setPage(pageNum);
-    } catch (error) {
+      setRetryCount(0);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || "Unable to load orders. Please try again.";
       console.error("Error loading orders:", error);
       Alert.alert("Error", "Failed to load available orders");
     } finally {
@@ -89,26 +127,53 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
     setShowDetails(true);
   };
 
+  /**
+   * Accept selected order
+   * POST /api/orders/shipper/:id/accept
+   */
+
   const handleAcceptOrder = async () => {
     if (!selectedOrder) return;
 
     setAccepting(true);
     try {
+      // Call API: POST /api/orders/shipper/:id/accept
       await ShipperService.acceptOrder(selectedOrder.id);
-      Alert.alert("Success", `Order #${selectedOrder.id} accepted! Proceed to restaurant.`, [
-        {
-          text: "View Delivery",
-          onPress: () => {
-            setShowDetails(false);
-            navigation.navigate("ShipperDeliveries");
+      
+
+      
+      // Remove from lists
+      const updatedAll = allOrders.filter((o) => o.id !== selectedOrder.id);
+      const updatedFiltered = orders.filter((o) => o.id !== selectedOrder.id);
+      setAllOrders(updatedAll);
+      setOrders(updatedFiltered);
+
+      // Success feedback
+      Alert.alert(
+        "✓ Order Accepted",
+        `Order #${selectedOrder.id}\n\nYou will earn ${formatCurrency(selectedOrder.deliveryFee)}`,
+        [
+          {
+            text: "View My Deliveries",
+            onPress: () => {
+              setShowDetails(false);
+              // Try navigating within current navigator first, then parent tab as fallback
+              navigation.navigate("ShipperDeliveries");
+              navigation.getParent?.()?.navigate?.("Active", {screen: "ShipperDeliveries"});
+            },
           },
-        },
-      ]);
-      // Remove from available list
-      setOrders(orders.filter((o) => o.id !== selectedOrder.id));
-      setShowDetails(false);
+          {
+            text: "Continue Browsing",
+            onPress: () => setShowDetails(false),
+          },
+        ]
+      );
     } catch (error: any) {
       Alert.alert("Error", error.response?.data?.message || "Failed to accept order");
+      // const errorMsg =
+      //   error?.response?.data?.message || "Failed to accept order. Try again.";
+      // Alert.alert("Error", errorMsg);
+      // console.error("Accept order error:", error);
     } finally {
       setAccepting(false);
     }
@@ -116,14 +181,41 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
 
   const handleFilterChange = (text: string) => {
     setFilterDistance(text);
-    if (text) {
+    if(text){
       const maxDistance = parseFloat(text);
-      const filtered = orders.filter((order) => order.distance <= maxDistance);
+      const filtered = allOrders.filter((order) => order.distance <= maxDistance);
       setOrders(filtered);
-    } else {
+      
+    }else{
       loadOrders(1);
     }
+
+
+    // actual filtering is applied in debounced effect below
   };
+
+  // Apply filter when debounced value changes
+  useEffect(() => {
+    const text = debouncedFilter;
+    if (!text || text.trim() === "") {
+      setOrders(allOrders);
+      return;
+    }
+
+    // Support comma decimal (e.g., 3,4)
+    const normalized = text.replace(",", ".");
+    const maxDistance = parseFloat(normalized);
+
+    if (isNaN(maxDistance) || maxDistance < 0) {
+      setOrders(allOrders);
+      return;
+    }
+
+    const filtered = allOrders.filter((order) => (order.distance ?? 0) <= maxDistance);
+    setOrders(filtered);
+
+    // If no results but more pages exist, show option to load more (handled in UI)
+  }, [debouncedFilter, allOrders]);
 
   const renderOrderCard = ({item}: {item: ShipperOrder}) => (
     <TouchableOpacity style={styles.orderCard} onPress={() => handleSelectOrder(item)} activeOpacity={0.7}>
@@ -188,15 +280,53 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
     );
   }
 
+  
+
+  // EMPTY STATE
   if (orders.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <EmptyState
-          icon="inbox-outline"
-          title="No Orders Available"
-          subtitle="Check back soon or adjust your filters"
+          icon="mail-outline"
+          title={
+            debouncedFilter && debouncedFilter.trim() !== ""
+              ? `No orders within ${debouncedFilter} km`
+              : "No Orders Available"
+          }
+          subtitle={debouncedFilter && debouncedFilter.trim() !== "" ? "Try increasing the distance or clear filter." : "Check back soon or adjust your filters"}
           containerStyle={styles.emptyState}
         />
+
+        {/* If filtered and more pages exist, allow loading more */}
+        {debouncedFilter && debouncedFilter.trim() !== "" && hasMore && (
+          <View style={{paddingHorizontal: 16, paddingTop: 12}}>
+            <Button
+              title="Load more orders"
+              onPress={() => loadOrders(page + 1)}
+              containerStyle={{width: 160}}
+              size="small"
+            />
+            <Button
+              title="Clear filter"
+              onPress={() => {
+                setFilterDistance("");
+                setOrders(allOrders);
+              }}
+              containerStyle={{width: 140, marginTop: 8}}
+              variant="outline"
+              size="small"
+            />
+            <Button
+              title="Reload orders"
+              onPress={() => {
+                setFilterDistance("");
+                loadOrders(1);
+              }}
+              containerStyle={{width: 140, marginTop: 8, marginLeft: 8}}
+              size="small"
+            />
+          </View>
+        )}
       </SafeAreaView>
     );
   }
@@ -210,6 +340,11 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
           value={filterDistance}
           onChangeText={handleFilterChange}
           keyboardType="numeric"
+          rightIcon={filterDistance ? "close-circle" : undefined}
+          onRightIconPress={() => {
+            setFilterDistance("");
+            setOrders(allOrders);
+          }}
           containerStyle={styles.filterInput}
         />
       </View>
@@ -404,6 +539,9 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 12,
     color: COLORS.GRAY,
+    fontStyle: "italic",
+  },
+  errorContainer: {
     flex: 1,
   },
   summarySection: {
@@ -458,6 +596,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: COLORS.GRAY,
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 20,
+  },
+  retryButton: {
+    width: "100%",
+    paddingHorizontal: 32,
   },
   modalContainer: {
     flex: 1,

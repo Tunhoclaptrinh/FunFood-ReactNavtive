@@ -69,9 +69,26 @@ export const NavigationService = {
 
   // Shipper flow
   toShipperDashboard: () => navigate("ShipperDashboard"),
-  toShipperAvailableOrders: () => navigate("ShipperAvailableOrders"),
-  toShipperDeliveries: () => navigate("ShipperDeliveries"),
-  toShipperHistory: () => navigate("ShipperHistory"),
+  toShipperAvailableOrders: () => {
+    if (navigationRef.isReady()) {
+      // Try opening Available tab and its nested screen
+      navigationRef.navigate("Available" as any, {screen: "ShipperAvailableOrders"});
+    }
+  },
+  toShipperDeliveries: () => {
+    if (navigationRef.isReady()) {
+      // Try opening Active tab and its nested screen
+      navigationRef.navigate("Active" as any, {screen: "ShipperDeliveries"});
+    }
+  },
+  toShipperHistory: () => {
+    if (navigationRef.isReady()) {
+      // Try Dashboard tab nested ShipperHistory first
+      navigationRef.navigate("Dashboard" as any, {screen: "ShipperHistory"});
+      // Also try Profile stack variant just in case
+      navigationRef.navigate("Profile" as any, {screen: "ShipperHistoryDelivery"});
+    }
+  },
 
   // Common
   toNotifications: () => navigate("Notifications"),

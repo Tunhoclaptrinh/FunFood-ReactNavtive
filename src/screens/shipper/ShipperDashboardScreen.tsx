@@ -163,13 +163,19 @@ const ShipperDashboardScreen = ({navigation}: any) => {
               <View style={styles.actionsGrid}>
                 <Button
                   title="Available Orders"
-                  onPress={() => navigation.navigate("ShipperAvailableOrders")}
+                  onPress={() => {
+                    navigation.navigate("ShipperAvailableOrders");
+                    navigation.getParent?.()?.navigate?.("Available", {screen: "ShipperAvailableOrders"});
+                  }}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
                 <Button
                   title="My Deliveries"
-                  onPress={() => navigation.navigate("ShipperDeliveries")}
+                  onPress={() => {
+                    navigation.navigate("ShipperDeliveries");
+                    navigation.getParent?.()?.navigate?.("Active", {screen: "ShipperDeliveries"});
+                  }}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
@@ -178,7 +184,10 @@ const ShipperDashboardScreen = ({navigation}: any) => {
               <View style={styles.actionsGrid}>
                 <Button
                   title="History"
-                  onPress={() => navigation.navigate("ShipperHistory")}
+                  onPress={() => { 
+                    navigation.navigate("ShipperHistory");                    
+                    navigation.getParent?.()?.navigate?.("Dashboard", {screen: "ShipperHistory" as any});
+                  }}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
