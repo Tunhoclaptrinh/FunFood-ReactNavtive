@@ -271,69 +271,9 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
     </TouchableOpacity>
   );
 
-  if (loading && orders.length === 0) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-        <Text style={styles.loadingText}>Loading available orders...</Text>
-      </View>
-    );
-  }
-
-  
-
-  // EMPTY STATE
-  if (orders.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <EmptyState
-          icon="mail-outline"
-          title={
-            debouncedFilter && debouncedFilter.trim() !== ""
-              ? `No orders within ${debouncedFilter} km`
-              : "No Orders Available"
-          }
-          subtitle={debouncedFilter && debouncedFilter.trim() !== "" ? "Try increasing the distance or clear filter." : "Check back soon or adjust your filters"}
-          containerStyle={styles.emptyState}
-        />
-
-        {/* If filtered and more pages exist, allow loading more */}
-        {debouncedFilter && debouncedFilter.trim() !== "" && hasMore && (
-          <View style={{paddingHorizontal: 16, paddingTop: 12}}>
-            <Button
-              title="Load more orders"
-              onPress={() => loadOrders(page + 1)}
-              containerStyle={{width: 160}}
-              size="small"
-            />
-            <Button
-              title="Clear filter"
-              onPress={() => {
-                setFilterDistance("");
-                setOrders(allOrders);
-              }}
-              containerStyle={{width: 140, marginTop: 8}}
-              variant="outline"
-              size="small"
-            />
-            <Button
-              title="Reload orders"
-              onPress={() => {
-                setFilterDistance("");
-                loadOrders(1);
-              }}
-              containerStyle={{width: 140, marginTop: 8, marginLeft: 8}}
-              size="small"
-            />
-          </View>
-        )}
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* Filter Bar */}
+      {/* Filter Bar - always visible */}
       <View style={styles.filterBar}>
         <Input
           placeholder="Max distance (km)"
@@ -349,24 +289,76 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
         />
       </View>
 
-      {/* Orders List */}
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderOrderCard}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListHeaderComponent={<Text style={styles.headerText}>Available Orders</Text>}
-        ListFooterComponent={
-          hasMore && !refreshing ? (
-            <View style={styles.loadingFooter}>
-              <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+      {/* Content area */}
+      {loading && orders.length === 0 ? (
+        <View style={[styles.container, styles.centered, {paddingTop: 12}]}> 
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+          <Text style={styles.loadingText}>Loading available orders...</Text>
+        </View>
+      ) : orders.length === 0 ? (
+        <View style={{flex: 1}}>
+          <EmptyState
+            icon="mail-outline"
+            title={
+              debouncedFilter && debouncedFilter.trim() !== ""
+                ? `No orders within ${debouncedFilter} km`
+                : "No Orders Available"
+            }
+            subtitle={debouncedFilter && debouncedFilter.trim() !== "" ? "Try increasing the distance or clear filter." : "Check back soon or adjust your filters"}
+            containerStyle={styles.emptyState}
+          />
+
+          {/* If filtered and more pages exist, allow loading more */}
+          {debouncedFilter && debouncedFilter.trim() !== "" && hasMore && (
+            <View style={{paddingHorizontal: 16, paddingTop: 12}}>
+              <Button
+                title="Load more orders"
+                onPress={() => loadOrders(page + 1)}
+                containerStyle={{width: 160}}
+                size="small"
+              />
+              <Button
+                title="Clear filter"
+                onPress={() => {
+                  setFilterDistance("");
+                  setOrders(allOrders);
+                }}
+                containerStyle={{width: 140, marginTop: 8}}
+                variant="outline"
+                size="small"
+              />
+              <Button
+                title="Reload orders"
+                onPress={() => {
+                  setFilterDistance("");
+                  loadOrders(1);
+                }}
+                containerStyle={{width: 140, marginTop: 8, marginLeft: 8}}
+                size="small"
+              />
             </View>
-          ) : null
-        }
-      />
+          )}
+        </View>
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderOrderCard}
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListHeaderComponent={<Text style={styles.headerText}>Available Orders</Text>}
+          ListFooterComponent={
+            hasMore && !refreshing ? (
+              <View style={styles.loadingFooter}>
+                <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+              </View>
+            ) : null
+          }
+        />
+      )}
+
 
       {/* Order Details Modal */}
       <Modal visible={showDetails} transparent animationType="slide">
