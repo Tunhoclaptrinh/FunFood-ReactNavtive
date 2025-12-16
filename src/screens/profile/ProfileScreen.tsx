@@ -301,6 +301,29 @@ const ProfileScreen = ({navigation}: any) => {
                 <Ionicons name="chevron-forward" size={18} color={COLORS.GRAY} />
               </TouchableOpacity>
             ))}
+
+            {/* Shipper only: Delivery History */}
+            {user?.role === "shipper" && (
+              <TouchableOpacity
+                style={[styles.mainMenuItem]}
+                onPress={() => {
+                  navigation.navigate("ShipperHistory");
+                  navigation.navigate("ShipperHistoryDelivery");
+                  navigation.getParent?.()?.navigate?.("Dashboard", {screen: "ShipperHistory"});
+                  navigation.getParent?.()?.navigate?.("Profile", {screen: "ShipperHistoryDelivery"});
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuIcon, {backgroundColor: "#EAF7FF"}]}>
+                  <Ionicons name="time-outline" size={20} color={COLORS.PRIMARY} />
+                </View>
+                <View style={styles.mainMenuContent}>
+                  <Text style={styles.menuTitle}>Lịch sử giao hàng</Text>
+                  <Text style={styles.menuSubtitle}>Xem lịch sử giao hàng của bạn</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.GRAY} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
