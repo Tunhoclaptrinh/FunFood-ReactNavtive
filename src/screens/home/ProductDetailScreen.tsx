@@ -30,7 +30,8 @@ const ProductDetailScreen = ({route, navigation}: any) => {
   const {productId} = route.params;
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const {addItem} = useCart();
+  const {addToCart, isLoading} = useCart();
+
   const {isFavorite, toggleFavorite, fetchFavorites} = useFavoriteStore();
 
   const [product, setProduct] = useState<any>(null);
@@ -89,9 +90,14 @@ const ProductDetailScreen = ({route, navigation}: any) => {
   };
 
   const handleToggleFavorite = () => toggleFavorite("product", productId);
-  const handleAddToCart = () => {
-    if (product) {
-      addItem(product, quantity);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    // Gọi hàm async từ hook
+    const success = await addToCart(product, quantity);
+
+    if (success) {
       Alert.alert("Đã thêm vào giỏ", `Bạn đã thêm ${quantity} ${product.name}`, [
         {text: "Xem tiếp", style: "cancel"},
         {text: "Đến giỏ hàng", onPress: () => navigation.navigate("Cart")},
@@ -229,6 +235,13 @@ const ProductDetailScreen = ({route, navigation}: any) => {
 
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
+        <Button
+          title={isLoading ? "Đang thêm..." : `Thêm • ${formatCurrency(finalPrice * quantity)}`}
+          onPress={handleAddToCart}
+          containerStyle={{flex: 1}}
+          disabled={!product.available || isLoading} // Disable khi đang gọi API
+          leftIcon="cart-outline"
+        />
         <View style={styles.quantityControl}>
           <TouchableOpacity
             style={[styles.qtyBtn, quantity <= 1 && styles.qtyBtnDisabled]}

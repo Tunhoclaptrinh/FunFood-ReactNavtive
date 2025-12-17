@@ -29,41 +29,15 @@ export interface CreateAddressRequest {
 
 export interface UpdateAddressRequest extends Partial<CreateAddressRequest> {}
 
-/**
- * Address Service - Extends BaseApiService
- *
- * Features:
- * - CRUD operations for addresses
- * - Get default address
- * - Set address as default
- * - Validation with backend schema
- *
- * Usage:
- * ```typescript
- * // Get all addresses
- * const addresses = await AddressService.getAddresses();
- *
- * // Create new address
- * await AddressService.createAddress({
- *   label: "Home",
- *   address: "123 Main St",
- *   recipientName: "John Doe",
- *   recipientPhone: "0912345678",
- *   isDefault: true
- * });
- *
- * // Get default address
- * const defaultAddr = await AddressService.getDefaultAddress();
- * ```
- */
 class AddressServiceClass extends BaseApiService<Address> {
   protected baseEndpoint = "/addresses";
 
   /**
    * Get all user addresses
    */
-  async getAddresses(params?: any): Promise<PaginatedResponse<Address>> {
-    return this.getAll(params);
+  async getMyAddresses(): Promise<Address[]> {
+    const response = await apiClient.get<{data: Address[]}>(this.baseEndpoint);
+    return response.data.data;
   }
 
   /**
@@ -74,8 +48,7 @@ class AddressServiceClass extends BaseApiService<Address> {
       const response = await apiClient.get<{data: Address}>(`${this.baseEndpoint}/default`);
       return response.data.data;
     } catch (error) {
-      console.error("Error getting default address:", error);
-      return null;
+      return null; // Không có địa chỉ mặc định
     }
   }
 

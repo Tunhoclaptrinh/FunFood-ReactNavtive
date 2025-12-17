@@ -1,21 +1,22 @@
 import React, {useEffect, useState} from "react";
-import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator, Modal} from "react-native";
+import {View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert, Modal, FlatList} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import {useCart} from "@hooks/useCart";
 import {OrderService} from "@services/order.service";
+import {AddressService} from "@services/address.service"; // Import mới
 import {PromotionService} from "@services/promotion.service";
 import {useGeolocation} from "@hooks/useGeolocation";
 import Input from "@/src/components/common/Input/Input";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
-import {calculateDeliveryFee} from "@utils/gps";
 import {COLORS} from "@/src/styles/colors";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
+import {Address} from "@/src/types/address"; // Import Type
 
 const PAYMENT_METHODS = [
-  {id: "cash", label: "Cash on Delivery", icon: "cash-outline"},
-  {id: "card", label: "Credit Card", icon: "card-outline"},
-  {id: "momo", label: "MoMo", icon: "wallet-outline"},
+  {id: "cash", label: "Tiền mặt (COD)", icon: "cash-outline"},
+  {id: "card", label: "Thẻ ngân hàng", icon: "card-outline"},
+  {id: "momo", label: "Ví MoMo", icon: "wallet-outline"},
   {id: "zalopay", label: "ZaloPay", icon: "wallet-outline"},
 ];
 
@@ -23,50 +24,64 @@ const CheckoutScreen = ({navigation}: any) => {
   const {items, totalPrice, clearCart} = useCart();
   const {location} = useGeolocation();
 
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientPhone, setRecipientPhone] = useState("");
+  // --- State cho Address ---
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [addressList, setAddressList] = useState<Address[]>([]);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [loadingAddress, setLoadingAddress] = useState(false);
+
+  // --- Các State khác ---
   const [note, setNote] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-
   const [discount, setDiscount] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(15000);
   const [loading, setLoading] = useState(false);
   const [validatingPromo, setValidatingPromo] = useState(false);
 
-  // Get restaurant ID from first item
   const restaurantId = items[0]?.product?.restaurantId;
 
+  // --- Load dữ liệu ---
   useEffect(() => {
-    // Calculate default delivery fee
-    calculateDefaultDeliveryFee();
+    fetchDefaultAddress();
+    fetchAddressList();
   }, []);
 
-  const calculateDefaultDeliveryFee = () => {
-    // Default delivery fee for now
-    setDeliveryFee(15000);
+  const fetchDefaultAddress = async () => {
+    const defaultAddr = await AddressService.getDefaultAddress();
+    if (defaultAddr) setSelectedAddress(defaultAddr);
   };
 
+  const fetchAddressList = async () => {
+    try {
+      setLoadingAddress(true);
+      const list = await AddressService.getMyAddresses();
+      setAddressList(list);
+    } catch (error) {
+      console.log("Error fetching addresses", error);
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
+
+  // --- Logic Xử lý ---
   const handleValidatePromo = async () => {
     if (!promoCode.trim()) {
-      Alert.alert("Error", "Please enter a promotion code");
+      Alert.alert("Lỗi", "Vui lòng nhập mã khuyến mãi");
       return;
     }
-
     setValidatingPromo(true);
     try {
+      // Validate mã giảm giá với các thông số hiện tại
       const result = await PromotionService.validatePromotion(promoCode, totalPrice, deliveryFee);
-
       if (result.success || result.data) {
         const discountAmount = result.data?.discount || result.calculation?.discount || 0;
         setDiscount(discountAmount);
-        Alert.alert("Promotion Applied!", `Discount: ${formatCurrency(discountAmount)}`);
+        Alert.alert("Thành công", `Đã áp dụng giảm giá: ${formatCurrency(discountAmount)}`);
       }
-    } catch (error: any) {
-      console.error("Promo validation error:", error);
-      Alert.alert("Invalid Code", "Promotion code is not valid or expired");
+    } catch (error) {
+      Alert.alert("Lỗi", "Mã khuyến mãi không hợp lệ hoặc đã hết hạn");
       setDiscount(0);
       setPromoCode("");
     } finally {
@@ -74,117 +89,73 @@ const CheckoutScreen = ({navigation}: any) => {
     }
   };
 
-  const handleRemovePromo = () => {
-    setPromoCode("");
-    setDiscount(0);
-  };
-
-  const validateForm = () => {
-    if (items.length === 0) {
-      Alert.alert("Error", "Your cart is empty");
-      return false;
-    }
-
-    if (!restaurantId) {
-      Alert.alert("Error", "Invalid restaurant");
-      return false;
-    }
-
-    if (!deliveryAddress.trim()) {
-      Alert.alert("Error", "Please enter delivery address");
-      return false;
-    }
-
-    if (!recipientName.trim()) {
-      Alert.alert("Error", "Please enter recipient name");
-      return false;
-    }
-
-    if (!recipientPhone.trim()) {
-      Alert.alert("Error", "Please enter recipient phone");
-      return false;
-    }
-
-    if (!paymentMethod) {
-      Alert.alert("Error", "Please select payment method");
-      return false;
-    }
-
-    return true;
-  };
-
   const handlePlaceOrder = async () => {
-    if (!validateForm()) return;
+    if (items.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
+    if (!selectedAddress) return Alert.alert("Lỗi", "Vui lòng chọn địa chỉ giao hàng");
+    if (!restaurantId) return Alert.alert("Lỗi", "Thông tin nhà hàng không hợp lệ");
 
     setLoading(true);
     try {
-      if (!restaurantId) {
-        Alert.alert("Error", "Invalid restaurant ID");
-        setLoading(false);
-        return;
-      }
-
       const orderData = {
         restaurantId,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
-        deliveryAddress,
+        // Sử dụng thông tin từ địa chỉ đã chọn
+        deliveryAddress: selectedAddress.address,
+        deliveryLatitude: selectedAddress.latitude || location?.latitude,
+        deliveryLongitude: selectedAddress.longitude || location?.longitude,
         paymentMethod,
-        note: note || undefined,
+        note,
         promotionCode: promoCode || undefined,
-        deliveryLatitude: location?.latitude,
-        deliveryLongitude: location?.longitude,
       };
-
-      console.log("Placing order:", orderData);
 
       const result = await OrderService.createOrder(orderData as any);
 
       if (result && result.id) {
-        Alert.alert(
-          "Order Placed Successfully!",
-          `Order #${result.id} created\nTotal: ${formatCurrency(result.total)}`,
-          [
-            {
-              text: "View Order",
-              onPress: () => {
-                clearCart();
-                navigation.replace("Orders");
-              },
+        Alert.alert("Thành công", `Đơn hàng #${result.id} đã được tạo!`, [
+          {
+            text: "OK",
+            onPress: () => {
+              clearCart();
+              navigation.replace("Orders");
             },
-          ]
-        );
-      } else {
-        Alert.alert("Success", "Order placed successfully");
-        clearCart();
-        navigation.replace("Orders");
+          },
+        ]);
       }
     } catch (error: any) {
-      console.error("Order creation error:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to place order";
-      Alert.alert("Error", errorMessage);
+      const msg = error.response?.data?.message || "Không thể tạo đơn hàng";
+      Alert.alert("Lỗi", msg);
     } finally {
       setLoading(false);
     }
   };
 
-  if (items.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={80} color={COLORS.LIGHT_GRAY} style={{marginBottom: 20}} />
-          <Text style={styles.emptyText}>Your cart is empty</Text>
-          <Button
-            title="Continue Shopping"
-            onPress={() => navigation.navigate("Search")}
-            containerStyle={{marginTop: 20}}
-          />
+  // Component hiển thị Item trong Modal chọn địa chỉ
+  const renderAddressItem = ({item}: {item: Address}) => (
+    <TouchableOpacity
+      style={[styles.addressItem, selectedAddress?.id === item.id && styles.addressItemSelected]}
+      onPress={() => {
+        setSelectedAddress(item);
+        setShowAddressModal(false);
+      }}
+    >
+      <View style={{flex: 1}}>
+        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 4}}>
+          <Text style={styles.addressLabel}>{item.label}</Text>
+          {item.isDefault && <Text style={styles.defaultBadge}>Mặc định</Text>}
         </View>
-      </SafeAreaView>
-    );
-  }
+        <Text style={styles.addressText} numberOfLines={2}>
+          {item.address}
+        </Text>
+        <Text style={styles.recipientText}>
+          {item.recipientName} • {item.recipientPhone}
+        </Text>
+      </View>
+      {selectedAddress?.id === item.id && <Ionicons name="checkmark-circle" size={24} color={COLORS.PRIMARY} />}
+    </TouchableOpacity>
+  );
 
   const subtotal = totalPrice;
   const finalTotal = subtotal + deliveryFee - discount;
@@ -192,166 +163,176 @@ const CheckoutScreen = ({navigation}: any) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Order Items Summary */}
+        {/* --- Phần Địa chỉ Giao hàng (MỚI) --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <Text style={styles.sectionTitle}>Địa chỉ giao hàng</Text>
+
+          {selectedAddress ? (
+            <TouchableOpacity style={styles.selectedAddressCard} onPress={() => setShowAddressModal(true)}>
+              <View style={styles.addressIcon}>
+                <Ionicons name="location" size={24} color={COLORS.PRIMARY} />
+              </View>
+              <View style={{flex: 1}}>
+                <View style={{flexDirection: "row", justifyContent: "space-between"}}>
+                  <Text style={styles.saLabel}>{selectedAddress.label}</Text>
+                  <Text style={styles.saChange}>Thay đổi</Text>
+                </View>
+                <Text style={styles.saAddress} numberOfLines={2}>
+                  {selectedAddress.address}
+                </Text>
+                <Text style={styles.saRecipient}>
+                  {selectedAddress.recipientName} | {selectedAddress.recipientPhone}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.addAddressButton} onPress={() => setShowAddressModal(true)}>
+              <Ionicons name="add-circle-outline" size={24} color={COLORS.PRIMARY} />
+              <Text style={styles.addAddressText}>Chọn địa chỉ giao hàng</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* --- Danh sách món ăn --- */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
           {items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.product?.name}</Text>
-                <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+                <Text style={styles.itemQty}>x{item.quantity}</Text>
               </View>
               <Text style={styles.itemPrice}>{formatCurrency((item.product?.price || 0) * item.quantity)}</Text>
             </View>
           ))}
         </View>
 
-        {/* Delivery Address */}
+        {/* --- Ghi chú --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Address</Text>
+          <Text style={styles.sectionTitle}>Ghi chú cho tài xế</Text>
           <Input
-            label="Address"
-            placeholder="Enter street address"
-            value={deliveryAddress}
-            onChangeText={setDeliveryAddress}
-            multiline
-            numberOfLines={3}
-            containerStyle={styles.input}
-          />
-          <Input
-            label="Recipient Name"
-            placeholder="Your name"
-            value={recipientName}
-            onChangeText={setRecipientName}
-            containerStyle={styles.input}
-          />
-          <Input
-            label="Phone Number"
-            placeholder="0912345678"
-            value={recipientPhone}
-            onChangeText={setRecipientPhone}
-            keyboardType="phone-pad"
-            containerStyle={styles.input}
-          />
-        </View>
-
-        {/* Delivery Notes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Notes (Optional)</Text>
-          <Input
-            placeholder="e.g., No onions, extra sauce..."
+            placeholder="Ví dụ: Không hành, nhiều ớt..."
             value={note}
             onChangeText={setNote}
-            multiline
-            numberOfLines={2}
-            containerStyle={styles.input}
+            containerStyle={{marginVertical: 0}}
           />
         </View>
 
-        {/* Promotion Code */}
+        {/* --- Khuyến mãi --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Promotion Code</Text>
-          {discount > 0 ? (
-            <View style={styles.promoApplied}>
-              <Ionicons name="checkmark-circle" size={24} color={COLORS.SUCCESS} />
-              <View style={styles.promoInfo}>
-                <Text style={styles.promoCode}>{promoCode}</Text>
-                <Text style={styles.promoDiscount}>Discount: {formatCurrency(discount)}</Text>
-              </View>
-              <TouchableOpacity onPress={handleRemovePromo}>
-                <Ionicons name="close" size={24} color={COLORS.ERROR} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.promoInputContainer}>
-              <Input
-                placeholder="Enter promotion code"
-                value={promoCode}
-                onChangeText={setPromoCode}
-                containerStyle={{flex: 1, marginVertical: 0}}
-              />
-              <Button
-                title="Apply"
-                onPress={handleValidatePromo}
-                loading={validatingPromo}
-                size="small"
-                containerStyle={styles.applyButton}
-              />
-            </View>
-          )}
+          <Text style={styles.sectionTitle}>Khuyến mãi</Text>
+          <View style={styles.promoContainer}>
+            <Input
+              placeholder="Nhập mã giảm giá"
+              value={promoCode}
+              onChangeText={setPromoCode}
+              containerStyle={{flex: 1, marginVertical: 0}}
+            />
+            <Button
+              title="Áp dụng"
+              onPress={handleValidatePromo}
+              loading={validatingPromo}
+              size="small"
+              containerStyle={{marginLeft: 4, width: 90}}
+            />
+          </View>
         </View>
 
-        {/* Payment Method */}
+        {/* --- Phương thức thanh toán --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          <TouchableOpacity style={styles.paymentDisplay} onPress={() => setShowPaymentModal(true)}>
-            <View style={styles.paymentDisplayContent}>
+          <Text style={styles.sectionTitle}>Thanh toán</Text>
+          <TouchableOpacity style={styles.paymentSelector} onPress={() => setShowPaymentModal(true)}>
+            <View style={{flexDirection: "row", alignItems: "center", gap: 10}}>
               <Ionicons
-                name={PAYMENT_METHODS.find((m) => m.id === paymentMethod)?.icon || ("cash-outline" as any)}
+                name={PAYMENT_METHODS.find((m) => m.id === paymentMethod)?.icon as any}
                 size={24}
                 color={COLORS.PRIMARY}
               />
-              <Text style={styles.paymentDisplayText}>
-                {PAYMENT_METHODS.find((m) => m.id === paymentMethod)?.label}
-              </Text>
+              <Text style={styles.paymentText}>{PAYMENT_METHODS.find((m) => m.id === paymentMethod)?.label}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={COLORS.GRAY} />
+            <Ionicons name="chevron-forward" size={20} color={COLORS.GRAY} />
           </TouchableOpacity>
         </View>
 
-        {/* Price Summary */}
+        {/* --- Tổng cộng --- */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Price Summary</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal:</Text>
+            <Text style={styles.summaryLabel}>Tạm tính</Text>
             <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee:</Text>
+            <Text style={styles.summaryLabel}>Phí giao hàng</Text>
             <Text style={styles.summaryValue}>{formatCurrency(deliveryFee)}</Text>
           </View>
           {discount > 0 && (
-            <View style={[styles.summaryRow, styles.discountRow]}>
-              <Text style={[styles.summaryLabel, styles.discountLabel]}>Discount:</Text>
-              <Text style={[styles.summaryValue, styles.discountValue]}>-{formatCurrency(discount)}</Text>
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, {color: COLORS.SUCCESS}]}>Giảm giá</Text>
+              <Text style={[styles.summaryValue, {color: COLORS.SUCCESS}]}>-{formatCurrency(discount)}</Text>
             </View>
           )}
-          <View style={styles.summaryDivider} />
+          <View style={styles.divider} />
           <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
+            <Text style={styles.totalLabel}>Tổng thanh toán</Text>
             <Text style={styles.totalValue}>{formatCurrency(finalTotal)}</Text>
           </View>
         </View>
 
-        <View style={styles.bottomPadding} />
+        <View style={{height: 100}} />
       </ScrollView>
 
-      {/* Place Order Button */}
+      {/* Footer Button */}
       <View style={styles.footer}>
         <Button
-          title={`Place Order - ${formatCurrency(finalTotal)}`}
+          title={`Đặt hàng • ${formatCurrency(finalTotal)}`}
           onPress={handlePlaceOrder}
           loading={loading}
-          containerStyle={styles.placeButton}
+          containerStyle={{width: "100%"}}
         />
       </View>
 
-      {/* Payment Method Modal */}
-      <Modal
-        visible={showPaymentModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPaymentModal(false)}
-      >
+      {/* --- Modal Chọn Địa Chỉ --- */}
+      <Modal visible={showAddressModal} animationType="slide">
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={() => setShowAddressModal(false)}>
+            <Ionicons name="close" size={24} color={COLORS.DARK} />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Chọn địa chỉ</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setShowAddressModal(false);
+              navigation.navigate("AddressList"); // Điều hướng sang trang quản lý địa chỉ
+            }}
+          >
+            <Text style={{color: COLORS.PRIMARY, fontWeight: "600"}}>Quản lý</Text>
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          data={addressList}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderAddressItem}
+          contentContainerStyle={{padding: 16}}
+          ListEmptyComponent={
+            <View style={{alignItems: "center", marginTop: 50}}>
+              <Text style={{color: COLORS.GRAY}}>Bạn chưa lưu địa chỉ nào</Text>
+              <Button
+                title="Thêm địa chỉ mới"
+                onPress={() => {
+                  setShowAddressModal(false);
+                  navigation.navigate("AddAddress");
+                }}
+                containerStyle={{marginTop: 16}}
+              />
+            </View>
+          }
+        />
+      </Modal>
+
+      {/* --- Modal Chọn Thanh Toán --- */}
+      <Modal visible={showPaymentModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Payment Method</Text>
-              <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.DARK} />
-              </TouchableOpacity>
-            </View>
-
+            <Text style={styles.modalTitle}>Phương thức thanh toán</Text>
             {PAYMENT_METHODS.map((method) => (
               <TouchableOpacity
                 key={method.id}
@@ -361,11 +342,23 @@ const CheckoutScreen = ({navigation}: any) => {
                   setShowPaymentModal(false);
                 }}
               >
-                <Ionicons name={method.icon as any} size={28} color={COLORS.PRIMARY} />
-                <Text style={styles.paymentOptionLabel}>{method.label}</Text>
-                {paymentMethod === method.id && <Ionicons name="checkmark-circle" size={24} color={COLORS.PRIMARY} />}
+                <Ionicons
+                  name={method.icon as any}
+                  size={24}
+                  color={paymentMethod === method.id ? COLORS.PRIMARY : COLORS.GRAY}
+                />
+                <Text
+                  style={[
+                    styles.paymentOptionText,
+                    paymentMethod === method.id && {color: COLORS.PRIMARY, fontWeight: "bold"},
+                  ]}
+                >
+                  {method.label}
+                </Text>
+                {paymentMethod === method.id && <Ionicons name="checkmark" size={20} color={COLORS.PRIMARY} />}
               </TouchableOpacity>
             ))}
+            <Button title="Đóng" onPress={() => setShowPaymentModal(false)} containerStyle={{marginTop: 10}} />
           </View>
         </View>
       </Modal>
@@ -374,27 +367,11 @@ const CheckoutScreen = ({navigation}: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: COLORS.GRAY,
-    marginBottom: 20,
-  },
+  container: {flex: 1, backgroundColor: "#F9FAFB"},
   section: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
+    backgroundColor: COLORS.WHITE,
+    padding: 16,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 16,
@@ -402,184 +379,132 @@ const styles = StyleSheet.create({
     color: COLORS.DARK,
     marginBottom: 12,
   },
+  // Style cho Address Card
+  selectedAddressCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#F0F9FF",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+  },
+  addressIcon: {marginRight: 12, marginTop: 2},
+  saLabel: {fontWeight: "bold", fontSize: 14, color: COLORS.DARK, marginBottom: 2},
+  saChange: {fontSize: 12, color: COLORS.PRIMARY, fontWeight: "600"},
+  saAddress: {fontSize: 13, color: COLORS.DARK_GRAY, marginBottom: 4},
+  saRecipient: {fontSize: 12, color: COLORS.GRAY},
+  addAddressButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+    borderStyle: "dashed",
+    borderRadius: 8,
+    gap: 8,
+  },
+  addAddressText: {color: COLORS.PRIMARY, fontWeight: "600"},
+
+  // List Items
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-    marginBottom: 4,
-  },
-  itemQty: {
-    fontSize: 12,
-    color: COLORS.GRAY,
-  },
-  itemPrice: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: COLORS.PRIMARY,
-  },
-  input: {
-    marginVertical: 8,
-  },
-  promoInputContainer: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "flex-end",
-  },
-  applyButton: {
     marginBottom: 8,
   },
-  promoApplied: {
+  itemInfo: {flex: 1},
+  itemName: {fontSize: 14, color: COLORS.DARK},
+  itemQty: {fontSize: 12, color: COLORS.GRAY},
+  itemPrice: {fontSize: 14, fontWeight: "600"},
+
+  // Promo
+  promoContainer: {flexDirection: "row", alignItems: "center"},
+
+  // Payment
+  paymentSelector: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#E8F8F5",
     padding: 12,
-    borderRadius: 8,
-    gap: 12,
-  },
-  promoInfo: {
-    flex: 1,
-  },
-  promoCode: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-  },
-  promoDiscount: {
-    fontSize: 12,
-    color: COLORS.SUCCESS,
-    marginTop: 4,
-  },
-  paymentDisplay: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    backgroundColor: COLORS.LIGHT_GRAY,
+    borderWidth: 1,
+    borderColor: COLORS.BORDER,
     borderRadius: 8,
   },
-  paymentDisplayContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  paymentDisplayText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-  },
-  discountRow: {
-    marginBottom: 10,
-  },
-  discountLabel: {
-    color: COLORS.SUCCESS,
-  },
-  discountValue: {
-    color: COLORS.SUCCESS,
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    marginVertical: 10,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-  },
-  totalValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.PRIMARY,
-  },
-  bottomPadding: {
-    height: 100,
-  },
+  paymentText: {fontSize: 14, fontWeight: "500", color: COLORS.DARK},
+
+  // Summary
+  summaryRow: {flexDirection: "row", justifyContent: "space-between", marginBottom: 8},
+  summaryLabel: {fontSize: 14, color: COLORS.GRAY},
+  summaryValue: {fontSize: 14, fontWeight: "600", color: COLORS.DARK},
+  divider: {height: 1, backgroundColor: COLORS.BORDER, marginVertical: 12},
+  totalLabel: {fontSize: 16, fontWeight: "bold"},
+  totalValue: {fontSize: 18, fontWeight: "bold", color: COLORS.PRIMARY},
+
   footer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 16,
     backgroundColor: COLORS.WHITE,
     borderTopWidth: 1,
-    borderTopColor: COLORS.LIGHT_GRAY,
-    elevation: 5,
-    shadowColor: COLORS.BLACK,
+    borderTopColor: COLORS.BORDER,
+    shadowColor: "#000",
     shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 5,
   },
-  placeButton: {
-    width: "100%",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: COLORS.WHITE,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingTop: 16,
-    maxHeight: "80%",
-  },
+
+  // Modal Address
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.BORDER,
+  },
+  modalTitle: {fontSize: 18, fontWeight: "bold"},
+  addressItem: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
+    backgroundColor: COLORS.WHITE,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.DARK,
+  addressItemSelected: {backgroundColor: "#F0F9FF"},
+  addressLabel: {fontWeight: "bold", fontSize: 14, marginRight: 8},
+  defaultBadge: {
+    fontSize: 10,
+    color: COLORS.PRIMARY,
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  addressText: {fontSize: 13, color: COLORS.DARK_GRAY, marginTop: 2},
+  recipientText: {fontSize: 12, color: COLORS.GRAY, marginTop: 4},
+
+  // Modal Payment Overlay
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    padding: 20,
   },
   paymentOption: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
     gap: 12,
   },
-  paymentOptionSelected: {
-    backgroundColor: "#F0F8FF",
-  },
-  paymentOptionLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.DARK,
-    flex: 1,
-  },
+  paymentOptionSelected: {backgroundColor: "#F5F5F5"},
+  paymentOptionText: {fontSize: 14, color: COLORS.DARK, flex: 1},
 });
 
 export default CheckoutScreen;

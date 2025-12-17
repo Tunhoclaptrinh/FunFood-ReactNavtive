@@ -36,8 +36,8 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // --- Store & Hooks ---
-  const {addItem, items, totalPrice} = useCart();
-  const {isFavorite, toggleFavorite, fetchFavorites} = useFavoriteStore(); // [2] Sử dụng hook từ Store
+  const {addToCart, items, totalPrice} = useCart();
+  const {isFavorite, toggleFavorite, fetchFavorites} = useFavoriteStore();
 
   // --- State ---
   const [restaurant, setRestaurant] = useState<any>(null);
@@ -186,13 +186,18 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
     setFilteredProducts(filtered);
   };
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = async (product: any) => {
     setAddingId(product.id);
-    // Truyền thêm thông tin restaurant vào item để cart có thể validate/group
-    const productWithRestaurant = {...product, restaurantId: restaurant.id};
-    addItem(productWithRestaurant, 1);
 
-    setTimeout(() => setAddingId(null), 300);
+    // Gọi API thông qua hook useCart
+    const success = await addToCart(product, 1);
+
+    if (success) {
+      // Có thể hiển thị toast hoặc feedback nhẹ nhàng
+      console.log(`Đã thêm ${product.name} vào giỏ`);
+    }
+
+    setAddingId(null);
   };
 
   const cartItemCount = items.length;
@@ -386,7 +391,7 @@ const RestaurantDetailScreen = ({route, navigation}: any) => {
                       <TouchableOpacity
                         style={[styles.addBtnMini, !item.available && {backgroundColor: COLORS.GRAY, opacity: 0.6}]}
                         onPress={() => item.available && handleAddToCart(item)}
-                        disabled={!item.available}
+                        disabled={!item.available || addingId === item.id} // Disable khi đang add
                       >
                         {addingId === item.id ? (
                           <ActivityIndicator size="small" color={COLORS.WHITE} />

@@ -1,8 +1,9 @@
 import {create} from "zustand";
-import {CartItem, Product} from "@types/index";
+import {CartItem, Product} from "../types/index";
 
 interface CartState {
   items: CartItem[];
+  setItems: (items: CartItem[]) => void;
   addItem: (product: Product, quantity: number) => void;
   removeItem: (cartItemId: number) => void;
   updateQuantity: (cartItemId: number, quantity: number) => void;
@@ -12,6 +13,10 @@ interface CartState {
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
+
+  setItems: (items: CartItem[]) => {
+    set({items});
+  },
 
   addItem: (product, quantity) => {
     set((state) => {
@@ -29,7 +34,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         items: [
           ...state.items,
           {
-            id: Date.now(),
+            id: Date.now(), // Lưu ý: Khi sync với server, ID này sẽ được thay thế bằng ID thật từ DB
             productId: product.id,
             quantity,
             product,
