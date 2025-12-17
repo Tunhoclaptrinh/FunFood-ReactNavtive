@@ -9,7 +9,9 @@ export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2
   return R * c;
 };
 
-export const calculateDeliveryFee = (distanceKm: number): number => {
+export const calculateDeliveryFee = (distance: number): number => {
+  const distanceKm = parseFloat(distance.toFixed(1));
+
   const BASE_FEE = 15000;
   const PER_KM_FEE = 5000;
   const EXTRA_PER_KM_FEE = 7000;

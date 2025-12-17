@@ -12,6 +12,7 @@ import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Address} from "@/src/types/address"; // Import Type
+import {calculateDistance, calculateDeliveryFee} from "@utils/gps";
 
 const PAYMENT_METHODS = [
   {id: "cash", label: "Tiền mặt (COD)", icon: "cash-outline"},
@@ -49,6 +50,35 @@ const CheckoutScreen = ({navigation}: any) => {
     fetchDefaultAddress();
     fetchAddressList();
   }, []);
+
+  useEffect(() => {
+    const calculateShipping = async () => {
+      // 1. Kiểm tra có địa chỉ giao hàng và thông tin nhà hàng chưa
+      if (!selectedAddress || items.length === 0 || !items[0].restaurant) return;
+
+      const restaurant = items[0].restaurant;
+
+      // Kiểm tra toạ độ hợp lệ (cần đảm bảo type Restaurant có latitude/longitude)
+      // Nếu restaurant trong cart không có toạ độ, bạn có thể cần gọi RestaurantService.getById(restaurantId) ở đây
+      const resLat = restaurant.latitude;
+      const resLng = restaurant.longitude;
+
+      // Sử dụng toạ độ từ địa chỉ đã chọn (ưu tiên) hoặc vị trí hiện tại
+      const userLat = selectedAddress.latitude || location?.latitude;
+      const userLng = selectedAddress.longitude || location?.longitude;
+
+      if (resLat && resLng && userLat && userLng) {
+        const distance = calculateDistance(userLat, userLng, resLat, resLng);
+
+        const fee = calculateDeliveryFee(distance);
+
+        console.log(`Khoảng cách: ${distance.toFixed(2)}km - Phí ship: ${fee}`);
+        setDeliveryFee(fee);
+      }
+    };
+
+    calculateShipping();
+  }, [selectedAddress, items, location]); // Chạy lại khi địa chỉ hoặc giỏ hàng thay đổi
 
   const fetchDefaultAddress = async () => {
     const defaultAddr = await AddressService.getDefaultAddress();
