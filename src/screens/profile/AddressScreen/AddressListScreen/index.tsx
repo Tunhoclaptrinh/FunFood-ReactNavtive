@@ -22,7 +22,7 @@ const AddressListScreen = ({navigation}: any) => {
   const loadAddresses = async () => {
     try {
       setLoading(true);
-      const response = await AddressService.getAddresses();
+      const response = await AddressService.getMyAddresses();
       setAddresses(response.data || []);
     } catch (error: any) {
       console.error("Lỗi khi tải địa chỉ:", error);

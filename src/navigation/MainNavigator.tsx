@@ -162,6 +162,11 @@ const CartStack = () => (
       component={OrdersScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Đơn của tôi")}
     />
+    <Stack.Screen
+      name={ROUTE_NAMES.PROFILE.ADDRESS_LIST}
+      component={AddressListScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Địa chỉ giao hàng")}
+    />
   </Stack.Navigator>
 );
 

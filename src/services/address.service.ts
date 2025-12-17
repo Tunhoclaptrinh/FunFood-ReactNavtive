@@ -35,9 +35,8 @@ class AddressServiceClass extends BaseApiService<Address> {
   /**
    * Get all user addresses
    */
-  async getMyAddresses(): Promise<Address[]> {
-    const response = await apiClient.get<{data: Address[]}>(this.baseEndpoint);
-    return response.data.data;
+  async getMyAddresses(params?: any): Promise<PaginatedResponse<Address>> {
+    return this.getAll(params);
   }
 
   /**

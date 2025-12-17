@@ -59,7 +59,7 @@ const CheckoutScreen = ({navigation}: any) => {
     try {
       setLoadingAddress(true);
       const list = await AddressService.getMyAddresses();
-      setAddressList(list);
+      setAddressList(list.data);
     } catch (error) {
       console.log("Error fetching addresses", error);
     } finally {
