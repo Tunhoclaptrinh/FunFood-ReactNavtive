@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   filterButton: {backgroundColor: COLORS.PRIMARY, shadowColor: COLORS.PRIMARY, shadowOpacity: 0.3, elevation: 4},
 
   categoriesSection: {marginBottom: 12},
-  categoriesContainer: {gap: 4},
+  categoriesContainer: {gap: 4, marginTop: 4},
   categoryItem: {alignItems: "center", width: 64},
   categoryIconContainer: {
     width: 36,
@@ -107,7 +107,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 4,
   },
-  tabButtonActive: {backgroundColor: COLORS.PRIMARY},
   tabText: {fontSize: 12, fontWeight: "600", color: COLORS.GRAY},
   tabTextActive: {color: COLORS.WHITE},
   resultCountText: {fontSize: 11, color: COLORS.GRAY, textAlign: "center", marginTop: 4},
@@ -312,6 +311,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: COLORS.DARK,
+  },
+
+  activeIndicator: {
+    position: "absolute",
+    left: 4,
+    top: 4,
+    bottom: 4,
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 10,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 0,
+  },
+
+  tabWrapper: {
+    flex: 1,
+    zIndex: 1,
   },
 });
 

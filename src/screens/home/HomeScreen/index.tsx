@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from "react";
+import React, {useState, useEffect, useCallback, useRef} from "react";
 import {
   View,
   ScrollView,
@@ -13,6 +13,7 @@ import {
   StatusBar,
   Alert,
   FlatList,
+  Animated,
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -77,6 +78,10 @@ const HomeScreen = ({navigation}: any) => {
   const [selectedPromotion, setSelectedPromotion] = useState<any>(null);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
 
+  // --- Animation Refs ---
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnims = useRef([new Animated.Value(1), new Animated.Value(0.95), new Animated.Value(0.95)]).current;
+
   const store = dataSource === "nearby" ? nearbyStore : allStore;
 
   // --- Effects ---
@@ -105,7 +110,7 @@ const HomeScreen = ({navigation}: any) => {
     handleFetchData();
   }, [location, dataSource, selectedCategory]);
 
-  // 3. Sync Store Items to Map Markers
+  // Sync Store Items to Map Markers
   useEffect(() => {
     if (store.items.length > 0) {
       const markers = store.items
@@ -116,6 +121,31 @@ const HomeScreen = ({navigation}: any) => {
       setMapMarkers([]);
     }
   }, [store.items]);
+
+  // Animate tabs when dataSource changes
+  useEffect(() => {
+    const tabs = ["nearby", "all", "toprated"];
+    const activeIndex = tabs.indexOf(dataSource);
+    const tabWidth = (width - 40 - 16) / 3; // 40 = horizontal padding, 16 = total gap (8*2)
+
+    // Slide indicator
+    Animated.spring(slideAnim, {
+      toValue: activeIndex * (tabWidth + 8), // 8 = gap between tabs
+      useNativeDriver: true,
+      tension: 80,
+      friction: 10,
+    }).start();
+
+    // Scale animations
+    scaleAnims.forEach((anim, index) => {
+      Animated.spring(anim, {
+        toValue: index === activeIndex ? 1 : 0.95,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      }).start();
+    });
+  }, [dataSource]);
 
   // --- Handlers ---
 
@@ -138,16 +168,13 @@ const HomeScreen = ({navigation}: any) => {
 
     // Logic lọc theo từ khóa tìm kiếm
     if (searchQuery) {
-      store.search(searchQuery); // Nếu đang search text thì ưu tiên search text
+      store.search(searchQuery);
       return;
     }
 
     if (dataSource === "nearby" && location) {
-      // Nếu có category, hàm fetchNearby của bạn cần hỗ trợ tham số categoryId (kiểm tra lại store)
-      // Nếu store chưa hỗ trợ, ta có thể dùng filter local hoặc gọi API search chung
       nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
 
-      // Lưu ý: Nếu API nearby chưa hỗ trợ lọc category, bạn cần filter phía client:
       if (selectedCategory) {
         filterByCategory(selectedCategory);
       }
@@ -159,13 +186,10 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   const handleRefresh = () => {
-    // Reset về mặc định
     setSearchQuery("");
-    // Giữ nguyên category hoặc reset tùy logic bạn muốn. Ở đây tôi reset để tải mới hoàn toàn.
     setSelectedCategory(null);
     clearAllFilters();
 
-    // Gọi lại dữ liệu
     if (location && dataSource === "nearby") {
       nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
     } else {
@@ -197,7 +221,6 @@ const HomeScreen = ({navigation}: any) => {
     }
   };
 
-  // Handle Category Selection
   const handleCategorySelect = (categoryId: number) => {
     if (selectedCategory === categoryId) {
       setSelectedCategory(null);
@@ -243,16 +266,12 @@ const HomeScreen = ({navigation}: any) => {
           onPress={() => handleCategorySelect(item.id)}
           activeOpacity={0.7}
         >
-          {/* Container Ảnh */}
           <View
             style={[
               styles.categoryIconContainer,
               {
-                // QUAN TRỌNG: Luôn đặt borderWidth là 1 để kích thước khung không đổi
                 borderWidth: 1,
-                // Khi không chọn thì để viền trong suốt (transparent), chọn thì hiện màu
                 borderColor: isSelected ? COLORS.PRIMARY : "transparent",
-                // Đổi màu nền tương ứng
                 backgroundColor: isSelected ? "#FFE5E5" : "#F3F4F6",
               },
             ]}
@@ -344,7 +363,6 @@ const HomeScreen = ({navigation}: any) => {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoriesContainer}
-              // [QUAN TRỌNG] extraData giúp FlatList biết cần render lại khi selectedCategory đổi
               extraData={selectedCategory}
             />
           </View>
@@ -391,25 +409,43 @@ const HomeScreen = ({navigation}: any) => {
         </>
       )}
 
-      {/* Tabs */}
+      {/* Smooth Animated Tabs */}
       <View style={styles.tabContainer}>
+        {/* Animated Background Indicator */}
+        <Animated.View
+          style={[
+            styles.activeIndicator,
+            {
+              width: (width - 40 - 16) / 3,
+              transform: [{translateX: slideAnim}],
+            },
+          ]}
+        />
+
+        {/* Tab Buttons */}
         {[
-          {mode: "nearby" as const, label: "Gần tôi", icon: "location"},
-          {mode: "all" as const, label: "Phổ biến", icon: "restaurant"},
-          {mode: "toprated" as const, label: "Đánh giá cao", icon: "star"},
-        ].map((btn) => (
-          <TouchableOpacity
-            key={btn.mode}
-            style={[styles.tabButton, dataSource === btn.mode && styles.tabButtonActive]}
-            onPress={() => {
-              setDataSource(btn.mode);
-              setSearchQuery(""); // Reset search text khi chuyển tab
-            }}
-          >
-            <Ionicons name={btn.icon as any} size={16} color={dataSource === btn.mode ? COLORS.WHITE : COLORS.GRAY} />
-            <Text style={[styles.tabText, dataSource === btn.mode && styles.tabTextActive]}>{btn.label}</Text>
-          </TouchableOpacity>
-        ))}
+          {mode: "nearby" as const, label: "Gần tôi", icon: "location", index: 0},
+          {mode: "all" as const, label: "Phổ biến", icon: "restaurant", index: 1},
+          {mode: "toprated" as const, label: "Đánh giá cao", icon: "star", index: 2},
+        ].map((btn) => {
+          const isActive = dataSource === btn.mode;
+
+          return (
+            <Animated.View key={btn.mode} style={[styles.tabWrapper, {transform: [{scale: scaleAnims[btn.index]}]}]}>
+              <TouchableOpacity
+                style={styles.tabButton}
+                onPress={() => {
+                  setDataSource(btn.mode);
+                  setSearchQuery("");
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={btn.icon as any} size={16} color={isActive ? COLORS.WHITE : COLORS.GRAY} />
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{btn.label}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        })}
       </View>
 
       {store.items.length > 0 && <Text style={styles.resultCountText}>{store.items.length} kết quả</Text>}
@@ -749,7 +785,6 @@ const HomeScreen = ({navigation}: any) => {
       >
         {renderHeader()}
 
-        {/* Khi ở chế độ map, ta show MapView */}
         {layoutMode === "map" ? <View style={{height: 400, marginTop: 10}}>{renderMapView()}</View> : renderListView()}
       </ScrollView>
 
