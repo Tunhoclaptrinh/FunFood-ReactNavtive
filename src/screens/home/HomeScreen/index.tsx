@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {
   View,
   ScrollView,
@@ -10,11 +10,12 @@ import {
   Image,
   Dimensions,
   Modal,
-  Platform,
   StatusBar,
+  Alert,
+  FlatList,
 } from "react-native";
-import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 
 // --- Stores & Hooks ---
 import {useNearbyRestaurants, useRestaurantStore, useRestaurantFilters} from "@stores/restaurantStore";
@@ -80,16 +81,13 @@ const HomeScreen = ({navigation}: any) => {
 
   // --- Effects ---
 
-  // 1. Fetch Categories & Promotions
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Fetch Categories
         setIsLoadingCategories(true);
         const categoriesData = await CategoryService.getCategories();
         setCategories(categoriesData);
 
-        // Fetch Active Promotions
         setIsLoadingPromotions(true);
         const promotionsRes = await PromotionService.getActivePromotions();
         setPromotions(promotionsRes.data || []);
@@ -103,10 +101,9 @@ const HomeScreen = ({navigation}: any) => {
     fetchInitialData();
   }, []);
 
-  // 2. Fetch Data based on Source
   useEffect(() => {
     handleFetchData();
-  }, [location, dataSource]);
+  }, [location, dataSource, selectedCategory]);
 
   // 3. Sync Store Items to Map Markers
   useEffect(() => {
@@ -122,16 +119,38 @@ const HomeScreen = ({navigation}: any) => {
 
   // --- Handlers ---
 
+  const handleCopyCode = async (code: string) => {
+    try {
+      await Clipboard.setStringAsync(code);
+      Alert.alert("Thành công", `Đã sao chép mã: ${code}`);
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể sao chép mã");
+    }
+  };
+
   const handleFetchData = () => {
     const params: any = {};
 
-    // Add category filter if selected
+    // Logic lọc theo danh mục
     if (selectedCategory) {
       params.categoryId = selectedCategory;
     }
 
+    // Logic lọc theo từ khóa tìm kiếm
+    if (searchQuery) {
+      store.search(searchQuery); // Nếu đang search text thì ưu tiên search text
+      return;
+    }
+
     if (dataSource === "nearby" && location) {
+      // Nếu có category, hàm fetchNearby của bạn cần hỗ trợ tham số categoryId (kiểm tra lại store)
+      // Nếu store chưa hỗ trợ, ta có thể dùng filter local hoặc gọi API search chung
       nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
+
+      // Lưu ý: Nếu API nearby chưa hỗ trợ lọc category, bạn cần filter phía client:
+      if (selectedCategory) {
+        filterByCategory(selectedCategory);
+      }
     } else if (dataSource === "all") {
       allStore.fetchAll({page: 1, limit: 10, ...params});
     } else if (dataSource === "toprated") {
@@ -140,10 +159,19 @@ const HomeScreen = ({navigation}: any) => {
   };
 
   const handleRefresh = () => {
+    // Reset về mặc định
     setSearchQuery("");
+    // Giữ nguyên category hoặc reset tùy logic bạn muốn. Ở đây tôi reset để tải mới hoàn toàn.
     setSelectedCategory(null);
     clearAllFilters();
-    handleFetchData();
+
+    // Gọi lại dữ liệu
+    if (location && dataSource === "nearby") {
+      nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
+    } else {
+      allStore.fetchAll({page: 1, limit: 10});
+    }
+
     CategoryService.getCategories().then(setCategories);
   };
 
@@ -180,7 +208,6 @@ const HomeScreen = ({navigation}: any) => {
     }
   };
 
-  // Handle Promotion Press
   const handlePromotionPress = (promotion: any) => {
     setSelectedPromotion(promotion);
     setShowPromotionModal(true);
@@ -203,6 +230,46 @@ const HomeScreen = ({navigation}: any) => {
     clearAllFilters();
     setShowFilters(false);
     handleFetchData();
+  };
+
+  // [FIX LỖI MẤT ẢNH] Render Item cẩn thận hơn
+  const renderCategoryItem = ({item}: {item: Category}) => {
+    const isSelected = selectedCategory === item.id;
+
+    return (
+      <TouchableOpacity
+        style={[styles.categoryItem, isSelected && styles.categoryItemActive]}
+        onPress={() => handleCategorySelect(item.id)}
+        activeOpacity={0.7}
+      >
+        {/* Container Ảnh: Luôn render, chỉ đổi style viền/nền */}
+        <View
+          style={[
+            styles.categoryIconContainer,
+            isSelected && {
+              backgroundColor: "#FFE5E5", // Màu nền nhạt khi chọn (thay vì đổi cấu trúc)
+              borderColor: COLORS.PRIMARY,
+              borderWidth: 1,
+            },
+          ]}
+        >
+          {item.image ? (
+            <Image
+              source={{uri: getImageUrl(item.image)}}
+              style={styles.categoryImage}
+              resizeMode="cover"
+              // Thêm defaultSource nếu cần thiết để tránh nháy khi load
+            />
+          ) : (
+            <Text style={{fontSize: 24}}>{item.icon || "🍽️"}</Text>
+          )}
+        </View>
+
+        <Text style={[styles.categoryName, isSelected && {color: COLORS.PRIMARY, fontWeight: "bold"}]}>
+          {item.name}
+        </Text>
+      </TouchableOpacity>
+    );
   };
 
   // --- Renders ---
@@ -249,7 +316,6 @@ const HomeScreen = ({navigation}: any) => {
           />
         </View>
 
-        {/* Toggle List/Map */}
         <TouchableOpacity
           style={[styles.iconButton, {backgroundColor: layoutMode === "map" ? COLORS.PRIMARY : "#F3F4F6"}]}
           onPress={() => setLayoutMode(layoutMode === "list" ? "map" : "list")}
@@ -261,7 +327,6 @@ const HomeScreen = ({navigation}: any) => {
           />
         </TouchableOpacity>
 
-        {/* Filter Button */}
         <TouchableOpacity style={[styles.iconButton, styles.filterButton]} onPress={() => setShowFilters(true)}>
           <Ionicons name="options" size={22} color={COLORS.WHITE} />
         </TouchableOpacity>
@@ -271,35 +336,16 @@ const HomeScreen = ({navigation}: any) => {
       {layoutMode === "list" && (
         <>
           <View style={styles.categoriesSection}>
-            <ScrollView
+            <FlatList
+              data={categories}
+              renderItem={renderCategoryItem}
+              keyExtractor={(item) => item.id.toString()}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoriesContainer}
-            >
-              {categories.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[styles.categoryItem, selectedCategory === cat.id && styles.categoryItemActive]}
-                  onPress={() => handleCategorySelect(cat.id)}
-                >
-                  <View
-                    style={[
-                      styles.categoryIconContainer,
-                      selectedCategory === cat.id && styles.categoryIconContainerActive,
-                    ]}
-                  >
-                    {cat.image ? (
-                      <Image source={{uri: getImageUrl(cat.image)}} style={styles.categoryImage} />
-                    ) : (
-                      <Text style={{fontSize: 24}}>{cat.icon || "🍽️"}</Text>
-                    )}
-                  </View>
-                  <Text style={[styles.categoryName, selectedCategory === cat.id && styles.categoryNameActive]}>
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+              // [QUAN TRỌNG] extraData giúp FlatList biết cần render lại khi selectedCategory đổi
+              extraData={selectedCategory}
+            />
           </View>
 
           {/* Promotions Banner */}
@@ -356,7 +402,7 @@ const HomeScreen = ({navigation}: any) => {
             style={[styles.tabButton, dataSource === btn.mode && styles.tabButtonActive]}
             onPress={() => {
               setDataSource(btn.mode);
-              setSearchQuery("");
+              setSearchQuery(""); // Reset search text khi chuyển tab
             }}
           >
             <Ionicons name={btn.icon as any} size={16} color={dataSource === btn.mode ? COLORS.WHITE : COLORS.GRAY} />
@@ -383,7 +429,6 @@ const HomeScreen = ({navigation}: any) => {
     );
   };
 
-  // Helper functions for promotion banner
   const getBannerColor = (type: string) => {
     switch (type) {
       case "percentage":
@@ -558,6 +603,7 @@ const HomeScreen = ({navigation}: any) => {
       </View>
     </Modal>
   );
+
   const renderMapPreviewModal = () => {
     if (!selectedMapRestaurant) return null;
     return (
@@ -571,7 +617,6 @@ const HomeScreen = ({navigation}: any) => {
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              {/* Modal cũng cần hiển thị ảnh nếu có */}
               {selectedMapRestaurant.image && (
                 <Image
                   source={{uri: selectedMapRestaurant.image}}
@@ -636,7 +681,7 @@ const HomeScreen = ({navigation}: any) => {
 
             <View style={styles.promoCodeSection}>
               <Text style={styles.promoCodeText}>{selectedPromotion.code}</Text>
-              <TouchableOpacity style={styles.copyButton}>
+              <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyCode(selectedPromotion.code)}>
                 <Ionicons name="copy-outline" size={18} color={COLORS.PRIMARY} />
                 <Text style={styles.copyText}>Sao chép</Text>
               </TouchableOpacity>
