@@ -12,7 +12,7 @@ import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Address} from "@/src/types/address"; // Import Type
-import {calculateDistance, calculateDeliveryFee} from "@utils/gps";
+import {calculateDeliveryFee, calculateDistance} from "@/src/utils/helpers";
 
 const PAYMENT_METHODS = [
   {id: "cash", label: "Tiền mặt (COD)", icon: "cash-outline"},
