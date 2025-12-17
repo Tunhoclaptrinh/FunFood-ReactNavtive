@@ -232,45 +232,46 @@ const HomeScreen = ({navigation}: any) => {
     handleFetchData();
   };
 
-  // [FIX LỖI MẤT ẢNH] Render Item cẩn thận hơn
-  const renderCategoryItem = ({item}: {item: Category}) => {
-    const isSelected = selectedCategory === item.id;
+  // [FIXED] Sử dụng useCallback và giữ border cố định để tránh mất ảnh
+  const renderCategoryItem = useCallback(
+    ({item}: {item: Category}) => {
+      const isSelected = selectedCategory === item.id;
 
-    return (
-      <TouchableOpacity
-        style={[styles.categoryItem, isSelected && styles.categoryItemActive]}
-        onPress={() => handleCategorySelect(item.id)}
-        activeOpacity={0.7}
-      >
-        {/* Container Ảnh: Luôn render, chỉ đổi style viền/nền */}
-        <View
-          style={[
-            styles.categoryIconContainer,
-            isSelected && {
-              backgroundColor: "#FFE5E5", // Màu nền nhạt khi chọn (thay vì đổi cấu trúc)
-              borderColor: COLORS.PRIMARY,
-              borderWidth: 1,
-            },
-          ]}
+      return (
+        <TouchableOpacity
+          style={[styles.categoryItem, isSelected && styles.categoryItemActive]}
+          onPress={() => handleCategorySelect(item.id)}
+          activeOpacity={0.7}
         >
-          {item.image ? (
-            <Image
-              source={{uri: getImageUrl(item.image)}}
-              style={styles.categoryImage}
-              resizeMode="cover"
-              // Thêm defaultSource nếu cần thiết để tránh nháy khi load
-            />
-          ) : (
-            <Text style={{fontSize: 24}}>{item.icon || "🍽️"}</Text>
-          )}
-        </View>
+          {/* Container Ảnh */}
+          <View
+            style={[
+              styles.categoryIconContainer,
+              {
+                // QUAN TRỌNG: Luôn đặt borderWidth là 1 để kích thước khung không đổi
+                borderWidth: 1,
+                // Khi không chọn thì để viền trong suốt (transparent), chọn thì hiện màu
+                borderColor: isSelected ? COLORS.PRIMARY : "transparent",
+                // Đổi màu nền tương ứng
+                backgroundColor: isSelected ? "#FFE5E5" : "#F3F4F6",
+              },
+            ]}
+          >
+            {item.image ? (
+              <Image source={{uri: getImageUrl(item.image)}} style={styles.categoryImage} resizeMode="cover" />
+            ) : (
+              <Text style={{fontSize: 24}}>{item.icon || "🍽️"}</Text>
+            )}
+          </View>
 
-        <Text style={[styles.categoryName, isSelected && {color: COLORS.PRIMARY, fontWeight: "bold"}]}>
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+          <Text style={[styles.categoryName, isSelected && {color: COLORS.PRIMARY, fontWeight: "bold"}]}>
+            {item.name}
+          </Text>
+        </TouchableOpacity>
+      );
+    },
+    [selectedCategory, handleCategorySelect]
+  );
 
   // --- Renders ---
   const renderHeader = () => (
