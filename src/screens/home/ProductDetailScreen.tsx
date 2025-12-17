@@ -235,13 +235,6 @@ const ProductDetailScreen = ({route, navigation}: any) => {
 
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
-        <Button
-          title={isLoading ? "Đang thêm..." : `Thêm • ${formatCurrency(finalPrice * quantity)}`}
-          onPress={handleAddToCart}
-          containerStyle={{flex: 1}}
-          disabled={!product.available || isLoading} // Disable khi đang gọi API
-          leftIcon="cart-outline"
-        />
         <View style={styles.quantityControl}>
           <TouchableOpacity
             style={[styles.qtyBtn, quantity <= 1 && styles.qtyBtnDisabled]}
@@ -259,10 +252,10 @@ const ProductDetailScreen = ({route, navigation}: any) => {
         </View>
 
         <Button
-          title={`Thêm • ${formatCurrency(finalPrice * quantity)}`}
+          title={isLoading ? "Đang thêm..." : `Thêm • ${formatCurrency(finalPrice * quantity)}`}
           onPress={handleAddToCart}
           containerStyle={{flex: 1}}
-          disabled={!product.available}
+          disabled={!product.available || isLoading} // Disable khi đang gọi API
           leftIcon="cart-outline"
         />
       </View>

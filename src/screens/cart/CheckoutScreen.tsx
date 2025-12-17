@@ -53,32 +53,28 @@ const CheckoutScreen = ({navigation}: any) => {
 
   useEffect(() => {
     const calculateShipping = async () => {
-      // 1. Kiểm tra có địa chỉ giao hàng và thông tin nhà hàng chưa
-      if (!selectedAddress || items.length === 0 || !items[0].restaurant) return;
+      if (!selectedAddress || !items[0]?.restaurant) return;
 
       const restaurant = items[0].restaurant;
-
-      // Kiểm tra toạ độ hợp lệ (cần đảm bảo type Restaurant có latitude/longitude)
-      // Nếu restaurant trong cart không có toạ độ, bạn có thể cần gọi RestaurantService.getById(restaurantId) ở đây
-      const resLat = restaurant.latitude;
-      const resLng = restaurant.longitude;
-
-      // Sử dụng toạ độ từ địa chỉ đã chọn (ưu tiên) hoặc vị trí hiện tại
-      const userLat = selectedAddress.latitude || location?.latitude;
-      const userLng = selectedAddress.longitude || location?.longitude;
+      // Đảm bảo convert sang Number nếu dữ liệu là string
+      const resLat = Number(restaurant.latitude);
+      const resLng = Number(restaurant.longitude);
+      const userLat = Number(selectedAddress.latitude);
+      const userLng = Number(selectedAddress.longitude);
 
       if (resLat && resLng && userLat && userLng) {
-        const distance = calculateDistance(userLat, userLng, resLat, resLng);
+        const dist = calculateDistance(userLat, userLng, resLat, resLng);
 
-        const fee = calculateDeliveryFee(distance);
+        if (dist > 50) {
+          Alert.alert("Cảnh báo", `Khoảng cách quá xa (${dist.toFixed(1)}km). Vui lòng chọn nhà hàng gần hơn.`);
+        }
 
-        console.log(`Khoảng cách: ${distance.toFixed(2)}km - Phí ship: ${fee}`);
+        const fee = calculateDeliveryFee(dist);
         setDeliveryFee(fee);
       }
     };
-
     calculateShipping();
-  }, [selectedAddress, items, location]); // Chạy lại khi địa chỉ hoặc giỏ hàng thay đổi
+  }, [selectedAddress, items]);
 
   const fetchDefaultAddress = async () => {
     const defaultAddr = await AddressService.getDefaultAddress();
