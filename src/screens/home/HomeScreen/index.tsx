@@ -764,7 +764,7 @@ const HomeScreen = ({navigation}: any) => {
                 setShowPromotionModal(false);
                 navigation.navigate("Search");
               }}
-              containerStyle={{marginTop: 20}}
+              containerStyle={{marginTop: 12}}
             />
           </View>
         </View>

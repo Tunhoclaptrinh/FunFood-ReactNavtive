@@ -168,6 +168,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
+    paddingBottom: 16,
   },
   modalContent: {
     backgroundColor: COLORS.WHITE,

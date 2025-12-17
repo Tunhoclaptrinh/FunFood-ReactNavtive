@@ -94,7 +94,7 @@ const CartScreen = ({navigation}: any) => {
 
                 {item.product?.discount ? <Text style={styles.discount}>{item.product.discount}% OFF</Text> : null}
 
-                <Text style={styles.total}>Subtotal: {formatCurrency((item.product?.price || 0) * item.quantity)}</Text>
+                <Text style={styles.total}>Tổng phụ: {formatCurrency((item.product?.price || 0) * item.quantity)}</Text>
               </View>
 
               {/* Quantity Control - Giữ nguyên */}
@@ -141,7 +141,7 @@ const CartScreen = ({navigation}: any) => {
           <View style={styles.divider} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Subtotal:</Text>
+            <Text style={styles.totalLabel}>Tổng phụ:</Text>
             <Text style={styles.totalValue}>{formatCurrency(totalPrice)}</Text>
           </View>
 
@@ -154,7 +154,7 @@ const CartScreen = ({navigation}: any) => {
       {/* Checkout Footer */}
       <View style={styles.footer}>
         <Button
-          title={`Checkout - ${formatCurrency(totalPrice)}`}
+          title={`Thanh toán - ${formatCurrency(totalPrice)}`}
           onPress={handleCheckout}
           containerStyle={styles.checkoutButton}
         />

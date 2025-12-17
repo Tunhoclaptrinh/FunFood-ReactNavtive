@@ -214,7 +214,7 @@ const OrderDetailScreen = ({route, navigation}: any) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Price Summary</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal:</Text>
+            <Text style={styles.summaryLabel}>Tổng phụ:</Text>
             <Text style={styles.summaryValue}>{formatCurrency(order.subtotal)}</Text>
           </View>
           <View style={styles.summaryRow}>

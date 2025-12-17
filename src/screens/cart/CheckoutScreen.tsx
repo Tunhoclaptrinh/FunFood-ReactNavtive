@@ -261,7 +261,7 @@ const CheckoutScreen = ({navigation}: any) => {
               onPress={handleValidatePromo}
               loading={validatingPromo}
               size="small"
-              containerStyle={{marginLeft: 4, width: 90}}
+              containerStyle={{marginLeft: 4, width: 90, height: 46}}
             />
           </View>
         </View>
