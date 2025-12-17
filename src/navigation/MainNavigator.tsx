@@ -37,9 +37,9 @@ import SettingsScreen from "../screens/profile/SettingsScreen";
 import NotificationsScreen from "../screens/notifications/NotificationsScreen";
 import SupportScreen from "../screens/profile/SupportScreen";
 import TermsPrivacyScreen from "../screens/profile/TermsPrivacyScreen";
-import FaqMissingFoodScreen from '../screens/profile/faqScreen/FaqMissingFoodScreen';
-import FaqCancelOrderScreen from '../screens/profile/faqScreen/FaqCancelOrderScreen';
-import FaqPaymentIssueScreen from '../screens/profile/faqScreen/FaqPaymentIssueScreen';
+import FaqMissingFoodScreen from "../screens/profile/faqScreen/FaqMissingFoodScreen";
+import FaqCancelOrderScreen from "../screens/profile/faqScreen/FaqCancelOrderScreen";
+import FaqPaymentIssueScreen from "../screens/profile/faqScreen/FaqPaymentIssueScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -156,6 +156,11 @@ const CartStack = () => (
       name={ROUTE_NAMES.CART.CHECKOUT}
       component={CheckoutScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Thanh toán")}
+    />
+    <Stack.Screen
+      name={ROUTE_NAMES.ORDERS.SCREEN}
+      component={OrdersScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Đơn của tôi")}
     />
   </Stack.Navigator>
 );

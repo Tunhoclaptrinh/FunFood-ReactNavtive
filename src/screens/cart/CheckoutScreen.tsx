@@ -40,7 +40,9 @@ const CheckoutScreen = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
   const [validatingPromo, setValidatingPromo] = useState(false);
 
-  const restaurantId = items[0]?.product?.restaurantId;
+  const restaurantId = items[0]?.restaurant?.id;
+
+  console.log("ai đây ?", items);
 
   // --- Load dữ liệu ---
   useEffect(() => {
@@ -119,7 +121,7 @@ const CheckoutScreen = ({navigation}: any) => {
             text: "OK",
             onPress: () => {
               clearCart();
-              navigation.replace("Orders");
+              navigation.navigate("Orders");
             },
           },
         ]);
