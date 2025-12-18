@@ -39,10 +39,9 @@ const styles = StyleSheet.create({
   },
   badgeText: {color: "white", fontSize: 10, fontWeight: "bold"},
 
-  locationSection: {flexDirection: "row", alignItems: "center", marginBottom: 12},
   locationIconBg: {
-    width: 30,
-    height: 30,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     backgroundColor: "#FFF0F0",
     justifyContent: "center",
@@ -332,6 +331,51 @@ const styles = StyleSheet.create({
   tabWrapper: {
     flex: 1,
     zIndex: 1,
+  },
+
+  // Thêm các styles này vào file styles.ts/styles.js của HomeScreen
+
+  // 1. Location Chevron Background
+  locationChevronBg: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FFF0F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // 2. Filter Active Dot Indicator
+  filterActiveDot: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFB800",
+    borderWidth: 1.5,
+    borderColor: COLORS.WHITE,
+  },
+
+  resultCountContainer: {
+    paddingVertical: 4,
+  },
+
+  locationSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.WHITE,
+    padding: 4,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
 });
 

@@ -44,7 +44,7 @@ type LayoutModeType = "list" | "map";
 
 const HomeScreen = ({navigation}: any) => {
   // --- Hooks & Stores ---
-  const {location, requestLocation} = useGeolocation();
+  const {location, requestLocation, address} = useGeolocation();
   const nearbyStore = useNearbyRestaurants();
   const allStore = useRestaurantStore();
   const {filterByCategory, filterByRating, filterByOpen, filterByPriceRange, clearAllFilters} = useRestaurantFilters();
@@ -54,6 +54,12 @@ const HomeScreen = ({navigation}: any) => {
   const [dataSource, setDataSource] = useState<DataSourceType>("nearby");
   const [layoutMode, setLayoutMode] = useState<LayoutModeType>("list");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // --- State: Pagination ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 10;
 
   // --- State: Map Logic ---
   const [mapMarkers, setMapMarkers] = useState<MapMarker[]>([]);
@@ -108,7 +114,9 @@ const HomeScreen = ({navigation}: any) => {
   }, []);
 
   useEffect(() => {
-    handleFetchData();
+    setCurrentPage(1);
+    setHasMore(true);
+    handleFetchData(1);
   }, [location, dataSource, selectedCategory]);
 
   // Sync Store Items to Map Markers
@@ -127,17 +135,15 @@ const HomeScreen = ({navigation}: any) => {
   useEffect(() => {
     const tabs = ["nearby", "all", "toprated"];
     const activeIndex = tabs.indexOf(dataSource);
-    const tabWidth = (width - 40 - 16) / 3; // 40 = horizontal padding, 16 = total gap (8*2)
+    const tabWidth = (width - 40 - 16) / 3;
 
-    // Slide indicator
     Animated.spring(slideAnim, {
-      toValue: activeIndex * (tabWidth + 8), // 8 = gap between tabs
+      toValue: activeIndex * (tabWidth + 8),
       useNativeDriver: true,
       tension: 80,
       friction: 10,
     }).start();
 
-    // Scale animations
     scaleAnims.forEach((anim, index) => {
       Animated.spring(anim, {
         toValue: index === activeIndex ? 1 : 0.95,
@@ -159,12 +165,20 @@ const HomeScreen = ({navigation}: any) => {
     }
   };
 
-  const handleFetchData = () => {
-    const params: any = {};
+  const handleFetchData = async (page: number = 1) => {
+    const params: any = {
+      page,
+      limit: ITEMS_PER_PAGE,
+    };
 
     // Logic lọc theo danh mục
     if (selectedCategory) {
       params.categoryId = selectedCategory;
+    }
+
+    // Logic lọc theo rating (từ filter modal)
+    if (filterRating) {
+      params.rating_gte = filterRating;
     }
 
     // Logic lọc theo từ khóa tìm kiếm
@@ -179,22 +193,58 @@ const HomeScreen = ({navigation}: any) => {
       if (selectedCategory) {
         filterByCategory(selectedCategory);
       }
+      if (filterRating) {
+        filterByRating(filterRating);
+      }
     } else if (dataSource === "all") {
-      allStore.fetchAll({page: 1, limit: 10, ...params});
+      const response = await allStore.fetchAll(params);
+
+      // Kiểm tra còn dữ liệu để load thêm không
+      if (response && response.length < ITEMS_PER_PAGE) {
+        setHasMore(false);
+      }
     } else if (dataSource === "toprated") {
-      allStore.fetchAll({rating_gte: 4.5, page: 1, limit: 10, sort: "rating", order: "desc", ...params});
+      const response = await allStore.fetchAll({
+        ...params,
+        rating_gte: filterRating || 4.5,
+        sort: "rating",
+        order: "desc",
+      });
+
+      if (response && response.length < ITEMS_PER_PAGE) {
+        setHasMore(false);
+      }
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore || store.isLoading || dataSource === "nearby") return;
+
+    setIsLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    try {
+      await handleFetchData(nextPage);
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.error("Failed to load more", error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
   const handleRefresh = () => {
     setSearchQuery("");
     setSelectedCategory(null);
+    setFilterRating(null);
+    setCurrentPage(1);
+    setHasMore(true);
     clearAllFilters();
 
     if (location && dataSource === "nearby") {
       nearbyStore.fetchNearby(location.latitude, location.longitude, 5);
     } else {
-      allStore.fetchAll({page: 1, limit: 10});
+      handleFetchData(1);
     }
 
     CategoryService.getCategories().then(setCategories);
@@ -205,7 +255,7 @@ const HomeScreen = ({navigation}: any) => {
     if (query.length > 2) {
       store.search(query);
     } else if (query.length === 0) {
-      handleFetchData();
+      handleFetchData(1);
     }
   };
 
@@ -240,10 +290,23 @@ const HomeScreen = ({navigation}: any) => {
   const applyAdvancedFilters = () => {
     const min = parseInt(tempPriceMin) || 0;
     const max = parseInt(tempPriceMax) || 10000000;
-    if (min > 0 || max < 10000000) filterByPriceRange(min, max);
-    if (filterOpenNow) filterByOpen(true);
-    if (filterRating) filterByRating(filterRating);
+
+    if (min > 0 || max < 10000000) {
+      filterByPriceRange(min, max);
+    }
+
+    if (filterOpenNow) {
+      filterByOpen(true);
+    }
+
+    if (filterRating) {
+      filterByRating(filterRating);
+    }
+
     setShowFilters(false);
+    setCurrentPage(1);
+    setHasMore(true);
+    handleFetchData(1);
   };
 
   const resetAdvancedFilters = () => {
@@ -253,10 +316,11 @@ const HomeScreen = ({navigation}: any) => {
     setFilterRating(null);
     clearAllFilters();
     setShowFilters(false);
-    handleFetchData();
+    setCurrentPage(1);
+    setHasMore(true);
+    handleFetchData(1);
   };
 
-  // [FIXED] Sử dụng useCallback và giữ border cố định để tránh mất ảnh
   const renderCategoryItem = useCallback(
     ({item}: {item: Category}) => {
       const isSelected = selectedCategory === item.id;
@@ -312,18 +376,23 @@ const HomeScreen = ({navigation}: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* Location */}
+      {/* Location - Cải thiện UI */}
       <TouchableOpacity style={styles.locationSection} onPress={requestLocation} activeOpacity={0.7}>
         <View style={styles.locationIconBg}>
-          <Ionicons name="location" size={18} color={COLORS.PRIMARY} />
+          <Ionicons name="location" size={20} color={COLORS.PRIMARY} />
         </View>
         <View style={styles.locationTextContainer}>
-          <Text style={styles.locationLabel}>Giao đến</Text>
+          <Text style={styles.locationLabel}>📍 Giao đến</Text>
           <Text style={styles.locationAddress} numberOfLines={1}>
-            {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Đang xác định vị trí..."}
+            {address ||
+              (location
+                ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
+                : "Đang xác định vị trí...")}
           </Text>
         </View>
-        <Ionicons name="chevron-down" size={16} color={COLORS.GRAY} />
+        <View style={styles.locationChevronBg}>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.PRIMARY} />
+        </View>
       </TouchableOpacity>
 
       {/* Search, Filter & MAP TOGGLE */}
@@ -350,6 +419,7 @@ const HomeScreen = ({navigation}: any) => {
 
         <TouchableOpacity style={[styles.iconButton, styles.filterButton]} onPress={() => setShowFilters(true)}>
           <Ionicons name="options" size={22} color={COLORS.WHITE} />
+          {(filterRating || filterOpenNow || tempPriceMin || tempPriceMax) && <View style={styles.filterActiveDot} />}
         </TouchableOpacity>
       </View>
 
@@ -412,7 +482,6 @@ const HomeScreen = ({navigation}: any) => {
 
       {/* Smooth Animated Tabs */}
       <View style={styles.tabContainer}>
-        {/* Animated Background Indicator */}
         <Animated.View
           style={[
             styles.activeIndicator,
@@ -423,7 +492,6 @@ const HomeScreen = ({navigation}: any) => {
           ]}
         />
 
-        {/* Tab Buttons */}
         {[
           {mode: "nearby" as const, label: "Gần tôi", icon: "location", index: 0},
           {mode: "all" as const, label: "Phổ biến", icon: "restaurant", index: 1},
@@ -449,7 +517,15 @@ const HomeScreen = ({navigation}: any) => {
         })}
       </View>
 
-      {store.items.length > 0 && <Text style={styles.resultCountText}>{store.items.length} kết quả</Text>}
+      {store.items.length > 0 && (
+        <View style={styles.resultCountContainer}>
+          <Text style={styles.resultCountText}>
+            {store.items.length} kết quả
+            {filterRating && ` • Đánh giá ${filterRating}+ ⭐`}
+            {selectedCategory && ` • ${categories.find((c) => c.id === selectedCategory)?.name}`}
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -550,6 +626,15 @@ const HomeScreen = ({navigation}: any) => {
         <RefreshControl refreshing={store.isRefreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
       }
       contentContainerStyle={{paddingBottom: 20, paddingHorizontal: 20}}
+      onScroll={({nativeEvent}) => {
+        const {layoutMeasurement, contentOffset, contentSize} = nativeEvent;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 100;
+
+        if (isCloseToBottom && !isLoadingMore && hasMore && dataSource !== "nearby") {
+          handleLoadMore();
+        }
+      }}
+      scrollEventThrottle={400}
     >
       {store.isLoading && store.items.length === 0 ? (
         <View style={styles.centerState}>
@@ -559,7 +644,23 @@ const HomeScreen = ({navigation}: any) => {
       ) : store.items.length === 0 ? (
         <EmptyState icon="search" title="Không tìm thấy kết quả" subtitle="Thử thay đổi bộ lọc hoặc vùng tìm kiếm" />
       ) : (
-        <View style={styles.restaurantGrid}>{store.items.map((restaurant) => renderRestaurantItem(restaurant))}</View>
+        <>
+          <View style={styles.restaurantGrid}>{store.items.map((restaurant) => renderRestaurantItem(restaurant))}</View>
+
+          {/* Load More Indicator */}
+          {isLoadingMore && (
+            <View style={{paddingVertical: 20, alignItems: "center"}}>
+              <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+              <Text style={{color: COLORS.GRAY, marginTop: 8, fontSize: 13}}>Đang tải thêm...</Text>
+            </View>
+          )}
+
+          {!hasMore && store.items.length > 0 && dataSource !== "nearby" && (
+            <View style={{paddingVertical: 20, alignItems: "center"}}>
+              <Text style={{color: COLORS.GRAY, fontSize: 13}}>Đã hiển thị tất cả kết quả</Text>
+            </View>
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -589,7 +690,7 @@ const HomeScreen = ({navigation}: any) => {
             {/* Đánh giá */}
             <Text style={styles.filterSectionTitle}>Đánh giá tối thiểu</Text>
             <View style={styles.ratingFilterContainer}>
-              {[3, 4, 4.5, 5].map((rate) => (
+              {[3, 3.5, 4, 4.5, 5].map((rate) => (
                 <TouchableOpacity
                   key={rate}
                   style={[styles.ratingChip, filterRating === rate && styles.ratingChipActive]}
@@ -657,7 +758,7 @@ const HomeScreen = ({navigation}: any) => {
             <View style={styles.modalBody}>
               {selectedMapRestaurant.image && (
                 <Image
-                  source={{uri: selectedMapRestaurant.image}}
+                  source={{uri: getImageUrl(selectedMapRestaurant.image)}}
                   style={{width: "100%", height: 120, borderRadius: 8, marginBottom: 12}}
                   resizeMode="cover"
                 />
