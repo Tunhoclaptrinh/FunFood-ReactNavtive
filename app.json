@@ -19,6 +19,7 @@
       }
     },
     "android": {
+      "package": "com.ntt1604.funfood",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -32,6 +33,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ff9d1641-1865-4385-9efb-82f065083dc9"
+      }
+    },
+    "owner": "ntt1604"
   }
 }

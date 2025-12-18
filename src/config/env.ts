@@ -1,18 +1,26 @@
+type AppEnv = "development" | "staging" | "production";
+
 const ENV = {
-  dev: {
-    apiUrl: "http://localhost:3000/api",
+  development: {
+    apiUrl: process.env.EXPO_PUBLIC_API_URL_DEV!,
     logLevel: "debug",
   },
   staging: {
     apiUrl: "https://staging-api.funfood.com",
     logLevel: "info",
   },
-  prod: {
-    apiUrl: "https://api.funfood.com",
+  production: {
+    apiUrl: process.env.EXPO_PUBLIC_API_URL!,
     logLevel: "warn",
   },
 };
 
-const currentEnv = process.env.EXPO_PUBLIC_ENV || "dev";
+const currentEnv = (process.env.EXPO_PUBLIC_ENV || "development") as AppEnv;
 
-export default ENV[currentEnv as keyof typeof ENV];
+const config = ENV[currentEnv];
+
+if (!config?.apiUrl) {
+  console.error("❌ API URL is undefined. Check ENV config");
+}
+
+export default config;
