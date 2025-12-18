@@ -213,7 +213,8 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
           </View>
           <View style={styles.stat}>
             <Ionicons name="cash-outline" size={14} color={COLORS.SUCCESS} />
-            <Text style={[styles.statText, styles.earnText]}>{formatCurrency(item.deliveryFee)}</Text>
+            <Text style={[styles.statText, styles.earnText]}>{formatCurrency(item.deliveryFee * 0.8)}</Text>
+            <Text style={styles.statText}>(80%)</Text>
           </View>
         </View>
       </View>
@@ -319,8 +320,14 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
                     <Text style={styles.value}>{formatCurrency(selectedOrder.total)}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.label}>Your Earnings</Text>
+                    <Text style={styles.label}>Thu nhập</Text>
                     <Text style={[styles.value, styles.earning]}>{formatCurrency(selectedOrder.deliveryFee)}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Thực thu (80%)</Text>
+                    <Text style={[styles.value, styles.earning]}>
+                      {formatCurrency(selectedOrder.deliveryFee * 0.8)}
+                    </Text>
                   </View>
                 </View>
 
@@ -511,7 +518,7 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    gap: 12,
+    gap: 4,
   },
   stat: {
     flex: 1,
