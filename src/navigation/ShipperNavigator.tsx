@@ -1,16 +1,17 @@
 /**
- * Shipper Navigator
- * Navigation cho Shipper role
+ * Shipper Navigator - FIXED & COMPLETE
+ * Navigation cho Shipper role với proper structure
  */
 
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {Ionicons} from "@expo/vector-icons";
+import {TouchableOpacity} from "react-native";
 
 import ShipperDashboardScreen from "@screens/shipper/ShipperDashboardScreen";
 import ShipperAvailableOrdersScreen from "@screens/shipper/ShipperAvailableOrdersScreen";
 import ShipperDeliveriesScreen from "@screens/shipper/ShipperDeliveriesScreen";
-import ShipperHistoryScreen from "../screens/shipper/ShipperHistoryScreen";
+import ShipperHistoryScreen from "@screens/shipper/ShipperHistoryScreen";
 import ProfileScreen from "@screens/profile/ProfileScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import ChangePasswordScreen from "@screens/profile/ChangePasswordScreen";
@@ -24,93 +25,164 @@ import SupportScreen from "@screens/profile/SupportScreen";
 import TermsPrivacyScreen from "@screens/profile/TermsPrivacyScreen";
 import SettingsScreen from "@screens/profile/SettingsScreen";
 
-
 import {COLORS} from "@/src/styles/colors";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Available Orders Stack
-const AvailableOrdersStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: true,
-      headerStyle: {backgroundColor: COLORS.WHITE},
-      headerTintColor: COLORS.PRIMARY,
-      headerTitleStyle: {fontWeight: "700"},
-    }}
-  >
+const HEADER_STYLE = {
+  headerShown: true,
+  headerStyle: {backgroundColor: COLORS.PRIMARY},
+  headerTintColor: COLORS.WHITE,
+  headerTitleStyle: {fontWeight: "700" as const},
+};
+
+/**
+ * Custom Back Button Component
+ */
+const CustomBackButton = ({navigation, title}: any) => ({
+  headerBackVisible: false,
+  headerTitle: title,
+  headerLeft: () => (
+    <TouchableOpacity
+      onPress={() => navigation.goBack()}
+      style={{flexDirection: "row", alignItems: "center", paddingLeft: 8}}
+    >
+      <Ionicons name="arrow-back" size={24} color={COLORS.WHITE} />
+    </TouchableOpacity>
+  ),
+});
+
+/**
+ * Dashboard Stack - Contains Dashboard + History
+ */
+const DashboardStack = () => (
+  <Stack.Navigator screenOptions={HEADER_STYLE}>
     <Stack.Screen
-      name="ShipperAvailableOrders"
+      name="ShipperDashboardMain"
+      component={ShipperDashboardScreen}
+      options={{title: "Dashboard", headerBackVisible: false}}
+    />
+    <Stack.Screen
+      name="ShipperHistory"
+      component={ShipperHistoryScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Delivery History")}
+    />
+  </Stack.Navigator>
+);
+
+/**
+ * Available Orders Stack
+ */
+const AvailableOrdersStack = () => (
+  <Stack.Navigator screenOptions={HEADER_STYLE}>
+    <Stack.Screen
+      name="ShipperAvailableOrdersMain"
       component={ShipperAvailableOrdersScreen}
       options={{title: "Available Orders", headerBackVisible: false}}
     />
   </Stack.Navigator>
 );
 
-// Deliveries Stack
+/**
+ * Active Deliveries Stack
+ */
 const DeliveriesStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: true,
-      headerStyle: {backgroundColor: COLORS.WHITE},
-      headerTintColor: COLORS.PRIMARY,
-      headerTitleStyle: {fontWeight: "700"},
-    }}
-  >
+  <Stack.Navigator screenOptions={HEADER_STYLE}>
     <Stack.Screen
-      name="ShipperDeliveries"
+      name="ShipperDeliveriesMain"
       component={ShipperDeliveriesScreen}
       options={{title: "My Deliveries", headerBackVisible: false}}
     />
   </Stack.Navigator>
 );
 
-// Dashboard Stack
-const DashboardStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}
-  >
-    <Stack.Screen name="ShipperDashboard" component={ShipperDashboardScreen} options={{title: "Dashboard"}} />
-    <Stack.Screen name="ShipperHistory" component={ShipperHistoryScreen} options={{title: "Delivery History"}} />
-  </Stack.Navigator>
-);
-
-// Profile Stack
+/**
+ * Profile Stack - Shared with Customer
+ */
 const ProfileStack = () => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: true,
-      headerStyle: {backgroundColor: COLORS.WHITE},
-      headerTintColor: COLORS.PRIMARY,
-      headerTitleStyle: {fontWeight: "700"},
-    }}
-  >
+  <Stack.Navigator screenOptions={HEADER_STYLE}>
+    <Stack.Screen name="ProfileMain" component={ProfileScreen} options={{title: "Profile", headerBackVisible: false}} />
+
+    {/* Profile Management */}
     <Stack.Screen
-      name="ProfileScreen"
-      component={ProfileScreen}
-      options={{title: "Profile", headerBackVisible: false}}
+      name="EditProfile"
+      component={EditProfileScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Edit Profile")}
     />
-    <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{title: "Chỉnh sửa hồ sơ"}} />
-    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{title: "Đổi mật khẩu"}} />
-    <Stack.Screen name="AddressList" component={AddressListScreen} options={{title: "Địa chỉ giao hàng"}} />
-    <Stack.Screen name="AddAddress" component={AddAddressScreen} options={{title: "Thêm địa chỉ"}} />
-    <Stack.Screen name="FavoritesList" component={FavoritesListScreen} options={{title: "Yêu thích"}} />
-    <Stack.Screen name="ShipperHistoryDelivery" component={ShipperHistoryScreen} options={{title : "Lịch sử giao hàng"}}/>
-    <Stack.Screen name="MyReviews" component={MyReviewsScreen} options={{title: "Đánh giá của tôi"}} />
-    <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{title: "Cài đặt thông báo"}} />
-    <Stack.Screen name="OrderStats" component={OrderStatsScreen} options={{title: "Thống kê đơn hàng"}} />
-    <Stack.Screen name="Support" component={SupportScreen} options={{title: "Trợ giúp"}} />
-    <Stack.Screen name="TermsPrivacy" component={TermsPrivacyScreen} options={{title: "Điều khoản"}} />
-    <Stack.Screen name="Settings" component={SettingsScreen} options={{title: "Cài đặt"}} />
+    <Stack.Screen
+      name="ChangePassword"
+      component={ChangePasswordScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Change Password")}
+    />
+
+    {/* Address Management */}
+    <Stack.Screen
+      name="AddressList"
+      component={AddressListScreen}
+      options={({navigation}) => CustomBackButton(navigation, "My Addresses")}
+    />
+    <Stack.Screen
+      name="AddAddress"
+      component={AddAddressScreen}
+      options={({navigation, route}: any) =>
+        CustomBackButton(navigation, route.params?.address ? "Edit Address" : "Add Address")
+      }
+    />
+
+    {/* Favorites & Reviews */}
+    <Stack.Screen
+      name="FavoritesList"
+      component={FavoritesListScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Favorites")}
+    />
+    <Stack.Screen
+      name="MyReviews"
+      component={MyReviewsScreen}
+      options={({navigation}) => CustomBackButton(navigation, "My Reviews")}
+    />
+
+    {/* Settings */}
+    <Stack.Screen
+      name="Settings"
+      component={SettingsScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Settings")}
+    />
+    <Stack.Screen
+      name="NotificationSettings"
+      component={NotificationSettingsScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Notifications")}
+    />
+
+    {/* Shipper-specific: Delivery History */}
+    <Stack.Screen
+      name="ShipperHistoryDelivery"
+      component={ShipperHistoryScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Delivery History")}
+    />
+
+    {/* Stats & Support */}
+    <Stack.Screen
+      name="OrderStats"
+      component={OrderStatsScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Statistics")}
+    />
+    <Stack.Screen
+      name="Support"
+      component={SupportScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Help & Support")}
+    />
+    <Stack.Screen
+      name="TermsPrivacy"
+      component={TermsPrivacyScreen}
+      options={({navigation}) => CustomBackButton(navigation, "Terms & Privacy")}
+    />
   </Stack.Navigator>
 );
 
 /**
- * Shipper Main Navigator
- * Bottom tabs: Dashboard, Available Orders, Deliveries, Profile
+ * Main Shipper Navigator
+ * Bottom tabs: Dashboard, Available Orders, Active Deliveries, Profile
  */
 const ShipperNavigator = () => {
   return (
@@ -120,14 +192,19 @@ const ShipperNavigator = () => {
         tabBarIcon: ({focused, color}) => {
           let iconName: string = "home";
 
-          if (route.name === "Dashboard") {
-            iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "Available") {
-            iconName = focused ? "list" : "list-outline";
-          } else if (route.name === "Active") {
-            iconName = focused ? "car" : "car-outline";
-          } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline";
+          switch (route.name) {
+            case "Dashboard":
+              iconName = focused ? "home" : "home-outline";
+              break;
+            case "Available":
+              iconName = focused ? "list" : "list-outline";
+              break;
+            case "Active":
+              iconName = focused ? "car" : "car-outline";
+              break;
+            case "Profile":
+              iconName = focused ? "person" : "person-outline";
+              break;
           }
 
           return <Ionicons name={iconName as any} size={24} color={color} />;

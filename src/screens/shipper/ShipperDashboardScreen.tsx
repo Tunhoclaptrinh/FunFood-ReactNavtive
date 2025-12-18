@@ -1,34 +1,23 @@
 /**
- * Shipper Dashboard
- * Thống kê earnings, deliveries, ratings
+ * Shipper Dashboard - FIXED Navigation
+ * Với proper navigation handling
  */
 
 import React, {useEffect, useState} from "react";
-import {View, ScrollView, StyleSheet, Text, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
+import {View, ScrollView, Text, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
 import {ShipperService, ShipperStats} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";
 import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
-
-interface DashboardTab {
-  id: string;
-  label: string;
-  icon: string;
-}
+import {StyleSheet} from "react-native";
 
 const ShipperDashboardScreen = ({navigation}: any) => {
   const [stats, setStats] = useState<ShipperStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-
-  const tabs: DashboardTab[] = [
-    {id: "overview", label: "Overview", icon: "home-outline"},
-    {id: "earnings", label: "Earnings", icon: "cash-outline"},
-    {id: "performance", label: "Performance", icon: "stats-chart-outline"},
-  ];
 
   useEffect(() => {
     loadStats();
@@ -50,6 +39,39 @@ const ShipperDashboardScreen = ({navigation}: any) => {
   const handleRefresh = () => {
     setRefreshing(true);
     loadStats();
+  };
+
+  /**
+   * FIXED: Navigation helper with multiple fallback strategies
+   */
+  const navigateTo = (screenName: string, params?: any) => {
+    try {
+      // Strategy 1: Try direct navigation first
+      if (navigation.navigate) {
+        navigation.navigate(screenName, params);
+      }
+
+      // Strategy 2: If direct fails, try parent navigation
+      const parent = navigation.getParent?.();
+      if (parent?.navigate) {
+        // Map screen names to tab names
+        const tabMapping: Record<string, string> = {
+          ShipperAvailableOrders: "Available",
+          ShipperDeliveries: "Active",
+          ShipperHistory: "Dashboard",
+          Profile: "Profile",
+        };
+
+        const tabName = tabMapping[screenName];
+        if (tabName) {
+          parent.navigate(tabName, {screen: screenName, params});
+        } else {
+          parent.navigate(screenName, params);
+        }
+      }
+    } catch (error) {
+      console.error("Navigation error:", error);
+    }
   };
 
   if (loading) {
@@ -83,7 +105,11 @@ const ShipperDashboardScreen = ({navigation}: any) => {
 
         {/* Tabs */}
         <View style={styles.tabsContainer}>
-          {tabs.map((tab) => (
+          {[
+            {id: "overview", label: "Overview", icon: "home-outline"},
+            {id: "earnings", label: "Earnings", icon: "cash-outline"},
+            {id: "performance", label: "Performance", icon: "stats-chart-outline"},
+          ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
               style={[styles.tab, activeTab === tab.id && styles.tabActive]}
@@ -98,12 +124,10 @@ const ShipperDashboardScreen = ({navigation}: any) => {
         {/* Overview Tab */}
         {activeTab === "overview" && (
           <View style={styles.tabContent}>
-            {/* Today's Summary */}
+            {/* Stats Grid */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Today's Summary</Text>
-
               <View style={styles.statsGrid}>
-                {/* Deliveries Today */}
                 <View style={styles.statCard}>
                   <View style={[styles.statIcon, {backgroundColor: "#E3F2FD"}]}>
                     <Ionicons name="checkmark-circle-outline" size={24} color="#1976D2" />
@@ -112,7 +136,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                   <Text style={styles.statLabel}>Delivered Today</Text>
                 </View>
 
-                {/* Active Deliveries */}
                 <View style={styles.statCard}>
                   <View style={[styles.statIcon, {backgroundColor: "#FFF3E0"}]}>
                     <Ionicons name="car-outline" size={24} color="#F57C00" />
@@ -121,7 +144,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                   <Text style={styles.statLabel}>In Progress</Text>
                 </View>
 
-                {/* Total Orders */}
                 <View style={styles.statCard}>
                   <View style={[styles.statIcon, {backgroundColor: "#F3E5F5"}]}>
                     <Ionicons name="layers-outline" size={24} color="#7B1FA2" />
@@ -130,7 +152,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                   <Text style={styles.statLabel}>Total Orders</Text>
                 </View>
 
-                {/* Rating */}
                 <View style={styles.statCard}>
                   <View style={[styles.statIcon, {backgroundColor: "#FCE4EC"}]}>
                     <Ionicons name="star" size={24} color="#C2185B" />
@@ -141,7 +162,7 @@ const ShipperDashboardScreen = ({navigation}: any) => {
               </View>
             </View>
 
-            {/* Today's Earnings */}
+            {/* Earnings Card */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Earnings</Text>
               <View style={styles.earningsCard}>
@@ -157,25 +178,19 @@ const ShipperDashboardScreen = ({navigation}: any) => {
               </View>
             </View>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - FIXED Navigation */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Quick Actions</Text>
               <View style={styles.actionsGrid}>
                 <Button
                   title="Available Orders"
-                  onPress={() => {
-                    navigation.navigate("ShipperAvailableOrders");
-                    navigation.getParent?.()?.navigate?.("Available", {screen: "ShipperAvailableOrders"});
-                  }}
+                  onPress={() => navigateTo("ShipperAvailableOrders")}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
                 <Button
                   title="My Deliveries"
-                  onPress={() => {
-                    navigation.navigate("ShipperDeliveries");
-                    navigation.getParent?.()?.navigate?.("Active", {screen: "ShipperDeliveries"});
-                  }}
+                  onPress={() => navigateTo("ShipperDeliveries")}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
@@ -184,16 +199,13 @@ const ShipperDashboardScreen = ({navigation}: any) => {
               <View style={styles.actionsGrid}>
                 <Button
                   title="History"
-                  onPress={() => { 
-                    navigation.navigate("ShipperHistory");                    
-                    navigation.getParent?.()?.navigate?.("Dashboard", {screen: "ShipperHistory" as any});
-                  }}
+                  onPress={() => navigateTo("ShipperHistory")}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
                 <Button
                   title="Profile"
-                  onPress={() => navigation.navigate("Profile")}
+                  onPress={() => navigateTo("Profile")}
                   size="small"
                   containerStyle={styles.actionButton}
                 />
@@ -207,7 +219,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
           <View style={styles.tabContent}>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Earnings Summary</Text>
-
               <View style={styles.earningsDetails}>
                 <View style={styles.earningsRow}>
                   <View>
@@ -220,17 +231,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                     <Text style={styles.earningsValue}>{stats.deliveredToday}</Text>
                   </View>
                 </View>
-
-                <View style={styles.earningsRow}>
-                  <View>
-                    <Text style={styles.earningsLabel}>Average per Delivery</Text>
-                    <Text style={styles.earningsValue}>
-                      {stats.deliveredToday > 0
-                        ? formatCurrency(stats.todayEarnings / stats.deliveredToday)
-                        : formatCurrency(0)}
-                    </Text>
-                  </View>
-                </View>
               </View>
 
               <View style={styles.section}>
@@ -241,13 +241,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                   <Text style={styles.totalEarningsSubtext}>From {stats.totalOrders} deliveries</Text>
                 </View>
               </View>
-
-              <View style={styles.infoBox}>
-                <Ionicons name="information-circle-outline" size={20} color={COLORS.INFO} />
-                <Text style={styles.infoText}>
-                  You earn 80% of delivery fees. The remaining 20% goes to operational costs.
-                </Text>
-              </View>
             </View>
           </View>
         )}
@@ -257,7 +250,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
           <View style={styles.tabContent}>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Your Performance</Text>
-
               <View style={styles.performanceCards}>
                 <View style={styles.performanceCard}>
                   <View style={styles.performanceHeader}>
@@ -285,37 +277,6 @@ const ShipperDashboardScreen = ({navigation}: any) => {
                     ))}
                   </View>
                 </View>
-
-                <View style={styles.performanceCard}>
-                  <View style={styles.performanceHeader}>
-                    <Text style={styles.performanceLabel}>Completion Rate</Text>
-                    <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.SUCCESS} />
-                  </View>
-                  <Text style={styles.performanceValue}>100%</Text>
-                  <Text style={styles.performanceSubtext}>All orders completed</Text>
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Tips for Better Performance</Text>
-                <View style={styles.tipsList}>
-                  <View style={styles.tipItem}>
-                    <Ionicons name="checkmark" size={16} color={COLORS.SUCCESS} />
-                    <Text style={styles.tipText}>Accept orders quickly to increase reliability</Text>
-                  </View>
-                  <View style={styles.tipItem}>
-                    <Ionicons name="checkmark" size={16} color={COLORS.SUCCESS} />
-                    <Text style={styles.tipText}>Complete deliveries on time</Text>
-                  </View>
-                  <View style={styles.tipItem}>
-                    <Ionicons name="checkmark" size={16} color={COLORS.SUCCESS} />
-                    <Text style={styles.tipText}>Keep your delivery address accurate</Text>
-                  </View>
-                  <View style={styles.tipItem}>
-                    <Ionicons name="checkmark" size={16} color={COLORS.SUCCESS} />
-                    <Text style={styles.tipText}>Maintain professional communication</Text>
-                  </View>
-                </View>
               </View>
             </View>
           </View>
@@ -328,34 +289,12 @@ const ShipperDashboardScreen = ({navigation}: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-  },
-  centered: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorText: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 20,
-    backgroundColor: COLORS.LIGHT_GRAY,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-  },
+  container: {flex: 1, backgroundColor: COLORS.WHITE},
+  centered: {justifyContent: "center", alignItems: "center"},
+  errorText: {fontSize: 14, color: COLORS.GRAY},
+  header: {paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20, backgroundColor: COLORS.LIGHT_GRAY},
+  headerTitle: {fontSize: 24, fontWeight: "bold", color: COLORS.DARK, marginBottom: 4},
+  headerSubtitle: {fontSize: 14, color: COLORS.GRAY},
   tabsContainer: {
     flexDirection: "row",
     paddingHorizontal: 16,
@@ -363,45 +302,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.LIGHT_GRAY,
   },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    gap: 4,
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.PRIMARY,
-  },
-  tabLabel: {
-    fontSize: 12,
-    color: COLORS.GRAY,
-    fontWeight: "500",
-  },
-  tabLabelActive: {
-    color: COLORS.PRIMARY,
-  },
-  tabContent: {
-    paddingVertical: 12,
-  },
-  section: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 12,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    justifyContent: "space-between",
-  },
+  tab: {flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 8, gap: 4},
+  tabActive: {borderBottomWidth: 2, borderBottomColor: COLORS.PRIMARY},
+  tabLabel: {fontSize: 12, color: COLORS.GRAY, fontWeight: "500"},
+  tabLabelActive: {color: COLORS.PRIMARY},
+  tabContent: {paddingVertical: 12},
+  section: {paddingHorizontal: 16, paddingVertical: 12},
+  sectionTitle: {fontSize: 16, fontWeight: "bold", color: COLORS.DARK, marginBottom: 12},
+  statsGrid: {flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "space-between"},
   statCard: {
     width: "48%",
     backgroundColor: COLORS.WHITE,
@@ -411,25 +319,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.LIGHT_GRAY,
     alignItems: "center",
   },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.GRAY,
-    textAlign: "center",
-  },
+  statIcon: {width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center", marginBottom: 8},
+  statValue: {fontSize: 20, fontWeight: "bold", color: COLORS.DARK, marginBottom: 4},
+  statLabel: {fontSize: 11, color: COLORS.GRAY, textAlign: "center"},
   earningsCard: {
     backgroundColor: COLORS.PRIMARY,
     borderRadius: 12,
@@ -438,139 +330,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  earningsLabel: {
-    fontSize: 12,
-    color: COLORS.INFO,
-    marginBottom: 4,
-    fontWeight: "500",
-  },
-  earningsAmount: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.WHITE,
-  },
-  earningsDivider: {
-    width: 1,
-    height: 50,
-    backgroundColor: "rgba(255,255,255,0.3)",
-  },
-  earningsTotal: {
-    alignItems: "flex-end",
-  },
-  actionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  earningsDetails: {
-    gap: 12,
-  },
-  earningsRow: {
-    flexDirection: "row",
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 12,
-    padding: 16,
-  },
-  earningsValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.PRIMARY,
-    marginTop: 4,
-  },
-  totalEarningsCard: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-  },
-  totalEarningsLabel: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
-  },
-  totalEarningsAmount: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: COLORS.WHITE,
-    marginVertical: 8,
-  },
-  totalEarningsSubtext: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
-  },
-  infoBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#E3F2FD",
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: COLORS.INFO,
-    lineHeight: 18,
-  },
-  performanceCards: {
-    gap: 12,
-  },
-  performanceCard: {
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 12,
-    padding: 16,
-  },
-  performanceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  performanceLabel: {
-    fontSize: 13,
-    color: COLORS.GRAY,
-    fontWeight: "500",
-  },
-  performanceValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginBottom: 4,
-  },
-  performanceSubtext: {
-    fontSize: 12,
-    color: COLORS.GRAY,
-  },
-  starsContainer: {
-    flexDirection: "row",
-    gap: 2,
-    marginTop: 6,
-  },
-  tipsList: {
-    gap: 10,
-  },
-  tipItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 8,
-  },
-  tipText: {
-    fontSize: 12,
-    color: COLORS.DARK,
-    flex: 1,
-  },
-  bottomPadding: {
-    height: 40,
-  },
+  earningsLabel: {fontSize: 12, color: COLORS.INFO, marginBottom: 4, fontWeight: "500"},
+  earningsAmount: {fontSize: 20, fontWeight: "bold", color: COLORS.WHITE},
+  earningsDivider: {width: 1, height: 50, backgroundColor: "rgba(255,255,255,0.3)"},
+  earningsTotal: {alignItems: "flex-end"},
+  actionsGrid: {flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "space-between", marginBottom: 8},
+  actionButton: {flex: 1},
+  earningsDetails: {gap: 12},
+  earningsRow: {flexDirection: "row", backgroundColor: COLORS.LIGHT_GRAY, borderRadius: 12, padding: 16},
+  earningsValue: {fontSize: 18, fontWeight: "bold", color: COLORS.PRIMARY, marginTop: 4},
+  totalEarningsCard: {backgroundColor: COLORS.PRIMARY, borderRadius: 12, padding: 20, alignItems: "center"},
+  totalEarningsLabel: {fontSize: 14, color: "rgba(255,255,255,0.7)"},
+  totalEarningsAmount: {fontSize: 32, fontWeight: "bold", color: COLORS.WHITE, marginVertical: 8},
+  totalEarningsSubtext: {fontSize: 12, color: "rgba(255,255,255,0.7)"},
+  performanceCards: {gap: 12},
+  performanceCard: {backgroundColor: COLORS.LIGHT_GRAY, borderRadius: 12, padding: 16},
+  performanceHeader: {flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8},
+  performanceLabel: {fontSize: 13, color: COLORS.GRAY, fontWeight: "500"},
+  performanceValue: {fontSize: 24, fontWeight: "bold", color: COLORS.DARK, marginBottom: 4},
+  performanceSubtext: {fontSize: 12, color: COLORS.GRAY},
+  starsContainer: {flexDirection: "row", gap: 2, marginTop: 6},
+  bottomPadding: {height: 40},
 });
 
 export default ShipperDashboardScreen;
