@@ -113,7 +113,7 @@ const SearchScreen = ({navigation}: any) => {
           value={query}
           onChangeText={setQuery}
           onClear={handleClearSearch}
-          placeholder="Search restaurants or food..."
+          placeholder="Tìm nhà hàng hoặc món ăn..."
         />
       </View>
 
@@ -121,7 +121,7 @@ const SearchScreen = ({navigation}: any) => {
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          <Text style={styles.loadingText}>Searching...</Text>
+          <Text style={styles.loadingText}>Đang tìm...</Text>
         </View>
       )}
 
@@ -140,8 +140,8 @@ const SearchScreen = ({navigation}: any) => {
       {!loading && !searched && query.length === 0 && (
         <View style={styles.initialStateContainer}>
           <Ionicons name="search-outline" size={80} color={COLORS.LIGHT_GRAY} style={styles.initialIcon} />
-          <Text style={styles.initialTitle}>What would you like to eat?</Text>
-          <Text style={styles.initialSubtitle}>Search for restaurants or food items</Text>
+          <Text style={styles.initialTitle}>Bạn muốn ăn gì?</Text>
+          <Text style={styles.initialSubtitle}>Tìm kiếm nhà hàng hoặc món ăn</Text>
 
           {/* Quick Search Suggestions */}
           <View style={styles.suggestionsContainer}>

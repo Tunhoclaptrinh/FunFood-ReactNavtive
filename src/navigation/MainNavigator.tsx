@@ -19,8 +19,8 @@ import CartScreen from "@screens/cart/CartScreen";
 import CheckoutScreen from "@screens/cart/CheckoutScreen";
 
 // Orders Stack Screens
-import OrdersScreen from "@screens/orders/OrdersScreen";
-import OrderDetailScreen from "@screens/orders/OrderDetailScreen";
+import OrdersScreen from "@/src/screens/orders";
+import OrderDetailScreen from "@/src/screens/orders/Detail";
 
 // Profile Stack Screens
 import ProfileScreen from "@screens/profile/ProfileScreen";
