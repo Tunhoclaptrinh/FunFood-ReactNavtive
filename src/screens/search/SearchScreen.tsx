@@ -97,11 +97,11 @@ const SearchScreen = ({navigation}: any) => {
 
   const groupedResults = [
     {
-      title: "Restaurants",
+      title: "Nhà hàng",
       data: searchResults.filter((r) => r.type === "restaurant"),
     },
     {
-      title: "Products",
+      title: "Món ăn",
       data: searchResults.filter((r) => r.type === "product"),
     },
   ].filter((section) => section.data.length > 0);
@@ -193,7 +193,7 @@ const SearchScreen = ({navigation}: any) => {
           renderSectionHeader={({section: {title, data}}) => (
             <View style={styles.sectionHeader}>
               <Ionicons
-                name={title === "Restaurants" ? "storefront-outline" : "fast-food-outline"}
+                name={title === "Nhà hàng" ? "storefront-outline" : "fast-food-outline"}
                 size={18}
                 color={COLORS.PRIMARY}
               />

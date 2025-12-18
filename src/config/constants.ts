@@ -38,4 +38,5 @@ export const ORDER_STATUS_LABEL: Record<string, string> = {
   on_the_way: "Đang giao",
   delivered: "Đã giao",
   cancelled: "Đã hủy",
+  driver_arrived: "Đơn đã đến",
 };

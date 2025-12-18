@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   categoryNameActive: {color: COLORS.PRIMARY, fontWeight: "700"},
   categoryItemActive: {transform: [{scale: 1.05}]},
 
-  bannersContainer: {gap: 12, marginBottom: 12, paddingRight: 20},
+  bannersContainer: {gap: 12, marginBottom: 12, paddingRight: 20, paddingLeft: 4},
   bannerCard: {
     width: width - 160,
     borderRadius: 12,
