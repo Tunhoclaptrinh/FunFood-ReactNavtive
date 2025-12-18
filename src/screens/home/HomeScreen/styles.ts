@@ -332,10 +332,6 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 1,
   },
-
-  // Thêm các styles này vào file styles.ts/styles.js của HomeScreen
-
-  // 1. Location Chevron Background
   locationChevronBg: {
     width: 28,
     height: 28,
@@ -344,8 +340,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  // 2. Filter Active Dot Indicator
   filterActiveDot: {
     position: "absolute",
     top: 6,
@@ -354,7 +348,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: "#FFB800",
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: COLORS.WHITE,
   },
 
@@ -368,7 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     padding: 4,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#F0F0F0",
     shadowColor: "#000",

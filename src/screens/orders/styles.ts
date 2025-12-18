@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   sortMenuItemActive: {backgroundColor: "#FFF5F5"},
   sortMenuText: {flex: 1, fontSize: 14, color: COLORS.DARK},
   sortMenuTextActive: {color: COLORS.PRIMARY, fontWeight: "600"},
-  tabsContainer: {marginTop: 8},
+  tabsContainer: {marginTop: 4, paddingLeft: 8, paddingRight: 8},
   tabsList: {paddingVertical: 8, gap: 8},
   tabItem: {
     flexDirection: "row",

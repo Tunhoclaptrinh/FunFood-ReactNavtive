@@ -44,7 +44,7 @@ type LayoutModeType = "list" | "map";
 
 const HomeScreen = ({navigation}: any) => {
   // --- Hooks & Stores ---
-  const {location, requestLocation, address} = useGeolocation();
+  const {location, requestLocation} = useGeolocation();
   const nearbyStore = useNearbyRestaurants();
   const allStore = useRestaurantStore();
   const {filterByCategory, filterByRating, filterByOpen, filterByPriceRange, clearAllFilters} = useRestaurantFilters();
@@ -197,21 +197,21 @@ const HomeScreen = ({navigation}: any) => {
         filterByRating(filterRating);
       }
     } else if (dataSource === "all") {
-      const response = await allStore.fetchAll(params);
+      await allStore.fetchAll(params);
 
       // Kiểm tra còn dữ liệu để load thêm không
-      if (response && response.length < ITEMS_PER_PAGE) {
+      if (allStore.items.length < ITEMS_PER_PAGE) {
         setHasMore(false);
       }
     } else if (dataSource === "toprated") {
-      const response = await allStore.fetchAll({
+      await allStore.fetchAll({
         ...params,
         rating_gte: filterRating || 4.5,
         sort: "rating",
         order: "desc",
       });
 
-      if (response && response.length < ITEMS_PER_PAGE) {
+      if (allStore.items.length < ITEMS_PER_PAGE) {
         setHasMore(false);
       }
     }
@@ -376,7 +376,6 @@ const HomeScreen = ({navigation}: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* Location - Cải thiện UI */}
       <TouchableOpacity style={styles.locationSection} onPress={requestLocation} activeOpacity={0.7}>
         <View style={styles.locationIconBg}>
           <Ionicons name="location" size={20} color={COLORS.PRIMARY} />
@@ -384,10 +383,7 @@ const HomeScreen = ({navigation}: any) => {
         <View style={styles.locationTextContainer}>
           <Text style={styles.locationLabel}>📍 Giao đến</Text>
           <Text style={styles.locationAddress} numberOfLines={1}>
-            {address ||
-              (location
-                ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
-                : "Đang xác định vị trí...")}
+            {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Đang xác định vị trí..."}
           </Text>
         </View>
         <View style={styles.locationChevronBg}>
@@ -690,7 +686,7 @@ const HomeScreen = ({navigation}: any) => {
             {/* Đánh giá */}
             <Text style={styles.filterSectionTitle}>Đánh giá tối thiểu</Text>
             <View style={styles.ratingFilterContainer}>
-              {[3, 3.5, 4, 4.5, 5].map((rate) => (
+              {[3.5, 4, 4.5, 5].map((rate) => (
                 <TouchableOpacity
                   key={rate}
                   style={[styles.ratingChip, filterRating === rate && styles.ratingChipActive]}

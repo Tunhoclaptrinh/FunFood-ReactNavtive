@@ -18,7 +18,6 @@ import {formatCurrency} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 import {ORDER_STATUS_COLOR} from "@/src/styles/colors";
 import {ORDER_STATUS_LABEL} from "@/src/config/constants";
-// [NEW] Import thêm để lấy stats
 import {useAuth} from "@hooks/useAuth";
 import {apiClient} from "@config/api.client";
 import styles from "./styles";
@@ -31,14 +30,12 @@ interface Order {
   items: any[];
 }
 
-// [NEW] Interface cho Stats để map dữ liệu chuẩn
 interface OrderStats {
   totalOrders: number;
   completedOrders: number;
   pendingOrders: number;
   shippingOrders: number;
   cancelledOrders: number;
-  // Nếu backend sau này có preparingOrders thì thêm vào đây
   preparingOrders?: number;
 }
 
@@ -48,7 +45,6 @@ type SortBy = "newest" | "oldest" | "highest" | "lowest";
 const STATUS_TABS: {key: StatusFilter; label: string; icon: string}[] = [
   {key: "all", label: "Tất cả", icon: "albums"},
   {key: "pending", label: "Chờ xác nhận", icon: "time"},
-  // Lưu ý: Nếu stats không có field preparing, ta có thể ẩn hoặc để 0
   {key: "preparing", label: "Đang chuẩn bị", icon: "restaurant"},
   {key: "delivering", label: "Đang giao", icon: "bicycle"},
   {key: "completed", label: "Hoàn thành", icon: "checkmark-circle"},
@@ -63,17 +59,14 @@ const SORT_OPTIONS: {key: SortBy; label: string; icon: string}[] = [
 ];
 
 const OrdersScreen = ({navigation, route}: any) => {
-  // [NEW] Lấy user để gọi API stats
   const {user} = useAuth();
 
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-
-  // [NEW] State lưu thống kê chính xác từ Server
   const [stats, setStats] = useState<OrderStats | null>(null);
 
   // Filter & Sort States
@@ -85,6 +78,11 @@ const OrdersScreen = ({navigation, route}: any) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const sortMenuAnim = useRef(new Animated.Value(0)).current;
 
+  // Ref để tránh load duplicate
+  const isLoadingRef = useRef(false);
+  const currentFilterRef = useRef(statusFilter);
+  const currentSortRef = useRef(sortBy);
+
   useEffect(() => {
     if (route.params?.initialTab !== undefined) {
       const tabKey = STATUS_TABS[route.params.initialTab]?.key || "all";
@@ -94,24 +92,10 @@ const OrdersScreen = ({navigation, route}: any) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      loadOrders(1);
-      fetchStats(); // [NEW] Gọi hàm lấy stats mỗi khi vào màn hình
+      loadOrders(1, true);
+      fetchStats();
     }, [])
   );
-
-  // [NEW] Hàm lấy thống kê chuẩn từ Server (giống OrderStatsScreen)
-  const fetchStats = async () => {
-    if (!user) return;
-    try {
-      const response = await apiClient.get(`/users/${user.id}/activity`);
-      const data = (response.data as {data: any}).data;
-
-      // Map dữ liệu stats vào state
-      setStats(data.stats || null);
-    } catch (error) {
-      console.error("Failed to fetch order stats", error);
-    }
-  };
 
   // Animate status tab indicator
   useEffect(() => {
@@ -135,17 +119,30 @@ const OrdersScreen = ({navigation, route}: any) => {
     }).start();
   }, [showSortMenu]);
 
-  // Filter and sort orders (Client-side logic - chỉ lọc trên danh sách đã tải)
-  // LƯU Ý: Để chính xác hoàn toàn, việc lọc status nên thực hiện ở Server (API params)
-  // Nhưng ở đây ta giữ logic hiện tại cho danh sách hiển thị
+  // Khi filter hoặc sort thay đổi, reset và load lại
   useEffect(() => {
-    let filtered = [...orders];
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((order) => order.status === statusFilter);
+    if (currentFilterRef.current !== statusFilter || currentSortRef.current !== sortBy) {
+      currentFilterRef.current = statusFilter;
+      currentSortRef.current = sortBy;
+      loadOrders(1, true);
     }
+  }, [statusFilter, sortBy]);
 
-    filtered.sort((a, b) => {
+  const fetchStats = async () => {
+    if (!user) return;
+    try {
+      const response = await apiClient.get(`/users/${user.id}/activity`);
+      const data = (response.data as {data: any}).data;
+      setStats(data.stats || null);
+    } catch (error) {
+      console.error("Failed to fetch order stats", error);
+    }
+  };
+
+  // Hàm sắp xếp orders
+  const sortOrders = (ordersList: Order[]): Order[] => {
+    const sorted = [...ordersList];
+    sorted.sort((a, b) => {
       switch (sortBy) {
         case "newest":
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -159,21 +156,48 @@ const OrdersScreen = ({navigation, route}: any) => {
           return 0;
       }
     });
+    return sorted;
+  };
 
-    setFilteredOrders(filtered);
-  }, [orders, statusFilter, sortBy]);
+  // Hàm lọc orders
+  const filterOrders = (ordersList: Order[]): Order[] => {
+    if (statusFilter === "all") return ordersList;
+    return ordersList.filter((order) => order.status === statusFilter);
+  };
 
-  const loadOrders = async (pageNum: number) => {
+  const loadOrders = async (pageNum: number, reset: boolean = false) => {
+    // Prevent duplicate calls
+    if (isLoadingRef.current) return;
+
     try {
-      if (pageNum === 1) setLoading(true);
+      isLoadingRef.current = true;
 
-      // Nếu API hỗ trợ lọc status, hãy truyền params vào đây: { page, limit, status: statusFilter }
+      if (reset) {
+        setLoading(true);
+        setPage(1);
+      } else {
+        setLoadingMore(true);
+      }
+
+      // Gọi API với params lọc và sắp xếp nếu backend hỗ trợ
+      // Hiện tại giữ nguyên, nhưng nên thêm params: status, sortBy
       const res = await OrderService.getOrders(pageNum, 10);
 
-      if (pageNum === 1) {
-        setOrders(res.data || []);
+      let newOrders = res.data || [];
+
+      // Apply filter và sort ở client side
+      newOrders = filterOrders(newOrders);
+      newOrders = sortOrders(newOrders);
+
+      if (reset || pageNum === 1) {
+        setOrders(newOrders);
       } else {
-        setOrders([...orders, ...(res.data || [])]);
+        // Merge và loại bỏ duplicate
+        const mergedOrders = [...orders, ...newOrders];
+        const uniqueOrders = mergedOrders.filter(
+          (order, index, self) => index === self.findIndex((o) => o.id === order.id)
+        );
+        setOrders(sortOrders(uniqueOrders));
       }
 
       setHasMore(res.pagination?.hasNext || false);
@@ -181,59 +205,68 @@ const OrdersScreen = ({navigation, route}: any) => {
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    loadOrders(1);
-    fetchStats(); // [NEW] Refresh cả stats
-  };
+    loadOrders(1, true);
+    fetchStats();
+  }, [statusFilter, sortBy]);
 
-  const handleLoadMore = () => {
-    if (hasMore && !loading && !refreshing) {
-      loadOrders(page + 1);
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !loading && !refreshing && !loadingMore && !isLoadingRef.current) {
+      loadOrders(page + 1, false);
     }
-  };
+  }, [hasMore, loading, refreshing, loadingMore, page]);
 
   const handleOrderPress = (orderId: number) => {
     navigation.navigate("OrderDetail", {orderId});
   };
 
   const handleStatusFilterChange = (status: StatusFilter) => {
+    if (status === statusFilter) return;
     setStatusFilter(status);
   };
 
   const handleSortChange = (sort: SortBy) => {
+    if (sort === sortBy) {
+      setShowSortMenu(false);
+      return;
+    }
     setSortBy(sort);
     setShowSortMenu(false);
   };
 
-  // [NEW] Helper lấy số lượng badge cho từng tab
   const getTabCount = (key: StatusFilter): number => {
     if (!stats) return 0;
 
-    // Map key của Tab sang key của Stats Object
     switch (key) {
       case "all":
         return stats.totalOrders;
       case "pending":
         return stats.pendingOrders;
       case "delivering":
-        return stats.shippingOrders; // Map 'delivering' sang 'shippingOrders'
+        return stats.shippingOrders;
       case "completed":
         return stats.completedOrders;
       case "cancelled":
         return stats.cancelledOrders;
       case "preparing":
-        // Nếu API trả về preparingOrders thì dùng, không thì tạm thời để 0 hoặc gộp logic
         return stats.preparingOrders || 0;
       default:
         return 0;
     }
   };
+
+  // Memoize filtered orders để tránh re-render không cần thiết
+  const displayOrders = React.useMemo(() => {
+    return orders;
+  }, [orders]);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -242,7 +275,7 @@ const OrdersScreen = ({navigation, route}: any) => {
         <View>
           <Text style={styles.headerTitle}>Lọc đơn theo</Text>
           <Text style={styles.headerSubtitle}>
-            {stats ? stats.totalOrders : filteredOrders.length} đơn hàng
+            {stats ? getTabCount(statusFilter) : displayOrders.length} đơn hàng
             {statusFilter !== "all" && ` • ${STATUS_TABS.find((t) => t.key === statusFilter)?.label}`}
           </Text>
         </View>
@@ -302,7 +335,6 @@ const OrdersScreen = ({navigation, route}: any) => {
           contentContainerStyle={styles.tabsList}
           renderItem={({item}) => {
             const isActive = statusFilter === item.key;
-            // [FIXED] Sử dụng count từ Server Stats thay vì đếm mảng local
             const count = getTabCount(item.key);
 
             return (
@@ -315,7 +347,6 @@ const OrdersScreen = ({navigation, route}: any) => {
                   <Ionicons name={item.icon as any} size={18} color={isActive ? COLORS.PRIMARY : COLORS.GRAY} />
                 </View>
                 <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{item.label}</Text>
-                {/* Chỉ hiện badge nếu count > 0 */}
                 {count > 0 && (
                   <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
                     <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>{count}</Text>
@@ -329,7 +360,7 @@ const OrdersScreen = ({navigation, route}: any) => {
     </View>
   );
 
-  const renderOrderCard = ({item, index}: {item: Order; index: number}) => {
+  const renderOrderCard = useCallback(({item, index}: {item: Order; index: number}) => {
     const statusColor = ORDER_STATUS_COLOR[item.status] || COLORS.GRAY;
     const statusLabel = ORDER_STATUS_LABEL[item.status] || item.status;
     const itemCount = item.items?.length || 0;
@@ -382,7 +413,9 @@ const OrdersScreen = ({navigation, route}: any) => {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, []);
+
+  const keyExtractor = useCallback((item: Order) => `order-${item.id}`, []);
 
   if (loading && orders.length === 0) {
     return (
@@ -400,8 +433,8 @@ const OrdersScreen = ({navigation, route}: any) => {
     <SafeAreaView style={styles.container}>
       <FlatList
         ListHeaderComponent={renderHeader()}
-        data={filteredOrders}
-        keyExtractor={(item) => item.id.toString()}
+        data={displayOrders}
+        keyExtractor={keyExtractor}
         renderItem={renderOrderCard}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -413,7 +446,11 @@ const OrdersScreen = ({navigation, route}: any) => {
           />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.3}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        removeClippedSubviews={true}
+        initialNumToRender={10}
         ListEmptyComponent={
           <EmptyState
             icon="document-outline"
@@ -427,7 +464,7 @@ const OrdersScreen = ({navigation, route}: any) => {
           />
         }
         ListFooterComponent={
-          hasMore && !refreshing && filteredOrders.length > 0 ? (
+          loadingMore ? (
             <View style={styles.loadingFooter}>
               <ActivityIndicator size="small" color={COLORS.PRIMARY} />
               <Text style={styles.loadingFooterText}>Đang tải thêm...</Text>

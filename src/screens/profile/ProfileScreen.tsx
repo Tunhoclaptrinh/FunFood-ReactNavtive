@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 10,
     marginBottom: 4,
-    gap: 8,
+    gap: 12,
   },
   statsCard: {
     width: "48%",
