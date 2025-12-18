@@ -1,10 +1,12 @@
 /**
- * Shipper Available Orders Screen
- * Danh sách các đơn hàng chưa được nhận, ready to deliver
+ * Shipper Available Orders Screen - FIXED VERSION
  *
- * API Endpoints:
- * - GET /api/orders/shipper/available - Lấy đơn hàng available
- * - POST /api/orders/shipper/:id/accept - Nhận đơn hàng
+ * Improvements:
+ * - Better error handling
+ * - Smooth navigation
+ * - Auto refresh after actions
+ * - Loading states
+ * - Better UX feedback
  */
 
 import React, {useEffect, useState, useCallback} from "react";
@@ -21,189 +23,55 @@ import {
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
+import {useFocusEffect} from "@react-navigation/native";
 import {ShipperService, ShipperOrder} from "@services/shipper.service";
 import Button from "@/src/components/common/Button";
 import Input from "@/src/components/common/Input/Input";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
-import ShipperOrderCard from "@/src/components/shipper/ShipperOrderCard";
 import {formatCurrency, formatDistance} from "@utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 
 const ShipperAvailableOrdersScreen = ({navigation}: any) => {
   // ============ STATE ============
   const [orders, setOrders] = useState<ShipperOrder[]>([]);
-  const [allOrders, setAllOrders] = useState<ShipperOrder[]>([]); // Cache toàn bộ data
+  const [allOrders, setAllOrders] = useState<ShipperOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
-  // Filter & Modal
+  // Filter
   const [filterDistance, setFilterDistance] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
+
+  // Modal
   const [selectedOrder, setSelectedOrder] = useState<ShipperOrder | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [accepting, setAccepting] = useState(false);
 
-  // ============ LIFECYCLE ============
-  // Load orders on mount
-  useEffect(() => {
-    loadOrders(1);
-  }, []);
+  // ============ AUTO REFRESH ON FOCUS ============
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders(1);
+    }, [])
+  );
 
-  // Debounce filter input (simple 300ms)
+  // ============ DEBOUNCE FILTER ============
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedFilter(filterDistance), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => {
+      setDebouncedFilter(filterDistance);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [filterDistance]);
 
-  const loadOrders = async (pageNum: number) => {
-    try {
-      if (pageNum === 1) {
-        setLoading(true);
-        setError(null);
-      }
-
-      // Call API: GET /api/orders/shipper/available
-      const res = await ShipperService.getAvailableOrders(pageNum, 15);
-      const newOrders = res.data || [];
-      console.log("Shipper: loadOrders() fetched", newOrders.length, "orders");
-
-      // Filter by distance if needed
-      let filtered = newOrders;
-      // if (filterDistance) {
-      //   const maxDistance = parseFloat(filterDistance);
-      //   filtered = newOrders.filter((order) => order.distance <= maxDistance);
-      // }
-
-      if (pageNum === 1) {
-        setAllOrders(newOrders);
-        setOrders(filtered);
-        console.log("Shipper: setOrders (page 1)", filtered.length);
-      } else {
-        // Append to both cache and visible list (respecting current filter)
-        setAllOrders((prev) => [...prev, ...newOrders]);
-
-        setOrders((prev) => {
-          // If a filter is active, append only the filtered subset
-          if (filterDistance && filterDistance.trim() !== "") {
-            return [...prev, ...filtered];
-          }
-          return [...prev, ...filtered];
-        });
-
-        console.log("Shipper: appended orders", filtered.length);
-      }
-
-      setHasMore(res.pagination?.hasNext || false);
-      setPage(pageNum);
-      setRetryCount(0);
-    } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message || "Unable to load orders. Please try again.";
-      console.error("Error loading orders:", error);
-      Alert.alert("Error", "Failed to load available orders");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadOrders(1);
-  }, []);
-
-  const handleLoadMore = useCallback(() => {
-    if (hasMore && !loading && !refreshing) {
-      loadOrders(page + 1);
-    }
-  }, [hasMore, loading, refreshing, page]);
-
-  const handleSelectOrder = (order: ShipperOrder) => {
-    setSelectedOrder(order);
-    setShowDetails(true);
-  };
-
-  /**
-   * Accept selected order
-   * POST /api/orders/shipper/:id/accept
-   */
-
-  const handleAcceptOrder = async () => {
-    if (!selectedOrder) return;
-
-    setAccepting(true);
-    try {
-      // Call API: POST /api/orders/shipper/:id/accept
-      await ShipperService.acceptOrder(selectedOrder.id);
-      
-
-      
-      // Remove from lists
-      const updatedAll = allOrders.filter((o) => o.id !== selectedOrder.id);
-      const updatedFiltered = orders.filter((o) => o.id !== selectedOrder.id);
-      setAllOrders(updatedAll);
-      setOrders(updatedFiltered);
-
-      // Success feedback
-      Alert.alert(
-        "✓ Order Accepted",
-        `Order #${selectedOrder.id}\n\nYou will earn ${formatCurrency(selectedOrder.deliveryFee)}`,
-        [
-          {
-            text: "View My Deliveries",
-            onPress: () => {
-              setShowDetails(false);
-              // Try navigating within current navigator first, then parent tab as fallback
-              navigation.navigate("ShipperDeliveries");
-              navigation.getParent?.()?.navigate?.("Active", {screen: "ShipperDeliveries"});
-            },
-          },
-          {
-            text: "Continue Browsing",
-            onPress: () => setShowDetails(false),
-          },
-        ]
-      );
-    } catch (error: any) {
-      Alert.alert("Error", error.response?.data?.message || "Failed to accept order");
-      // const errorMsg =
-      //   error?.response?.data?.message || "Failed to accept order. Try again.";
-      // Alert.alert("Error", errorMsg);
-      // console.error("Accept order error:", error);
-    } finally {
-      setAccepting(false);
-    }
-  };
-
-  const handleFilterChange = (text: string) => {
-    setFilterDistance(text);
-    if(text){
-      const maxDistance = parseFloat(text);
-      const filtered = allOrders.filter((order) => order.distance <= maxDistance);
-      setOrders(filtered);
-      
-    }else{
-      loadOrders(1);
-    }
-
-
-    // actual filtering is applied in debounced effect below
-  };
-
-  // Apply filter when debounced value changes
+  // ============ APPLY FILTER ============
   useEffect(() => {
-    const text = debouncedFilter;
-    if (!text || text.trim() === "") {
+    if (!debouncedFilter || debouncedFilter.trim() === "") {
       setOrders(allOrders);
       return;
     }
 
-    // Support comma decimal (e.g., 3,4)
-    const normalized = text.replace(",", ".");
+    const normalized = debouncedFilter.replace(",", ".");
     const maxDistance = parseFloat(normalized);
 
     if (isNaN(maxDistance) || maxDistance < 0) {
@@ -213,10 +81,122 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
 
     const filtered = allOrders.filter((order) => (order.distance ?? 0) <= maxDistance);
     setOrders(filtered);
-
-    // If no results but more pages exist, show option to load more (handled in UI)
   }, [debouncedFilter, allOrders]);
 
+  // ============ LOAD ORDERS ============
+  const loadOrders = async (pageNum: number, showLoading = true) => {
+    try {
+      if (pageNum === 1 && showLoading) {
+        setLoading(true);
+      }
+
+      const res = await ShipperService.getAvailableOrders(pageNum, 15);
+      const newOrders = res.data || [];
+
+      if (pageNum === 1) {
+        setAllOrders(newOrders);
+        setOrders(newOrders);
+      } else {
+        setAllOrders((prev) => [...prev, ...newOrders]);
+        setOrders((prev) => [...prev, ...newOrders]);
+      }
+
+      setHasMore(res.pagination?.hasNext || false);
+      setPage(pageNum);
+    } catch (error: any) {
+      console.error("Error loading orders:", error);
+      Alert.alert("Lỗi tải đơn hàng", error?.response?.data?.message || "Không thể tải danh sách đơn hàng");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // ============ REFRESH ============
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setFilterDistance(""); // Clear filter khi refresh
+    loadOrders(1);
+  }, []);
+
+  // ============ LOAD MORE ============
+  const handleLoadMore = useCallback(() => {
+    if (hasMore && !loading && !refreshing) {
+      loadOrders(page + 1, false);
+    }
+  }, [hasMore, loading, refreshing, page]);
+
+  // ============ FILTER CHANGE ============
+  const handleFilterChange = (text: string) => {
+    setFilterDistance(text);
+  };
+
+  // ============ CLEAR FILTER ============
+  const handleClearFilter = () => {
+    setFilterDistance("");
+    setOrders(allOrders);
+  };
+
+  // ============ SELECT ORDER ============
+  const handleSelectOrder = (order: ShipperOrder) => {
+    setSelectedOrder(order);
+    setShowDetails(true);
+  };
+
+  // ============ ACCEPT ORDER ============
+  const handleAcceptOrder = async () => {
+    if (!selectedOrder) return;
+
+    setAccepting(true);
+    try {
+      await ShipperService.acceptOrder(selectedOrder.id);
+
+      // Remove from current list
+      const updatedAll = allOrders.filter((o) => o.id !== selectedOrder.id);
+      const updatedFiltered = orders.filter((o) => o.id !== selectedOrder.id);
+      setAllOrders(updatedAll);
+      setOrders(updatedFiltered);
+
+      // Close modal
+      setShowDetails(false);
+
+      // Success feedback
+      Alert.alert(
+        "✓ Nhận đơn thành công",
+        `Đơn hàng #${selectedOrder.id}\n\nBạn sẽ kiếm được ${formatCurrency(selectedOrder.deliveryFee)}`,
+        [
+          {
+            text: "Xem đơn đang giao",
+            onPress: () => {
+              // Navigate to Active tab
+              const parent = navigation.getParent();
+              if (parent) {
+                parent.navigate("Active", {
+                  screen: "ShipperDeliveries",
+                });
+              }
+            },
+          },
+          {
+            text: "Tiếp tục xem",
+            style: "cancel",
+          },
+        ]
+      );
+
+      // Auto refresh list in background
+      setTimeout(() => {
+        loadOrders(1, false);
+      }, 1000);
+    } catch (error: any) {
+      console.error("Accept order error:", error);
+      Alert.alert("Lỗi nhận đơn", error?.response?.data?.message || "Không thể nhận đơn hàng này");
+    } finally {
+      setAccepting(false);
+    }
+  };
+
+  // ============ RENDER ORDER CARD ============
   const renderOrderCard = ({item}: {item: ShipperOrder}) => (
     <TouchableOpacity style={styles.orderCard} onPress={() => handleSelectOrder(item)} activeOpacity={0.7}>
       {/* Restaurant Info */}
@@ -236,119 +216,93 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
       <View style={styles.detailsSection}>
         <View style={styles.detailRow}>
           <Ionicons name="location-outline" size={16} color={COLORS.GRAY} />
-          <Text style={styles.detailText}>{item.deliveryAddress}</Text>
+          <Text style={styles.detailText} numberOfLines={1}>
+            {item.deliveryAddress}
+          </Text>
         </View>
 
         <View style={styles.detailRow}>
           <Ionicons name="car-outline" size={16} color={COLORS.GRAY} />
-          <Text style={styles.detailText}>{formatDistance(item.distance)} away</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Ionicons name="time-outline" size={16} color={COLORS.GRAY} />
-          <Text style={styles.detailText}>~{item.estimatedTime} min</Text>
+          <Text style={styles.detailText}>
+            {formatDistance(item.distance)} • ~{item.estimatedTime} phút
+          </Text>
         </View>
       </View>
 
       {/* Order Summary */}
       <View style={styles.summarySection}>
         <View style={styles.summaryRow}>
-          <Text style={styles.itemCount}>{item.items.length} items</Text>
+          <Text style={styles.itemCount}>{item.items.length} món</Text>
           <Text style={styles.orderTotal}>{formatCurrency(item.total)}</Text>
         </View>
 
         <View style={styles.earnings}>
           <Ionicons name="cash-outline" size={14} color={COLORS.SUCCESS} />
-          <Text style={styles.earningsText}>Earn: {formatCurrency(item.deliveryFee)}</Text>
+          <Text style={styles.earningsText}>Thu nhập: {formatCurrency(item.deliveryFee)}</Text>
         </View>
       </View>
 
       {/* Tap to view */}
       <View style={styles.tapToView}>
-        <Text style={styles.tapText}>Tap for details</Text>
+        <Text style={styles.tapText}>Nhấn để xem chi tiết</Text>
         <Ionicons name="chevron-forward" size={16} color={COLORS.PRIMARY} />
       </View>
     </TouchableOpacity>
   );
 
+  // ============ RENDER ============
   return (
     <SafeAreaView style={styles.container}>
-      {/* Filter Bar - always visible */}
+      {/* Filter Bar */}
       <View style={styles.filterBar}>
         <Input
-          placeholder="Max distance (km)"
+          placeholder="Lọc theo khoảng cách (km)"
           value={filterDistance}
           onChangeText={handleFilterChange}
           keyboardType="numeric"
           rightIcon={filterDistance ? "close-circle" : undefined}
-          onRightIconPress={() => {
-            setFilterDistance("");
-            setOrders(allOrders);
-          }}
+          onRightIconPress={handleClearFilter}
           containerStyle={styles.filterInput}
         />
       </View>
 
-      {/* Content area */}
+      {/* Loading State */}
       {loading && orders.length === 0 ? (
-        <View style={[styles.container, styles.centered, {paddingTop: 12}]}> 
+        <View style={[styles.container, styles.centered]}>
           <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          <Text style={styles.loadingText}>Loading available orders...</Text>
+          <Text style={styles.loadingText}>Đang tải đơn hàng...</Text>
         </View>
       ) : orders.length === 0 ? (
+        /* Empty State */
         <View style={{flex: 1}}>
           <EmptyState
             icon="mail-outline"
-            title={
-              debouncedFilter && debouncedFilter.trim() !== ""
-                ? `No orders within ${debouncedFilter} km`
-                : "No Orders Available"
+            title={debouncedFilter ? `Không có đơn trong ${debouncedFilter} km` : "Chưa có đơn hàng"}
+            subtitle={
+              debouncedFilter ? "Thử tăng khoảng cách hoặc xóa bộ lọc" : "Kiểm tra lại sau hoặc điều chỉnh bộ lọc"
             }
-            subtitle={debouncedFilter && debouncedFilter.trim() !== "" ? "Try increasing the distance or clear filter." : "Check back soon or adjust your filters"}
             containerStyle={styles.emptyState}
           />
-
-          {/* If filtered and more pages exist, allow loading more */}
-          {debouncedFilter && debouncedFilter.trim() !== "" && hasMore && (
-            <View style={{paddingHorizontal: 16, paddingTop: 12}}>
-              <Button
-                title="Load more orders"
-                onPress={() => loadOrders(page + 1)}
-                containerStyle={{width: 160}}
-                size="small"
-              />
-              <Button
-                title="Clear filter"
-                onPress={() => {
-                  setFilterDistance("");
-                  setOrders(allOrders);
-                }}
-                containerStyle={{width: 140, marginTop: 8}}
-                variant="outline"
-                size="small"
-              />
-              <Button
-                title="Reload orders"
-                onPress={() => {
-                  setFilterDistance("");
-                  loadOrders(1);
-                }}
-                containerStyle={{width: 140, marginTop: 8, marginLeft: 8}}
-                size="small"
-              />
+          {debouncedFilter && hasMore && (
+            <View style={styles.emptyActions}>
+              <Button title="Tải thêm đơn" onPress={() => loadOrders(page + 1, false)} size="small" />
+              <Button title="Xóa bộ lọc" onPress={handleClearFilter} variant="outline" size="small" />
             </View>
           )}
         </View>
       ) : (
+        /* List */
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderOrderCard}
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
+          }
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          ListHeaderComponent={<Text style={styles.headerText}>Available Orders</Text>}
+          ListHeaderComponent={<Text style={styles.headerText}>Đơn hàng khả dụng ({orders.length})</Text>}
           ListFooterComponent={
             hasMore && !refreshing ? (
               <View style={styles.loadingFooter}>
@@ -359,55 +313,56 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
         />
       )}
 
-
       {/* Order Details Modal */}
       <Modal visible={showDetails} transparent animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           {selectedOrder && (
             <>
+              {/* Header */}
               <View style={styles.modalHeader}>
                 <TouchableOpacity onPress={() => setShowDetails(false)}>
                   <Ionicons name="close" size={24} color={COLORS.DARK} />
                 </TouchableOpacity>
-                <Text style={styles.modalTitle}>Order Details</Text>
+                <Text style={styles.modalTitle}>Chi tiết đơn hàng</Text>
                 <View style={{width: 24}} />
               </View>
 
+              {/* Content */}
               <View style={styles.modalContent}>
-                {/* Order ID */}
+                {/* Order Info */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Order Information</Text>
+                  <Text style={styles.sectionTitle}>Thông tin đơn hàng</Text>
                   <View style={styles.infoRow}>
-                    <Text style={styles.label}>Order ID:</Text>
+                    <Text style={styles.label}>Mã đơn:</Text>
                     <Text style={styles.value}>#{selectedOrder.id}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.label}>Total:</Text>
+                    <Text style={styles.label}>Tổng tiền:</Text>
                     <Text style={styles.value}>{formatCurrency(selectedOrder.total)}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.label}>Your Earnings:</Text>
+                    <Text style={styles.label}>Thu nhập của bạn:</Text>
                     <Text style={[styles.value, styles.earnings]}>{formatCurrency(selectedOrder.deliveryFee)}</Text>
                   </View>
                 </View>
 
                 {/* Restaurant */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Restaurant</Text>
+                  <Text style={styles.sectionTitle}>Lấy hàng tại</Text>
                   <Text style={styles.name}>{selectedOrder.restaurantName}</Text>
                   <Text style={styles.address}>{selectedOrder.restaurantAddress}</Text>
                 </View>
 
-                {/* Delivery Address */}
+                {/* Delivery */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Delivery Address</Text>
+                  <Text style={styles.sectionTitle}>Giao hàng đến</Text>
                   <Text style={styles.name}>{selectedOrder.customerName}</Text>
                   <Text style={styles.address}>{selectedOrder.deliveryAddress}</Text>
                 </View>
 
                 {/* Items */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Items ({selectedOrder.items.length})</Text>
+                  <Text style={styles.sectionTitle}>Món hàng ({selectedOrder.items.length})</Text>
                   {selectedOrder.items.map((item, index) => (
                     <View key={index} style={styles.itemRow}>
                       <Text style={styles.itemName}>{item.productName}</Text>
@@ -416,21 +371,21 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
                   ))}
                 </View>
 
-                {/* Distance & Time */}
+                {/* Route Info */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Delivery Details</Text>
+                  <Text style={styles.sectionTitle}>Thông tin tuyến đường</Text>
                   <View style={styles.infoRow}>
                     <Ionicons name="car-outline" size={20} color={COLORS.PRIMARY} />
                     <View style={{flex: 1, marginLeft: 10}}>
-                      <Text style={styles.label}>Distance</Text>
+                      <Text style={styles.label}>Khoảng cách</Text>
                       <Text style={styles.value}>{formatDistance(selectedOrder.distance)}</Text>
                     </View>
                   </View>
                   <View style={styles.infoRow}>
                     <Ionicons name="time-outline" size={20} color={COLORS.PRIMARY} />
                     <View style={{flex: 1, marginLeft: 10}}>
-                      <Text style={styles.label}>Estimated Time</Text>
-                      <Text style={styles.value}>~{selectedOrder.estimatedTime} minutes</Text>
+                      <Text style={styles.label}>Thời gian ước tính</Text>
+                      <Text style={styles.value}>~{selectedOrder.estimatedTime} phút</Text>
                     </View>
                   </View>
                 </View>
@@ -439,9 +394,10 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
               {/* Accept Button */}
               <View style={styles.modalFooter}>
                 <Button
-                  title={`Accept Order - ${formatCurrency(selectedOrder.deliveryFee)}`}
+                  title={`Nhận đơn - ${formatCurrency(selectedOrder.deliveryFee)}`}
                   onPress={handleAcceptOrder}
                   loading={accepting}
+                  disabled={accepting}
                   containerStyle={styles.acceptButton}
                 />
               </View>
@@ -453,6 +409,7 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
   );
 };
 
+// ============ STYLES ============
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -461,9 +418,6 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: "center",
     alignItems: "center",
-  },
-  emptyState: {
-    flex: 1,
   },
   filterBar: {
     paddingHorizontal: 16,
@@ -484,9 +438,21 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     marginBottom: 16,
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: COLORS.GRAY,
+  },
   loadingFooter: {
     paddingVertical: 16,
     alignItems: "center",
+  },
+  emptyState: {
+    flex: 1,
+  },
+  emptyActions: {
+    padding: 16,
+    gap: 12,
   },
   orderCard: {
     backgroundColor: COLORS.WHITE,
@@ -531,9 +497,6 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 12,
     color: COLORS.GRAY,
-    fontStyle: "italic",
-  },
-  errorContainer: {
     flex: 1,
   },
   summarySection: {
@@ -583,18 +546,6 @@ const styles = StyleSheet.create({
   tapText: {
     fontSize: 12,
     color: COLORS.GRAY,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: COLORS.GRAY,
-    textAlign: "center",
-    marginBottom: 32,
-    lineHeight: 20,
-  },
-  retryButton: {
-    width: "100%",
-    paddingHorizontal: 32,
   },
   modalContainer: {
     flex: 1,
@@ -666,6 +617,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 13,
     color: COLORS.DARK,
+    flex: 1,
   },
   itemQty: {
     fontSize: 13,
