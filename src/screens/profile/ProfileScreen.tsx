@@ -17,6 +17,8 @@ import {apiClient} from "@config/api.client";
 import {LinearGradient} from "expo-linear-gradient";
 import {COLORS} from "@/src/styles/colors";
 import {getImageUrl} from "@/src/utils/formatters";
+import {ROUTE_NAMES} from "@/src/navigation";
+import {useNotifications} from "@/src/stores/notificationStore";
 
 interface UserStats {
   totalOrders: number;
@@ -33,9 +35,11 @@ const ProfileScreen = ({navigation}: any) => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const {unreadCount, fetchAll} = useNotifications();
 
   useEffect(() => {
     loadUserStats();
+    fetchAll();
   }, []);
 
   const loadUserStats = async () => {
@@ -99,6 +103,14 @@ const ProfileScreen = ({navigation}: any) => {
   };
 
   const mainMenuItems = [
+    {
+      icon: "notifications-outline",
+      title: "Thông báo",
+      subtitle: "Bạn có " + unreadCount + " thông báo chưa đọc.",
+      screen: ROUTE_NAMES.COMMON.NOTIFICATIONS,
+      color: COLORS.SECONDARY,
+      bgColor: "#E8F8F1",
+    },
     {
       icon: "person-outline",
       title: "Chỉnh sửa hồ sơ",

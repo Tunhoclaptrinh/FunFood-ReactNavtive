@@ -199,6 +199,11 @@ const ProfileStack = () => (
       options={{title: "Hồ sơ", headerBackVisible: false}}
     />
     <Stack.Screen
+      name={ROUTE_NAMES.COMMON.NOTIFICATIONS}
+      component={NotificationsScreen}
+      options={({navigation}: any) => CustomBackHeader(navigation, "Thông báo")}
+    />
+    <Stack.Screen
       name={ROUTE_NAMES.PROFILE.EDIT_PROFILE}
       component={EditProfileScreen}
       options={({navigation}: any) => CustomBackHeader(navigation, "Chỉnh sửa hồ sơ")}
