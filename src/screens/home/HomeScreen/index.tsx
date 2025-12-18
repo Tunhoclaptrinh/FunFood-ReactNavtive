@@ -48,7 +48,7 @@ const HomeScreen = ({navigation}: any) => {
   const nearbyStore = useNearbyRestaurants();
   const allStore = useRestaurantStore();
   const {filterByCategory, filterByRating, filterByOpen, filterByPriceRange, clearAllFilters} = useRestaurantFilters();
-  const {unreadCount} = useNotifications();
+  const {unreadCount, fetchAll} = useNotifications();
 
   // --- State: Data & UI ---
   const [dataSource, setDataSource] = useState<DataSourceType>("nearby");
@@ -104,6 +104,7 @@ const HomeScreen = ({navigation}: any) => {
       }
     };
     fetchInitialData();
+    fetchAll();
   }, []);
 
   useEffect(() => {
