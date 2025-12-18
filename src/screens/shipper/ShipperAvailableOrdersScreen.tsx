@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Linking,
 } from "react-native";
 import {Ionicons} from "@expo/vector-icons";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
@@ -348,7 +349,26 @@ const ShipperAvailableOrdersScreen = ({navigation}: any) => {
 
                 {/* Restaurant */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Lấy hàng tại</Text>
+                  <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
+                    <Text style={styles.sectionTitle}>Lấy hàng tại</Text>
+
+                    {/* Giả sử API trả về tọa độ nhà hàng, nếu không có thì chỉ hiển thị địa chỉ. 
+        Lưu ý: Trong API Docs, restaurant có latitude/longitude
+    */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        // Nếu item có restaurantLatitude, thay thế vào đây.
+                        // Nếu API không trả về lat/lng của nhà hàng trong object order,
+                        // có thể dùng tên địa chỉ để search (dù kém chính xác hơn)
+                        const query = encodeURIComponent(selectedOrder.restaurantAddress);
+                        Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+                      }}
+                      style={{flexDirection: "row", alignItems: "center", gap: 4}}
+                    >
+                      <Ionicons name="navigate-circle-outline" size={18} color={COLORS.PRIMARY} />
+                      <Text style={{color: COLORS.PRIMARY, fontSize: 12, fontWeight: "600"}}>Vị trí</Text>
+                    </TouchableOpacity>
+                  </View>
                   <Text style={styles.name}>{selectedOrder.restaurantName}</Text>
                   <Text style={styles.address}>{selectedOrder.restaurantAddress}</Text>
                 </View>
@@ -550,6 +570,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: COLORS.WHITE,
+    marginBottom: 0,
+    marginTop: 50,
   },
   modalHeader: {
     flexDirection: "row",
