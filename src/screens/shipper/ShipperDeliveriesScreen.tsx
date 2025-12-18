@@ -1,9 +1,10 @@
 /**
  * Shipper Active Deliveries Screen
  * Quản lý các đơn đang giao, cập nhật status
+ * FIXED: Thêm ScrollView cho Modal để tránh bị tràn nội dung
  */
 
-import React, {useEffect, useState, useCallback} from "react";
+import React, {useCallback, useState} from "react";
 import {
   View,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  ScrollView, // Import thêm ScrollView
 } from "react-native";
 import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {Ionicons} from "@expo/vector-icons";
@@ -272,7 +274,7 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
         }
       />
 
-      {/* Delivery Details Modal */}
+      {/* Delivery Details Modal - FIX: Thêm ScrollView */}
       <Modal visible={showDetails} transparent animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           {selectedOrder && (
@@ -285,7 +287,8 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
                 <View style={{width: 24}} />
               </View>
 
-              <View style={styles.modalContent}>
+              {/* FIX: Thay View bằng ScrollView để cuộn được nội dung */}
+              <ScrollView style={{flex: 1}} contentContainerStyle={{padding: 16}} showsVerticalScrollIndicator={false}>
                 {/* Current Status */}
                 <View style={[styles.statusSection, {backgroundColor: getStatusColor(selectedOrder.status) + "20"}]}>
                   <Ionicons
@@ -376,9 +379,12 @@ const ShipperDeliveriesScreen = ({navigation}: any) => {
                     </View>
                   </View>
                 </View>
-              </View>
 
-              {/* Action Buttons */}
+                {/* Khoảng trống để không bị nút che mất nội dung cuối */}
+                <View style={{height: 20}} />
+              </ScrollView>
+
+              {/* Action Buttons (Footer cố định) */}
               <View style={styles.modalFooter}>
                 <View style={styles.buttonsRow}>
                   {selectedOrder.status === "preparing" && (
@@ -535,6 +541,8 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: COLORS.WHITE,
+    marginTop: 50,
+    marginBottom: 0,
   },
   modalHeader: {
     flexDirection: "row",
@@ -550,10 +558,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: COLORS.DARK,
   },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
+  // Đã thay View bằng ScrollView nên bỏ style flex:1 ở đây để tránh conflict
+  // modalContent: {
+  //   flex: 1,
+  //   padding: 16,
+  // },
   statusSection: {
     alignItems: "center",
     paddingVertical: 20,

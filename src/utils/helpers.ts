@@ -1,5 +1,6 @@
 import {Address} from "react-native-maps";
 import {CartItem} from "../types";
+import {Linking, Platform, Alert} from "react-native";
 
 export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371; // Earth radius in km
@@ -35,66 +36,23 @@ interface RestaurantGroup {
   deliveryFee: number;
 }
 
-// Hàm xử lý logic gom nhóm và tính phí
-export const processCartGroups = (
-  items: CartItem[],
-  userAddress: Address | null,
-  userLocation: {latitude: number; longitude: number} | null
-): {groups: RestaurantGroup[]; totalDeliveryFee: number; totalFoodPrice: number} => {
-  const groups: Record<number, RestaurantGroup> = {};
-  let totalDeliveryFee = 0;
-  let totalFoodPrice = 0;
+export const openMap = (lat?: number, lng?: number, label?: string) => {
+  if (!lat || !lng) {
+    Alert.alert("Lỗi", "Không tìm thấy tọa độ địa điểm này");
+    return;
+  }
 
-  // 1. Gom nhóm theo Restaurant ID
-  items.forEach((item) => {
-    const rId = item.restaurant?.id;
-    if (!rId || !item.product) return;
-
-    if (!groups[rId]) {
-      groups[rId] = {
-        restaurantId: rId,
-        restaurantName: item.restaurant?.name || "Nhà hàng",
-        restaurantAddress: item.restaurant?.address || "",
-        items: [],
-        subtotal: 0,
-        distance: 0,
-        deliveryFee: 0,
-      };
-    }
-
-    groups[rId].items.push(item);
-    // Tính tổng tiền món ngay khi gom nhóm
-    const itemTotal = (item.product.price || 0) * item.quantity;
-    groups[rId].subtotal += itemTotal;
-    totalFoodPrice += itemTotal;
+  const scheme = Platform.select({ios: "maps:0,0?q=", android: "geo:0,0?q="});
+  const latLng = `${lat},${lng}`;
+  const labelText = label || "Vị trí giao hàng";
+  const url = Platform.select({
+    ios: `${scheme}${labelText}@${latLng}`,
+    android: `${scheme}${latLng}(${labelText})`,
   });
 
-  // 2. Tính phí ship cho từng nhóm
-  const resultGroups = Object.values(groups).map((group) => {
-    // Lấy tọa độ quán từ item đầu tiên trong nhóm
-    const resLat = Number(group.items[0].restaurant?.latitude);
-    const resLng = Number(group.items[0].restaurant?.longitude);
-
-    // Ưu tiên tọa độ từ địa chỉ đã chọn, nếu không có thì dùng GPS hiện tại
-    const uLat = userAddress?.latitude ? Number(userAddress.latitude) : userLocation?.latitude;
-    const uLng = userAddress?.longitude ? Number(userAddress.longitude) : userLocation?.longitude;
-
-    let fee = 15000; // Phí mặc định
-    let dist = 0;
-
-    if (resLat && resLng && uLat && uLng) {
-      dist = calculateDistance(uLat, uLng, resLat, resLng);
-      fee = calculateDeliveryFee(dist);
-    }
-
-    totalDeliveryFee += fee;
-
-    return {
-      ...group,
-      distance: dist,
-      deliveryFee: fee,
-    };
-  });
-
-  return {groups: resultGroups, totalDeliveryFee, totalFoodPrice};
+  if (url) {
+    Linking.openURL(url).catch(() => {
+      Alert.alert("Lỗi", "Không thể mở ứng dụng bản đồ");
+    });
+  }
 };

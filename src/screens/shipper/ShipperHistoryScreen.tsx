@@ -1,16 +1,11 @@
-/**
- * Shipper Delivery History Screen
- * Lịch sử các đơn hàng đã giao
- */
-
-import React, {useEffect, useState, useCallback} from "react";
-import {View, StyleSheet, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator} from "react-native";
+import React, {useCallback, useState} from "react";
+import {View, StyleSheet, Text, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
-import SafeAreaView from "@/src/components/common/SafeAreaView";
 import {useFocusEffect} from "@react-navigation/native";
-import {ShipperService, ShipperOrder} from "@services/shipper.service";
+import SafeAreaView from "@/src/components/common/SafeAreaView";
 import EmptyState from "@/src/components/common/EmptyState/EmptyState";
-import {formatCurrency, formatDistance} from "@utils/formatters";
+import {ShipperService, ShipperOrder} from "@/src/services/shipper.service";
+import {formatCurrency, formatDistance} from "@/src/utils/formatters";
 import {COLORS} from "@/src/styles/colors";
 
 const ShipperHistoryScreen = ({navigation}: any) => {
@@ -36,252 +31,134 @@ const ShipperHistoryScreen = ({navigation}: any) => {
       if (pageNum === 1) {
         setOrders(newOrders);
       } else {
-        setOrders([...orders, ...newOrders]);
+        setOrders((prev) => [...prev, ...newOrders]);
       }
 
       setHasMore(res.pagination?.hasNext || false);
       setPage(pageNum);
     } catch (error) {
-      console.error("Error loading history:", error);
+      console.error("Lỗi tải lịch sử:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     setRefreshing(true);
     loadHistory(1);
-  }, []);
+  };
 
-  const handleLoadMore = useCallback(() => {
+  const handleLoadMore = () => {
     if (hasMore && !loading && !refreshing) {
       loadHistory(page + 1);
     }
-  }, [hasMore, loading, refreshing, page]);
+  };
 
-  const renderHistoryCard = ({item}: {item: ShipperOrder}) => (
-    <TouchableOpacity style={styles.historyCard} activeOpacity={0.7}>
-      {/* Order Header */}
-      <View style={styles.orderHeader}>
-        <View>
-          <Text style={styles.orderId}>Order #{item.id}</Text>
-          <Text style={styles.orderDate}>Delivered</Text>
+  const renderHistoryItem = ({item}: {item: ShipperOrder}) => (
+    <View style={styles.card}>
+      {/* Header: Date & Status */}
+      <View style={styles.cardHeader}>
+        <View style={styles.statusBadge}>
+          <Ionicons name="checkmark-done-circle" size={16} color={COLORS.SUCCESS} />
+          <Text style={styles.statusText}>Hoàn thành</Text>
         </View>
-        <View style={styles.earnBadge}>
-          <Ionicons name="cash-outline" size={16} color={COLORS.SUCCESS} />
-          <Text style={styles.earnAmount}>{formatCurrency(item.deliveryFee)}</Text>
-        </View>
+        <Text style={styles.idText}>#{item.id}</Text>
       </View>
 
-      {/* Route Info */}
-      <View style={styles.routeInfo}>
-        <View style={styles.routePoint}>
-          <View style={[styles.routeDot, {backgroundColor: COLORS.PRIMARY}]} />
-          <View style={styles.routeDetails}>
-            <Text style={styles.routeLabel}>From</Text>
-            <Text style={styles.routeName} numberOfLines={1}>
-              {item.restaurantName}
-            </Text>
-          </View>
+      {/* Content */}
+      <View style={styles.cardBody}>
+        <View style={styles.row}>
+          <Ionicons name="storefront-outline" size={16} color={COLORS.GRAY} />
+          <Text style={styles.locationText} numberOfLines={1}>
+            {item.restaurantName}
+          </Text>
+        </View>
+        <View style={[styles.row, {marginTop: 6}]}>
+          <Ionicons name="person-outline" size={16} color={COLORS.GRAY} />
+          <Text style={styles.locationText} numberOfLines={1}>
+            {item.customerName}
+          </Text>
         </View>
 
-        <View style={styles.routeLine} />
+        <View style={styles.divider} />
 
-        <View style={styles.routePoint}>
-          <View style={[styles.routeDot, {backgroundColor: COLORS.SUCCESS}]} />
-          <View style={styles.routeDetails}>
-            <Text style={styles.routeLabel}>To</Text>
-            <Text style={styles.routeName} numberOfLines={1}>
-              {item.customerName}
-            </Text>
-          </View>
+        <View style={styles.statsRow}>
+          <Text style={styles.statText}>
+            Thu nhập: <Text style={styles.money}>{formatCurrency(item.deliveryFee)}</Text>
+          </Text>
+          <Text style={styles.statText}>Tổng đơn: {formatCurrency(item.total)}</Text>
         </View>
       </View>
-
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Ionicons name="car-outline" size={14} color={COLORS.GRAY} />
-          <Text style={styles.statText}>{formatDistance(item.distance)}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="time-outline" size={14} color={COLORS.GRAY} />
-          <Text style={styles.statText}>{item.estimatedTime}m</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="cash-outline" size={14} color={COLORS.SUCCESS} />
-          <Text style={styles.statText}>{formatCurrency(item.total)}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    </View>
   );
-
-  if (loading && orders.length === 0) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-      </View>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <EmptyState
-          icon="time-outline"
-          title="No Delivery History"
-          subtitle="Your completed deliveries will appear here"
-          containerStyle={styles.emptyState}
-        />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={orders}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderHistoryCard}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListHeaderComponent={<Text style={styles.headerText}>Delivery History</Text>}
-        ListFooterComponent={
-          hasMore && !refreshing ? (
-            <View style={styles.loadingFooter}>
-              <ActivityIndicator size="small" color={COLORS.PRIMARY} />
-            </View>
-          ) : null
-        }
-      />
+      {loading && page === 1 ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+        </View>
+      ) : orders.length === 0 ? (
+        <EmptyState title="Chưa có lịch sử" subtitle="Các đơn hàng đã giao sẽ xuất hiện tại đây" icon="time-outline" />
+      ) : (
+        <FlatList
+          data={orders}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderHistoryItem}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.PRIMARY]} />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+        />
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-  },
-  centered: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyState: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-    marginVertical: 12,
-    marginBottom: 16,
-  },
-  loadingFooter: {
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  historyCard: {
+  container: {flex: 1, backgroundColor: COLORS.WHITE},
+  center: {flex: 1, justifyContent: "center", alignItems: "center"},
+  list: {padding: 16},
+  card: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 12,
     marginBottom: 12,
-    padding: 12,
     borderWidth: 1,
     borderColor: COLORS.LIGHT_GRAY,
+    padding: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  orderHeader: {
+  cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
   },
-  orderId: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: COLORS.DARK,
-  },
-  orderDate: {
-    fontSize: 12,
-    color: COLORS.GRAY,
-    marginTop: 2,
-  },
-  earnBadge: {
+  statusBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#E8F8F5",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
   },
-  earnAmount: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.SUCCESS,
-  },
-  routeInfo: {
-    marginBottom: 12,
-  },
-  routePoint: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 8,
-    gap: 10,
-  },
-  routeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginTop: 4,
-  },
-  routeDetails: {
-    flex: 1,
-  },
-  routeLabel: {
-    fontSize: 10,
-    color: COLORS.GRAY,
-    fontWeight: "500",
-  },
-  routeName: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.DARK,
-    marginTop: 2,
-  },
-  routeLine: {
-    width: 2,
-    height: 24,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    marginLeft: 5,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.LIGHT_GRAY,
-  },
-  statItem: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  statText: {
-    fontSize: 11,
-    color: COLORS.GRAY,
-    fontWeight: "500",
-  },
+  statusText: {fontSize: 12, color: COLORS.SUCCESS, fontWeight: "600"},
+  idText: {fontSize: 14, fontWeight: "bold", color: COLORS.GRAY},
+  cardBody: {gap: 4},
+  row: {flexDirection: "row", alignItems: "center", gap: 8},
+  locationText: {fontSize: 14, color: COLORS.DARK, flex: 1},
+  divider: {height: 1, backgroundColor: COLORS.LIGHT_GRAY, marginVertical: 8},
+  statsRow: {flexDirection: "row", justifyContent: "space-between"},
+  statText: {fontSize: 13, color: COLORS.GRAY},
+  money: {color: COLORS.PRIMARY, fontWeight: "bold"},
 });
 
 export default ShipperHistoryScreen;
